@@ -4,6 +4,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Haihv.Vbdlis.Tools.Desktop.App.MainWindow"
+        xmlns:Controls="clr-namespace:Haihv.Vbdlis.Tools.Desktop.App.Controls;assembly=Haihv.Vbdlis.Tools.Desktop.App"
         Title="Haihv.Vbdlis.Tools.Desktop.App">
-    Welcome to Avalonia!
+    <DockPanel>
+        <Controls:MenuControl DockPanel.Dock="Top"/>
+    <TextBlock/>
+  </DockPanel>
 </Window>

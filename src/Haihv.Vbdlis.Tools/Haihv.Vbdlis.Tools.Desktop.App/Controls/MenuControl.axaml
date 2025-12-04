@@ -1,0 +1,27 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             x:Class="Haihv.Vbdlis.Tools.Desktop.App.Controls.MenuControl">
+    <Menu HorizontalAlignment="Stretch"
+          VerticalAlignment="Top">
+          <MenuItem Header="_Tài khoản">
+            <MenuItem Header="_Đăng nhập"/>
+            <Separator/>
+            <MenuItem Header="_Thoát"/>
+        </MenuItem>
+        <MenuItem Header="_Công cụ">
+            <MenuItem Header="Tìm kiếm theo Số _phát hành"/>
+            <MenuItem Header="Tìm kiếm theo Số định _danh"/>
+        </MenuItem>
+        <MenuItem Header="_Xuất kết quả">
+            <MenuItem Header="Copy"/>
+            <MenuItem Header="Paste"/>
+        </MenuItem>
+        <MenuItem Header="_Trợ giúp">
+            <MenuItem Header="_Xem hướng dẫn"/>
+            <Separator/>
+            <MenuItem Header="_Giới thiệu"/>
+        </MenuItem>
+    </Menu>
+</UserControl>

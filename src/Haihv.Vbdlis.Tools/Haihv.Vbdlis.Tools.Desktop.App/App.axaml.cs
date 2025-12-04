@@ -15,7 +15,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.App
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow();
+                desktop.MainWindow = new MainWindow
+                {
+                    Title = "Các công cụ làm việc với VBDLIS",
+                    MinHeight = 800,
+                    MinWidth = 1200,
+                    WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen,
+                };
             }
 
             base.OnFrameworkInitializationCompleted();
