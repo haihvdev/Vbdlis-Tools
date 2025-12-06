@@ -42,7 +42,7 @@
             </SplitView.Pane>
 
             <!--  Main Content Area  -->
-            <Grid Background="White">
+            <Grid>
                 <!--  This is where your main content will go  -->
                 <StackPanel
                     HorizontalAlignment="Center"

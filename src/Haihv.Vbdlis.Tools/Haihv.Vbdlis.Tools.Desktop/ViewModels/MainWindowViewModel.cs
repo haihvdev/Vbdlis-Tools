@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Haihv.Vbdlis.Tools.Desktop.Services;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Haihv.Vbdlis.Tools.Desktop.Models;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 {
@@ -50,12 +51,12 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         private async Task LoadSavedCredentialsAsync()
         {
             var credentials = await _credentialService.LoadCredentialsAsync();
-            if (credentials.HasValue)
+            if (credentials != null)
             {
-                LoginViewModel.Server = credentials.Value.server;
-                LoginViewModel.Username = credentials.Value.username;
-                LoginViewModel.Password = credentials.Value.password;
-                LoginViewModel.HeadlessBrowser = credentials.Value.headlessBrowser;
+                LoginViewModel.Server = credentials.Server;
+                LoginViewModel.Username = credentials.Username;
+                LoginViewModel.Password = credentials.Password;
+                LoginViewModel.HeadlessBrowser = credentials.HeadlessBrowser;
                 LoginViewModel.RememberMe = true; // User had saved credentials, so check RememberMe
             }
         }
@@ -70,7 +71,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             // Save credentials for next time only if RememberMe is checked
             if (e.RememberMe)
             {
-                await _credentialService.SaveCredentialsAsync(e.Server, e.Username, e.Password, e.HeadlessBrowser);
+                await _credentialService.SaveCredentialsAsync(new LoginSessionInfo(e.Server, e.Username, e.Password, e.HeadlessBrowser));
             }
             else
             {

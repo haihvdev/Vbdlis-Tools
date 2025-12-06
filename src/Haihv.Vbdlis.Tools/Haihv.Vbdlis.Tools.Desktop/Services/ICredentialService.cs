@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Haihv.Vbdlis.Tools.Desktop.Models;
 
 namespace Haihv.Vbdlis.Tools.Desktop.Services
 {
@@ -10,21 +11,17 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         /// <summary>
         /// Saves login credentials
         /// </summary>
-        Task SaveCredentialsAsync(string server, string username, string password, bool headlessBrowser);
+        Task SaveCredentialsAsync(LoginSessionInfo loginSessionInfo);
 
         /// <summary>
         /// Loads saved credentials
         /// </summary>
-        Task<(string server, string username, string password, bool headlessBrowser)?> LoadCredentialsAsync();
+        Task<LoginSessionInfo?> LoadCredentialsAsync();
 
         /// <summary>
         /// Clears saved credentials
         /// </summary>
         Task ClearCredentialsAsync();
 
-        /// <summary>
-        /// Checks if credentials exist
-        /// </summary>
-        Task<bool> HasSavedCredentialsAsync();
     }
 }

@@ -11,14 +11,18 @@ using Haihv.Vbdlis.Tools.Desktop.Models;
 namespace Haihv.Vbdlis.Tools.Desktop.Services
 {
     /// <summary>
-    /// Service for storing login credentials securely using DPAPI (Windows) or Keychain (macOS)
+    /// Dịch vụ lưu trữ thông tin đăng nhập một cách an toàn sử dụng DPAPI (Windows), Keychain (macOS) hoặc Secret Service (Linux).
     /// </summary>
     public class CredentialService : ICredentialService
     {
         private readonly string _credentialsFilePath;
-        private const string MacServiceName = "Haihv.Vbdlis.Tools";
-        private const string MacAccountName = "CurrentSession";
+        private const string ServiceName = "Haihv.Vbdlis.Tools";
+        private const string AccountName = "CurrentSession";
 
+        /// <summary>
+        /// Khởi tạo một thể hiện mới của lớp <see cref="CredentialService"/>.
+        /// Thiết lập đường dẫn lưu trữ tệp tin trên Windows.
+        /// </summary>
         public CredentialService()
         {
             var appDataPath = Path.Combine(
@@ -30,9 +34,12 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             _credentialsFilePath = Path.Combine(appDataPath, "credentials.dat");
         }
 
-        public async Task SaveCredentialsAsync(string server, string username, string password, bool headlessBrowser)
+        /// <summary>
+        /// Lưu thông tin đăng nhập một cách an toàn.
+        /// </summary>
+        /// <param name="credentials">Thông tin phiên đăng nhập cần lưu.</param>
+        public async Task SaveCredentialsAsync(LoginSessionInfo credentials)
         {
-            var credentials = new LoginSessionInfo(server, username, password, headlessBrowser);
             var json = JsonSerializer.Serialize(credentials);
 
             if (OperatingSystem.IsWindows())
@@ -48,15 +55,49 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             {
                 // Use macOS Keychain via 'security' CLI
                 // -a: Account, -s: Service, -w: Password data, -U: Update if exists
-                RunSecurityCommand("add-generic-password", "-a", MacAccountName, "-s", MacServiceName, "-w", json, "-U");
+                RunCommand("security", "add-generic-password", "-a", AccountName, "-s", ServiceName, "-w", json, "-U");
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                // Linux Secret Service (GNOME Keyring / KWallet)
+                // Cú pháp: secret-tool store --label="{Label}" service {ServiceName} account {AccountName}
+                var psi = new ProcessStartInfo("secret-tool")
+                {
+                    RedirectStandardInput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                psi.ArgumentList.Add("store");
+                psi.ArgumentList.Add("--label=Haihv.Vbdlis.Tools Credentials");
+                psi.ArgumentList.Add("service");
+                psi.ArgumentList.Add(ServiceName);
+                psi.ArgumentList.Add("account");
+                psi.ArgumentList.Add(AccountName);
+
+                using var process = Process.Start(psi)
+                    ?? throw new InvalidOperationException("Cannot start secret-tool process.");
+                await process.StandardInput.WriteAsync(json);
+                process.StandardInput.Close();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    var error = process.StandardError.ReadToEnd();
+                    throw new Exception($"secret-tool exited with code {process.ExitCode}: {error}");
+                }
             }
             else
             {
-                throw new PlatformNotSupportedException("Credential storage is only supported on Windows and macOS.");
+                throw new PlatformNotSupportedException("Credential storage is only supported on Windows, macOS, and Linux.");
             }
         }
 
-        public async Task<(string server, string username, string password, bool headlessBrowser)?> LoadCredentialsAsync()
+        /// <summary>
+        /// Tải thông tin đăng nhập đã lưu.
+        /// </summary>
+        /// <returns>Thông tin phiên đăng nhập nếu tìm thấy và giải mã thành công; ngược lại trả về null.</returns>
+        public async Task<LoginSessionInfo?> LoadCredentialsAsync()
         {
             try
             {
@@ -77,15 +118,23 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 else if (OperatingSystem.IsMacOS())
                 {
                     // -w: Output password only
-                    json = RunSecurityCommand("find-generic-password", "-a", MacAccountName, "-s", MacServiceName, "-w");
+                    json = RunCommand("security", "find-generic-password", "-a", AccountName, "-s", ServiceName, "-w");
                 }
-
-                if (string.IsNullOrEmpty(json)) return null;
-
-                var credentials = JsonSerializer.Deserialize<LoginSessionInfo>(json);
-                if (credentials == null) return null;
-
-                return (credentials.Server, credentials.Username, credentials.Password, credentials.HeadlessBrowser);
+                else if (OperatingSystem.IsLinux())
+                {
+                    // Linux Secret Service (GNOME Keyring / KWallet)
+                    // Cú pháp: secret-tool lookup service {ServiceName} account {AccountName}
+                    // Yêu cầu máy Linux phải cài: libsecret-tools (Ubuntu/Debian)
+                    json = RunCommand("secret-tool", "lookup", "service", ServiceName, "account", AccountName);
+                }
+                else
+                {
+                    // Thay vì ném lỗi, có thể return null nếu muốn không crash app
+                    throw new PlatformNotSupportedException("Credential storage is not supported on this platform.");
+                }
+                return string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : JsonSerializer.Deserialize<LoginSessionInfo>(json);
             }
             catch
             {
@@ -93,6 +142,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             }
         }
 
+        /// <summary>
+        /// Xóa thông tin đăng nhập đã lưu.
+        /// </summary>
         public Task ClearCredentialsAsync()
         {
             if (OperatingSystem.IsWindows())
@@ -106,43 +158,38 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             {
                 try
                 {
-                    RunSecurityCommand("delete-generic-password", "-a", MacAccountName, "-s", MacServiceName);
+                    RunCommand("security", "delete-generic-password", "-a", AccountName, "-s", ServiceName);
                 }
                 catch
                 {
-                    // Ignore if not found
+                    Debug.WriteLine("No existing credentials found in Keychain.");
+                }
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                try
+                {
+                    RunCommand("secret-tool", "clear", "service", ServiceName, "account", AccountName);
+                }
+                catch
+                {
+                    Debug.WriteLine("No existing credentials found in Secret Service.");
                 }
             }
 
             return Task.CompletedTask;
         }
 
-        public Task<bool> HasSavedCredentialsAsync()
+        /// <summary>
+        /// Chạy một lệnh hệ thống và trả về kết quả đầu ra chuẩn.
+        /// </summary>
+        /// <param name="fileName">Tên tệp thực thi hoặc lệnh.</param>
+        /// <param name="args">Danh sách các tham số truyền vào lệnh.</param>
+        /// <returns>Chuỗi kết quả đầu ra từ lệnh (đã loại bỏ ký tự xuống dòng cuối cùng), hoặc null nếu không khởi chạy được.</returns>
+        /// <exception cref="Exception">Ném ra ngoại lệ nếu lệnh trả về mã thoát khác 0.</exception>
+        private static string? RunCommand(string fileName, params string[] args)
         {
-            if (OperatingSystem.IsWindows())
-            {
-                return Task.FromResult(File.Exists(_credentialsFilePath));
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                try
-                {
-                    // Check if exists by trying to find it. Exit code 0 means found.
-                    var output = RunSecurityCommand("find-generic-password", "-a", MacAccountName, "-s", MacServiceName);
-                    return Task.FromResult(!string.IsNullOrEmpty(output));
-                }
-                catch
-                {
-                    return Task.FromResult(false);
-                }
-            }
-
-            return Task.FromResult(false);
-        }
-
-        private static string? RunSecurityCommand(string command, params string[] args)
-        {
-            var psi = new ProcessStartInfo("security")
+            var psi = new ProcessStartInfo(fileName)
             {
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -150,19 +197,19 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 CreateNoWindow = true
             };
 
-            psi.ArgumentList.Add(command);
             foreach (var arg in args) psi.ArgumentList.Add(arg);
 
             using var process = Process.Start(psi);
             if (process == null) return null;
 
             var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
             if (process.ExitCode != 0)
             {
                 // Throwing exception for non-zero exit code to handle "not found" cases in caller
-                throw new Exception($"Security command failed with exit code {process.ExitCode}");
+                throw new Exception($"Command '{fileName}' failed with exit code {process.ExitCode}: {error}");
             }
 
             return output.TrimEnd('\n', '\r');
