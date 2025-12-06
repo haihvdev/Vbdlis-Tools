@@ -16,8 +16,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
     public class CredentialService : ICredentialService
     {
         private readonly string _credentialsFilePath;
-        private const string MacServiceName = "Haihv.Vbdlis.Tools";
-        private const string MacAccountName = "CurrentSession";
+        private const string ServiceName = "Haihv.Vbdlis.Tools";
+        private const string AccountName = "CurrentSession";
 
         public CredentialService()
         {
@@ -47,7 +47,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             {
                 // Use macOS Keychain via 'security' CLI
                 // -a: Account, -s: Service, -w: Password data, -U: Update if exists
-                RunSecurityCommand("add-generic-password", "-a", MacAccountName, "-s", MacServiceName, "-w", json, "-U");
+                RunSecurityCommand("add-generic-password", "-a", AccountName, "-s", ServiceName, "-w", json, "-U");
             }
             else
             {
@@ -76,12 +76,23 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 else if (OperatingSystem.IsMacOS())
                 {
                     // -w: Output password only
-                    json = RunSecurityCommand("find-generic-password", "-a", MacAccountName, "-s", MacServiceName, "-w");
+                    json = RunSecurityCommand("find-generic-password", "-a", AccountName, "-s", ServiceName, "-w");
                 }
-
-                if (string.IsNullOrEmpty(json)) return null;
-
-                return JsonSerializer.Deserialize<LoginSessionInfo>(json);
+                else if (OperatingSystem.IsLinux())
+                {
+                    // Linux Secret Service (GNOME Keyring / KWallet)
+                    // Cú pháp: secret-tool lookup service {ServiceName} account {AccountName}
+                    // Yêu cầu máy Linux phải cài: libsecret-tools (Ubuntu/Debian)
+                    json = RunSecurityCommand("secret-tool", "lookup", "service", ServiceName, "account", AccountName);
+                }
+                else
+                {
+                    // Thay vì ném lỗi, có thể return null nếu muốn không crash app
+                    throw new PlatformNotSupportedException("Credential storage is not supported on this platform.");
+                }
+                return string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : JsonSerializer.Deserialize<LoginSessionInfo>(json);
             }
             catch
             {
@@ -102,7 +113,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             {
                 try
                 {
-                    RunSecurityCommand("delete-generic-password", "-a", MacAccountName, "-s", MacServiceName);
+                    RunSecurityCommand("delete-generic-password", "-a", AccountName, "-s", ServiceName);
                 }
                 catch
                 {
