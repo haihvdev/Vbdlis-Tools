@@ -11,15 +11,10 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services.Data;
 /// <summary>
 /// Service quản lý cache Đơn vị hành chính (ĐVHC) sử dụng EF Core
 /// </summary>
-public class DvhcCacheService
+public class DvhcService(IDatabaseService databaseService)
 {
-    private readonly ILogger _logger = Log.ForContext<DvhcCacheService>();
-    private readonly IDatabaseService _databaseService;
-
-    public DvhcCacheService(IDatabaseService databaseService)
-    {
-        _databaseService = databaseService;
-    }
+    private readonly ILogger _logger = Log.ForContext<DvhcService>();
+    private readonly IDatabaseService _databaseService = databaseService;
 
     #region DvhcCapHuyen
 
@@ -37,7 +32,7 @@ public class DvhcCacheService
                 .Where(x => x.CapTinhId == tinhId)
                 .ToListAsync();
 
-            if (existingRecords.Any())
+            if (existingRecords.Count != 0)
             {
                 dbContext.DvhcCapHuyen.RemoveRange(existingRecords);
             }
@@ -46,19 +41,20 @@ public class DvhcCacheService
             await dbContext.DvhcCapHuyen.AddRangeAsync(capHuyenList);
             await dbContext.SaveChangesAsync();
 
-            _logger.Information("Saved {Count} districts for province {TinhId}", capHuyenList.Count, tinhId);
+            _logger.Information("Đã lưu {Count} quận/huyện cho tỉnh {TinhId}", capHuyenList.Count, tinhId);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to save districts for province {TinhId}", tinhId);
+            _logger.Error(ex, "Lưu danh sách quận/huyện cho tỉnh {TinhId} thất bại", tinhId);
             throw;
         }
     }
 
     /// <summary>
     /// Lấy danh sách huyện từ database
+    /// Mặc định tỉnh Id = 24 (Tỉnh Bắc Ninh mới - Tỉnh Bắc Giang cũ)
     /// </summary>
-    public async Task<List<DvhcCapHuyen>> GetCapHuyenListAsync(int tinhId)
+    public async Task<List<DvhcCapHuyen>> GetCapHuyenListAsync(int tinhId = 24)
     {
         try
         {
@@ -68,13 +64,13 @@ public class DvhcCacheService
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
-            _logger.Debug("Retrieved {Count} districts for province {TinhId}", result.Count, tinhId);
+            _logger.Debug("Đã lấy {Count} quận/huyện cho tỉnh {TinhId}", result.Count, tinhId);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to get districts for province {TinhId}", tinhId);
-            return new List<DvhcCapHuyen>();
+            _logger.Error(ex, "Lấy danh sách quận/huyện cho tỉnh {TinhId} thất bại", tinhId);
+            return [];
         }
     }
 
@@ -105,19 +101,20 @@ public class DvhcCacheService
             await dbContext.DvhcCapXa.AddRangeAsync(capXaList);
             await dbContext.SaveChangesAsync();
 
-            _logger.Information("Saved {Count} wards for province {TinhId}", capXaList.Count, tinhId);
+            _logger.Information("Đã lưu {Count} xã/phường cho tỉnh {TinhId}", capXaList.Count, tinhId);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to save wards for province {TinhId}", tinhId);
+            _logger.Error(ex, "Lưu danh sách xã/phường cho tỉnh {TinhId} thất bại", tinhId);
             throw;
         }
     }
 
     /// <summary>
     /// Lấy danh sách xã theo tỉnh từ database
+    /// Mặc định tỉnh Id = 24 (Tỉnh Bắc Ninh mới - Tỉnh Bắc Giang cũ)
     /// </summary>
-    public async Task<List<DvhcCapXa>> GetCapXaListByTinhAsync(int tinhId)
+    public async Task<List<DvhcCapXa>> GetCapXaListByTinhAsync(int tinhId = 24)
     {
         try
         {
@@ -127,36 +124,38 @@ public class DvhcCacheService
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
-            _logger.Debug("Retrieved {Count} wards for province {TinhId}", result.Count, tinhId);
+            _logger.Debug("Đã lấy {Count} xã/phường cho tỉnh {TinhId}", result.Count, tinhId);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to get wards for province {TinhId}", tinhId);
-            return new List<DvhcCapXa>();
+            _logger.Error(ex, "Lấy danh sách xã/phường cho tỉnh {TinhId} thất bại", tinhId);
+            return [];
         }
     }
 
     /// <summary>
     /// Lấy danh sách xã theo huyện từ database
+    /// Mặc định tỉnh Id = 24 (Tỉnh Bắc Ninh mới - Tỉnh Bắc Giang cũ)
+    /// huyệnId = 0 để lấy tất cả xã của tỉnh
     /// </summary>
-    public async Task<List<DvhcCapXa>> GetCapXaListByHuyenAsync(int tinhId, int huyenId)
+    public async Task<List<DvhcCapXa>> GetCapXaListByHuyenAsync(int tinhId = 24, int huyenId = 0)
     {
         try
         {
             var dbContext = _databaseService.GetDbContext();
             var result = await dbContext.DvhcCapXa
-                .Where(x => x.CapTinhId == tinhId && x.CapHuyenId == huyenId)
+                .Where(x => x.CapTinhId == tinhId && (huyenId == 0 || x.CapHuyenId == huyenId))
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
-            _logger.Debug("Retrieved {Count} wards for district {HuyenId}", result.Count, huyenId);
+            _logger.Debug("Đã lấy {Count} xã theo huyện {HuyenId}", result.Count, huyenId);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to get wards for district {HuyenId}", huyenId);
-            return new List<DvhcCapXa>();
+            _logger.Error(ex, "Lấy danh sách xã theo huyện {HuyenId} thất bại", huyenId);
+            return [];
         }
     }
 

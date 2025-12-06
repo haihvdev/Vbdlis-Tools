@@ -1,5 +1,10 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using Avalonia;
+using Haihv.Vbdlis.Tools.Desktop.Extensions;
+using Serilog;
+using Serilog.Events;
 
 namespace Haihv.Vbdlis.Tools.Desktop
 {
@@ -9,8 +14,25 @@ namespace Haihv.Vbdlis.Tools.Desktop
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args)
+        {
+            SerilogExtensions.ConfigureSerilog();
+            try
+            {
+                BuildAvaloniaApp()
+                    .StartWithClassicDesktopLifetime(args);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Ứng dụng bị lỗi không mong muốn và phải đóng.");
+
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+
+            }
+        }
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
@@ -18,5 +40,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 .UsePlatformDetect()
                 .WithInterFont()
                 .LogToTrace();
+
+
     }
 }

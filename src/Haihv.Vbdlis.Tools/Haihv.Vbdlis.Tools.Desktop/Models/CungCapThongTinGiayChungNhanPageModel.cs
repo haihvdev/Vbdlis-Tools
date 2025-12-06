@@ -209,9 +209,9 @@ public class GiayChungNhanItem
 {
     [JsonPropertyName("GiayChungNhan")] public GiayChungNhanDto? GiayChungNhan { get; set; }
 
-    [JsonPropertyName("ChuSoHuu")] public List<ChuSoHuuDto> ChuSoHuu { get; set; } = new();
+    [JsonPropertyName("ChuSoHuu")] public List<ChuSoHuuDto> ChuSoHuu { get; set; } = [];
 
-    [JsonPropertyName("TaiSan")] public List<TaiSanDto> TaiSan { get; set; } = new();
+    [JsonPropertyName("TaiSan")] public List<TaiSanDto> TaiSan { get; set; } = [];
 }
 
 public class GiayChungNhanDto

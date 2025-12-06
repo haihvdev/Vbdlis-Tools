@@ -11,16 +11,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services.Data;
 /// <summary>
 /// Service quản lý tham chiếu tờ bản đồ sử dụng EF Core
 /// </summary>
-public class ThamChieuToBanDoService
+public class ThamChieuToBanDoService(IDatabaseService databaseService)
 {
     private readonly ILogger _logger = Log.ForContext<ThamChieuToBanDoService>();
-    private readonly IDatabaseService _databaseService;
+    private readonly IDatabaseService _databaseService = databaseService;
     private bool _initialized;
-
-    public ThamChieuToBanDoService(IDatabaseService databaseService)
-    {
-        _databaseService = databaseService;
-    }
 
     /// <summary>
     /// Khởi tạo service và load dữ liệu nếu cần
@@ -84,7 +79,7 @@ public class ThamChieuToBanDoService
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to find map references for new number {SoToBanDo}", soToBanDo);
-            return new List<ThamChieuToBanDo>();
+            return [];
         }
     }
 

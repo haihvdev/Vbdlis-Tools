@@ -20,7 +20,7 @@ public class DonViHanhChinhViewModel
     private readonly ILogger _logger = Log.ForContext<DonViHanhChinhViewModel>();
     private readonly IPlaywrightService _playwrightService;
     private readonly LoginSessionInfo _loginSessionInfo;
-    private readonly DvhcCacheService _dvhcCacheService;
+    private readonly DvhcService _dvhcCacheService;
     private readonly ThamChieuToBanDoService _thamChieuToBanDoService;
     private readonly DvhcElementSelectors _elementSelectors;
     private IPage? _page;
@@ -38,7 +38,7 @@ public class DonViHanhChinhViewModel
         _loginSessionInfo = loginSessionInfo;
         var databaseService = new DatabaseService();
         _thamChieuToBanDoService = new ThamChieuToBanDoService(databaseService);
-        _dvhcCacheService = new DvhcCacheService(databaseService);
+        _dvhcCacheService = new DvhcService(databaseService);
         _elementSelectors = elementSelectors ?? new DvhcElementSelectors();
     }
 
