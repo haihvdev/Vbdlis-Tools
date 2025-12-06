@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="350"
+             x:Class="Haihv.Vbdlis.Tools.Desktop.LoginControl"
+             x:DataType="vm:LoginViewModel">
+
+  <Design.DataContext>
+    <vm:LoginViewModel />
+  </Design.DataContext>
+
+  <Border Background="{DynamicResource SystemRegionBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+          BorderThickness="1"
+          CornerRadius="8"
+          Padding="20"
+		      MinWidth="400">
+
+    <StackPanel Spacing="15">
+
+      <!-- Header -->
+      <TextBlock Text="Đăng nhập"
+                 FontSize="24"
+                 FontWeight="Bold"
+                 HorizontalAlignment="Center"
+                 Margin="0 0 0 10"/>
+
+      <!-- Server Input -->
+      <Grid ColumnDefinitions="Auto,10,*">
+        <TextBlock Grid.Column="0"
+                   Text="Máy chủ:"
+                   FontWeight="SemiBold"
+				   Width="88"
+                   VerticalAlignment="Center"/>
+        <TextBox Grid.Column="2"
+                 Text="{Binding Server}"
+                 Watermark="Nhập địa chỉ máy chủ (vd: https://example.com)"
+                 IsEnabled="{Binding !IsLoggingIn}"/>
+      </Grid>
+
+      <!-- Username Input -->
+      <Grid ColumnDefinitions="Auto,10,*">
+        <TextBlock Grid.Column="0"
+                   Text="Tài khoản:"
+				   Width="88"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"/>
+        <TextBox Grid.Column="2"
+                 Text="{Binding Username}"
+                 Watermark="Nhập tên tài khoản"
+                 IsEnabled="{Binding !IsLoggingIn}"/>
+      </Grid>
+
+      <!-- Password Input -->
+      <Grid ColumnDefinitions="Auto,10,*">
+        <TextBlock Grid.Column="0"
+                   Text="Mật khẩu:"
+				   Width="88"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"/>
+        <TextBox Grid.Column="2"
+                 Text="{Binding Password}"
+                 PasswordChar="●"
+                 Watermark="Nhập mật khẩu"
+                 IsEnabled="{Binding !IsLoggingIn}"/>
+      </Grid>
+
+      <!-- Remember Me Checkbox -->
+      <CheckBox IsChecked="{Binding RememberMe}"
+                Content="Lưu thông tin đăng nhập"
+                IsEnabled="{Binding !IsLoggingIn}"
+                Margin="98 0 0 0"/>
+
+
+      <!-- Error Message -->
+      <TextBlock Text="{Binding ErrorMessage}"
+                 Foreground="Red"
+                 TextWrapping="Wrap"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+      <!-- Buttons -->
+      <Grid ColumnDefinitions="*,*,*" 
+            ColumnSpacing="10"
+            Margin="0 10 0 0">
+        <!-- Headless Browser Checkbox -->
+        <CheckBox Grid.Column="0"
+                  IsChecked="{Binding HeadlessBrowser}"
+                  Content="Ẩn trình duyệt"
+                  IsEnabled="{Binding !IsLoggingIn}"/>
+        <!-- Login Button -->
+        <Button Grid.Column="1"
+                Content="Đăng nhập"
+                Command="{Binding LoginCommand}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                Classes="accent"/>
+
+        <!-- Cancel Button -->
+        <Button Grid.Column="2"
+                Content="Hủy bỏ"
+                Command="{Binding CancelCommand}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                IsEnabled="{Binding !IsLoggingIn}"/>
+      </Grid>
+
+      <!-- Loading Indicator -->
+      <StackPanel Spacing="8"
+                  IsVisible="{Binding IsLoggingIn}">
+        <ProgressBar IsIndeterminate="True"
+                     Height="6"
+                     CornerRadius="3"/>
+        <TextBlock Text="{Binding LoginStatusMessage}"
+                   FontStyle="Italic"
+                   HorizontalAlignment="Center"
+                   IsVisible="{Binding LoginStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </Border>
+</UserControl>

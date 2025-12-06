@@ -1,0 +1,69 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
+        xmlns:controls="using:Haihv.Vbdlis.Tools.Desktop"
+        xmlns:sidebarControls="using:Haihv.Vbdlis.Tools.Desktop.Views.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+        x:Class="Haihv.Vbdlis.Tools.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Công cụ VBDLIS"
+        Width="1200"
+        Height="700">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <!-- Main Content: Show Login or Home based on IsLoggedIn -->
+    <Panel>
+        
+        <!-- Login Screen (shown when not logged in) -->
+        <Grid IsVisible="{Binding !IsLoggedIn}"
+              Background="{DynamicResource SystemAltHighColor}">
+            <controls:LoginControl 
+                DataContext="{Binding LoginViewModel}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- Main Application (shown when logged in) -->
+        <DockPanel IsVisible="{Binding IsLoggedIn}">
+            
+            <!-- Sidebar -->
+            <sidebarControls:SidebarControl 
+                DockPanel.Dock="Left" 
+                Width="266"
+                x:Name="SidebarControl"/>
+            
+            <!-- Main Content Area -->
+            <Grid Background="White">
+                <!-- This is where your main content will go -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                    <TextBlock Text="Trang chủ" 
+                              FontSize="32" 
+                              FontWeight="Bold"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock HorizontalAlignment="Center">
+                        <Run Text="Xin chào, "/>
+                        <Run Text="{Binding LoggedInUsername}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock Text="{Binding LoggedInServer}" 
+                              HorizontalAlignment="Center"
+                              Foreground="Gray"/>
+                    
+                    <!-- Logout Button for testing -->
+                    <Button Content="Đăng xuất" 
+                            Command="{Binding LogoutCommand}"
+                            HorizontalAlignment="Center"
+                            Margin="0,20,0,0"/>
+                </StackPanel>
+            </Grid>
+            
+        </DockPanel>
+        
+    </Panel>
+
+</Window>

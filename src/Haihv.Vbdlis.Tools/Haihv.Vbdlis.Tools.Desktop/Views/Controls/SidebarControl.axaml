@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="266" d:DesignHeight="450"
+             x:Class="Haihv.Vbdlis.Tools.Desktop.Views.Controls.SidebarControl"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border BorderBrush="#cccccc" BorderThickness="0,0,1,0" Background="White">
+        <Grid RowDefinitions="Auto, *, Auto">
+            <!-- Phần trên cùng: Tiêu đề và thông tin đăng nhập -->
+            <Border Grid.Row="0" Padding="10" BorderBrush="#cccccc" BorderThickness="0,0,0,1">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="Xin chào,"/>
+                        <TextBlock Text="{Binding LoggedInUsername}" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding LoggedInServer}" 
+                              FontSize="10" 
+                              Foreground="Gray"
+                              Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Phần giữa: Menu -->
+            <ScrollViewer Grid.Row="1" Padding="0,10">
+                <StackPanel Spacing="2">
+                    <Button Content="Trang chủ" 
+                           HorizontalAlignment="Stretch" 
+                           HorizontalContentAlignment="Left" 
+                           Background="Transparent" 
+                           BorderThickness="0"
+                           Padding="15,10"/>
+                    <Button Content="Chức năng 1" 
+                           HorizontalAlignment="Stretch" 
+                           HorizontalContentAlignment="Left" 
+                           Background="Transparent" 
+                           BorderThickness="0"
+                           Padding="15,10"/>
+                    <Button Content="Chức năng 2" 
+                           HorizontalAlignment="Stretch" 
+                           HorizontalContentAlignment="Left" 
+                           Background="Transparent" 
+                           BorderThickness="0"
+                           Padding="15,10"/>
+                    <Button Content="Cài đặt" 
+                           HorizontalAlignment="Stretch" 
+                           HorizontalContentAlignment="Left" 
+                           Background="Transparent" 
+                           BorderThickness="0"
+                           Padding="15,10"/>
+                    
+                    <Separator Margin="10,5"/>
+                    
+                    <Button Content="Đăng xuất" 
+                           Command="{Binding LogoutCommand}"
+                           HorizontalAlignment="Stretch" 
+                           HorizontalContentAlignment="Left" 
+                           Background="Transparent" 
+                           BorderThickness="0"
+                           Padding="15,10"
+                           Foreground="Red"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Phần dưới cùng: Giới thiệu -->
+            <Border Grid.Row="2" Padding="10" BorderBrush="#cccccc" BorderThickness="0,1,0,0">
+                <StackPanel>
+                    <TextBlock Text="Thông tin giới thiệu" FontWeight="Bold" FontSize="12"/>
+                    <TextBlock Text="Phiên bản: 1.0.0" FontSize="11" Foreground="Gray"/>
+                    <TextBlock Text="© 2025 vpdkbacninh.vn | haihv.vn" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

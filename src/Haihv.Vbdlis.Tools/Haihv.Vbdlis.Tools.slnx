@@ -1,9 +1,3 @@
 <Solution>
-  <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.Mac/Haihv.Vbdlis.Tools.Desktop.Mac.csproj" Id="cd903e51-6251-406c-a27b-98c0809d1b68">
-    <Deploy />
-  </Project>
-  <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.WinUI/Haihv.Vbdlis.Tools.Desktop.WinUI.csproj" Id="2b0fb604-27f5-4d1c-8eb9-e2240f0acbf3">
-    <Platform Project="x64" />
-  </Project>
-  <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.csproj" Id="be364367-cc3f-407a-bebc-425f86bae0cc" />
+  <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.csproj" Id="a281f979-b1be-4f83-ae34-d6195a095cd3" />
 </Solution>
