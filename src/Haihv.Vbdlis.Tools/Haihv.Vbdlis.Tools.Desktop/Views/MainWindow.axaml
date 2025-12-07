@@ -73,7 +73,10 @@
                 </StackPanel>
 
                 <!--  Cung Cấp Thông Tin View  -->
-                <views:CungCapThongTinView IsVisible="{Binding CurrentView, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=CungCapThongTin}" />
+                <views:CungCapThongTinView
+                    x:Name="CungCapThongTinView"
+                    DataContext="{Binding CungCapThongTinViewModel}"
+                    IsVisible="{Binding $parent[Grid].DataContext.CurrentView, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=CungCapThongTin}" />
             </Grid>
         </SplitView>
     </Panel>

@@ -13,7 +13,8 @@
       "Bash(open:*)",
       "Bash(chmod:*)",
       "Bash(tree:*)",
-      "Bash(dotnet clean:*)"
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet add package:*)"
     ],
     "deny": [],
     "ask": []

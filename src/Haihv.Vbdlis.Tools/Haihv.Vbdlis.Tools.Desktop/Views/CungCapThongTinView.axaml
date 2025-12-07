@@ -2,22 +2,91 @@
     x:Class="Haihv.Vbdlis.Tools.Desktop.Views.CungCapThongTinView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Haihv.Vbdlis.Tools.Desktop.Views.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    x:DataType="vm:CungCapThongTinViewModel"
     mc:Ignorable="d">
-    <StackPanel
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center"
-        Spacing="10">
-        <TextBlock
-            FontSize="32"
-            FontWeight="Bold"
-            Text="Cung cấp thông tin giấy chứng nhận" />
-        <TextBlock
-            FontSize="16"
-            Foreground="Gray"
-            Text="Trang này sẽ hiển thị form cung cấp thông tin" />
-    </StackPanel>
+    <Grid Margin="15" RowDefinitions="Auto,Auto,*">
+        <!--  Toolbar - Search Buttons  -->
+        <StackPanel
+            Grid.Row="0"
+            Margin="0,0,0,15"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button Command="{Binding SearchBySoGiayToCommand}" Content="Tìm kiếm theo Số Giấy Tờ" />
+            <Button Command="{Binding SearchBySoPhatHanhCommand}" Content="Tìm kiếm theo Số Phát Hành" />
+            <Button Content="Tìm kiếm theo Thửa Đất" IsEnabled="False" />
+        </StackPanel>
+
+        <!--  Progress Bar  -->
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,0,0,10"
+            IsVisible="{Binding IsSearching}"
+            Spacing="5">
+            <TextBlock
+                FontSize="12"
+                Foreground="Gray"
+                Text="{Binding SearchProgress}" />
+            <ProgressBar
+                Height="8"
+                Maximum="{Binding ProgressMaximum}"
+                Value="{Binding ProgressValue}" />
+        </StackPanel>
+
+        <!--  Content: DataGrid and Detail  -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,300">
+            <!--  DataGrid  -->
+            <Border
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                BorderBrush="#cccccc"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    GridLinesVisibility="All"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding SearchResults}"
+                    SelectedItem="{Binding SelectedResult}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn
+                            Width="150"
+                            Binding="{Binding SearchQuery}"
+                            Header="Từ khóa" />
+                        <DataGridTextColumn
+                            Width="120"
+                            Binding="{Binding SearchType}"
+                            Header="Loại" />
+                        <DataGridTextColumn
+                            Width="80"
+                            Binding="{Binding ResultCount}"
+                            Header="Kết quả" />
+                        <DataGridTextColumn
+                            Width="100"
+                            Binding="{Binding Status}"
+                            Header="Trạng thái" />
+                        <DataGridTextColumn
+                            Width="*"
+                            Binding="{Binding SearchTime, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}"
+                            Header="Thời gian" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!--  Detail Panel  -->
+            <Border
+                Grid.Column="1"
+                BorderBrush="#cccccc"
+                BorderThickness="1"
+                CornerRadius="5"
+                IsVisible="{Binding IsDetailVisible}">
+                <controls:GiayChungNhanDetailControl DataContext="{Binding SelectedItem}" />
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>

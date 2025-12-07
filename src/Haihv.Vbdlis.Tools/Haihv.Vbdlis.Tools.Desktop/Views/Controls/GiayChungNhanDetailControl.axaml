@@ -1,0 +1,236 @@
+<UserControl
+    x:Class="Haihv.Vbdlis.Tools.Desktop.Views.Controls.GiayChungNhanDetailControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:Haihv.Vbdlis.Tools.Desktop.Models"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="models:GiayChungNhanItem"
+    mc:Ignorable="d">
+    <ScrollViewer>
+        <StackPanel Margin="10" Spacing="15">
+            <!--  Giấy Chứng Nhận  -->
+            <Border
+                Padding="10"
+                Background="#f5f5f5"
+                BorderBrush="#cccccc"
+                BorderThickness="1"
+                CornerRadius="5">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Thông tin Giấy Chứng Nhận" />
+
+                    <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Số Phát Hành:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.SoPhatHanh}" />
+
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Số Vào Sổ:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.SoVaoSo}" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Ngày Vào Sổ:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.NgayVaoSo}" />
+
+                        <TextBlock
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Số Hồ Sơ Gốc:" />
+                        <TextBlock
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.SoHoSoGoc}" />
+
+                        <TextBlock
+                            Grid.Row="4"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Cơ Quan Cấp:" />
+                        <TextBlock
+                            Grid.Row="4"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.CoQuanCap}" />
+
+                        <TextBlock
+                            Grid.Row="5"
+                            Grid.Column="0"
+                            FontWeight="SemiBold"
+                            Text="Loại Giấy:" />
+                        <TextBlock
+                            Grid.Row="5"
+                            Grid.Column="1"
+                            Text="{Binding GiayChungNhan.LoaiGiayChungNhan.TenLoai}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!--  Chủ Sử Dụng  -->
+            <Border
+                Padding="10"
+                Background="#f5f5f5"
+                BorderBrush="#cccccc"
+                BorderThickness="1"
+                CornerRadius="5">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Chủ Sử Dụng" />
+
+                    <ItemsControl ItemsSource="{Binding ChuSoHuu}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Margin="0,5"
+                                    Padding="10"
+                                    Background="White"
+                                    BorderBrush="#dddddd"
+                                    BorderThickness="1"
+                                    CornerRadius="3">
+                                    <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Họ Tên:" />
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Text="{Binding HoTen}" />
+
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Năm Sinh:" />
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding NamSinh}" />
+
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Số Giấy Tờ:" />
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Text="{Binding SoGiayTo}" />
+
+                                        <TextBlock
+                                            Grid.Row="3"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Địa Chỉ:" />
+                                        <TextBlock
+                                            Grid.Row="3"
+                                            Grid.Column="1"
+                                            Text="{Binding DiaChi}"
+                                            TextWrapping="Wrap" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!--  Tài Sản  -->
+            <Border
+                Padding="10"
+                Background="#f5f5f5"
+                BorderBrush="#cccccc"
+                BorderThickness="1"
+                CornerRadius="5">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Tài Sản" />
+
+                    <ItemsControl ItemsSource="{Binding TaiSan}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Margin="0,5"
+                                    Padding="10"
+                                    Background="White"
+                                    BorderBrush="#dddddd"
+                                    BorderThickness="1"
+                                    CornerRadius="3">
+                                    <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Thửa Số:" />
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Text="{Binding SoThuTuThua}" />
+
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Tờ Bản Đồ:" />
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding SoHieuToBanDo}" />
+
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Địa Chỉ:" />
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Text="{Binding DiaChi}"
+                                            TextWrapping="Wrap" />
+
+                                        <TextBlock
+                                            Grid.Row="3"
+                                            Grid.Column="0"
+                                            FontWeight="SemiBold"
+                                            Text="Số Hiệu Căn Hộ:" />
+                                        <TextBlock
+                                            Grid.Row="3"
+                                            Grid.Column="1"
+                                            Text="{Binding SoHieuCanHo}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

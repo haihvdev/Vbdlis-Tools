@@ -9,16 +9,16 @@ using Haihv.Vbdlis.Tools.Desktop.Services;
 using Microsoft.Playwright;
 using Serilog;
 
-namespace Haihv.Vbdlis.Tools.Desktop.ViewModels;
+namespace Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 
 /// <summary>
-/// ViewModel cho tìm kiếm nâng cao Giấy chứng nhận trên VBDLIS sử dụng Playwright
+/// Service cho tìm kiếm nâng cao Giấy chứng nhận trên VBDLIS sử dụng Playwright
 /// </summary>
-public class CungCapThongTinGiayChungNhanViewModel(
+public class CungCapThongTinGiayChungNhanService(
     IPlaywrightService playwrightService,
     LoginSessionInfo loginSessionInfo)
 {
-    private readonly ILogger _logger = Log.ForContext<CungCapThongTinGiayChungNhanViewModel>();
+    private readonly ILogger _logger = Log.ForContext<CungCapThongTinGiayChungNhanService>();
     private readonly IPlaywrightService _playwrightService = playwrightService;
     private readonly LoginSessionInfo _loginSessionInfo = loginSessionInfo;
     private IPage? _page;

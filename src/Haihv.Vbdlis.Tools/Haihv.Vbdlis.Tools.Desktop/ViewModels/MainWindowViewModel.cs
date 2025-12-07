@@ -6,6 +6,7 @@ using Haihv.Vbdlis.Tools.Desktop.Services;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Haihv.Vbdlis.Tools.Desktop.Models;
+using Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 {
@@ -13,6 +14,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
     {
         private readonly IPlaywrightService _playwrightService;
         private readonly ICredentialService _credentialService;
+        private LoginSessionInfo? _currentLoginSession;
 
         [ObservableProperty]
         private bool _isLoggedIn;
@@ -28,6 +30,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 
         [ObservableProperty]
         private string _currentView = "Home";
+
+        [ObservableProperty]
+        private CungCapThongTinViewModel? _cungCapThongTinViewModel;
 
         public MainWindowViewModel(IPlaywrightService playwrightService, ICredentialService credentialService)
         {
@@ -71,10 +76,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             LoggedInUsername = e.Username;
             LoggedInServer = e.Server;
 
+            // Store current login session
+            _currentLoginSession = new LoginSessionInfo(e.Server, e.Username, e.Password, e.HeadlessBrowser);
+
             // Save credentials for next time only if RememberMe is checked
             if (e.RememberMe)
             {
-                await _credentialService.SaveCredentialsAsync(new LoginSessionInfo(e.Server, e.Username, e.Password, e.HeadlessBrowser));
+                await _credentialService.SaveCredentialsAsync(_currentLoginSession);
             }
             else
             {
@@ -98,6 +106,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         [RelayCommand]
         private void ShowCungCapThongTin()
         {
+            // Create ViewModel if not already created
+            if (CungCapThongTinViewModel == null && _currentLoginSession != null)
+            {
+                var searchService = new CungCapThongTinGiayChungNhanService(_playwrightService, _currentLoginSession);
+                CungCapThongTinViewModel = new CungCapThongTinViewModel(searchService);
+            }
+
             CurrentView = "CungCapThongTin";
         }
 

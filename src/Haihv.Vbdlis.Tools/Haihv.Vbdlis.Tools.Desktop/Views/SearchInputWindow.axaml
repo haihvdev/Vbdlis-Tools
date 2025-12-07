@@ -1,0 +1,56 @@
+<Window
+    x:Class="Haihv.Vbdlis.Tools.Desktop.Views.SearchInputWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:CompileBindings="False"
+    Width="500"
+    Height="400"
+    CanResize="False"
+    SizeToContent="Manual"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Grid Margin="20" RowDefinitions="Auto,*,Auto">
+        <!--  Prompt  -->
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,10"
+            FontSize="14"
+            Text="{Binding Prompt}"
+            TextWrapping="Wrap" />
+
+        <!--  Input TextBox  -->
+        <Border
+            Grid.Row="1"
+            Margin="0,0,0,15"
+            BorderBrush="#cccccc"
+            BorderThickness="1"
+            CornerRadius="3">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBox
+                    x:Name="InputTextBox"
+                    AcceptsReturn="True"
+                    Text="{Binding Input}"
+                    TextWrapping="Wrap"
+                    Watermark="Nhập thông tin, mỗi dòng hoặc phân cách bằng dấu ;" />
+            </ScrollViewer>
+        </Border>
+
+        <!--  Buttons  -->
+        <StackPanel
+            Grid.Row="2"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                Click="OnSearchClick"
+                Content="Tìm kiếm"
+                IsDefault="True" />
+            <Button
+                Click="OnCancelClick"
+                Content="Bỏ qua"
+                IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>
