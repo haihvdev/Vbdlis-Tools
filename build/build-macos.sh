@@ -69,6 +69,12 @@ build_for_arch() {
     # Make executable
     chmod +x "$APP_PATH/Contents/MacOS/Haihv.Vbdlis.Tools.Desktop"
 
+    # Copy app icon
+    if [ -f "$PROJECT_PATH/Assets/appicon.icns" ]; then
+        echo "Copying app icon..."
+        cp "$PROJECT_PATH/Assets/appicon.icns" "$APP_PATH/Contents/Resources/AppIcon.icns"
+    fi
+
     # Create Info.plist
     cat > "$APP_PATH/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
