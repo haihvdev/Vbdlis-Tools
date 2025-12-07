@@ -8,6 +8,8 @@ using Haihv.Vbdlis.Tools.Desktop.Views;
 using Haihv.Vbdlis.Tools.Desktop.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Threading.Tasks;
+using Serilog;
 
 namespace Haihv.Vbdlis.Tools.Desktop
 {
@@ -36,6 +38,10 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
 
+                // Check and install Playwright browsers if needed (async, non-blocking)
+                // This runs in background and logs progress
+                _ = EnsurePlaywrightBrowsersAsync();
+
                 // Get MainWindowViewModel from DI container
                 var mainViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
 
@@ -56,6 +62,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
         private void ConfigureServices(ServiceCollection services)
         {
+            // Register Playwright installer service
+            services.AddSingleton<IPlaywrightInstallerService, PlaywrightInstallerService>();
+
             // Register Playwright service as singleton to maintain browser context
             services.AddSingleton<IPlaywrightService, PlaywrightService>();
 
@@ -66,6 +75,59 @@ namespace Haihv.Vbdlis.Tools.Desktop
             services.AddSingleton<MainWindowViewModel>();
 
             // Add other services here as needed
+        }
+
+        /// <summary>
+        /// Ensures Playwright browsers are installed on first run.
+        /// This runs asynchronously in the background during app startup.
+        /// Supported on Windows and MacOS only.
+        /// </summary>
+        private async Task EnsurePlaywrightBrowsersAsync()
+        {
+            try
+            {
+                if (_serviceProvider == null)
+                {
+                    Log.Warning("Service provider is not initialized");
+                    return;
+                }
+
+                var installer = _serviceProvider.GetService<IPlaywrightInstallerService>();
+                if (installer == null)
+                {
+                    Log.Warning("PlaywrightInstallerService is not registered");
+                    return;
+                }
+
+                var os = installer.GetOperatingSystem();
+                Log.Information("Checking Playwright browsers installation on {OS}...", os);
+
+                // Check if auto-install is supported
+                if (!installer.IsAutoInstallSupported())
+                {
+                    Log.Warning("Auto-install not supported on {OS}. User must install Playwright manually.", os);
+                    return;
+                }
+
+                // Ensure browsers are installed (will auto-install if needed)
+                var success = await installer.EnsureBrowsersInstalledAsync(message =>
+                {
+                    Log.Information("[Playwright] {Message}", message);
+                });
+
+                if (success)
+                {
+                    Log.Information("Playwright browsers are ready to use");
+                }
+                else
+                {
+                    Log.Error("Failed to ensure Playwright browsers are installed. The application may not function correctly.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error during Playwright browsers installation check");
+            }
         }
 
         private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)

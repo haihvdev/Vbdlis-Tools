@@ -1,10 +1,26 @@
 # Hướng dẫn cài đặt Playwright
 
-## Yêu cầu
+## Tự động cài đặt (Khuyến nghị) ✨
 
-Trước khi chạy ứng dụng, bạn cần cài đặt Playwright browsers.
+**Từ phiên bản mới nhất, ứng dụng sẽ tự động cài đặt Playwright browsers khi khởi động lần đầu trên Windows và MacOS!**
 
-## Cài đặt
+- ✅ **Windows**: Tự động cài đặt
+- ✅ **MacOS**: Tự động cài đặt
+- ❌ **Linux**: Chưa hỗ trợ, cần cài đặt thủ công (xem bên dưới)
+
+Khi khởi động ứng dụng lần đầu:
+1. Ứng dụng sẽ kiểm tra xem Playwright browsers đã được cài đặt chưa
+2. Nếu chưa có, sẽ tự động tải xuống và cài đặt Chromium browser (~300MB)
+3. Quá trình này chỉ diễn ra một lần duy nhất
+4. Các lần khởi động sau sẽ bỏ qua bước này
+
+**Lưu ý**: Quá trình tải xuống và cài đặt có thể mất vài phút tùy thuộc vào tốc độ mạng. Bạn có thể theo dõi tiến trình trong log của ứng dụng.
+
+---
+
+## Cài đặt thủ công (Không bắt buộc cho Windows/MacOS)
+
+Nếu bạn muốn cài đặt thủ công hoặc đang sử dụng Linux, hãy làm theo các bước sau:
 
 ### Cách 1: Sử dụng PowerShell (Khuyến nghị)
 
@@ -41,9 +57,13 @@ Sau khi cài đặt xong, chạy ứng dụng và thử đăng nhập. Trình du
 
 ## Lưu ý
 
-- Browsers sẽ được cài đặt vào thư mục: `%USERPROFILE%\AppData\Local\ms-playwright`
+- **Vị trí cài đặt browsers**:
+  - Windows: `%USERPROFILE%\AppData\Local\ms-playwright`
+  - MacOS: `~/Library/Caches/ms-playwright`
+  - Linux: `~/.cache/ms-playwright`
 - Kích thước khoảng 300MB cho Chromium
 - Chỉ cần cài đặt 1 lần, các lần sau không cần cài lại
+- Việc cài đặt tự động chỉ chạy một lần khi lần đầu tiên ứng dụng phát hiện chưa có browsers
 
 ## Xử lý lỗi
 
