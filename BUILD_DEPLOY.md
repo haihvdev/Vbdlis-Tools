@@ -65,14 +65,58 @@ dotnet publish `
 Remove-Item -Path "publish\win-x64\.playwright" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-### Tạo Windows Installer (Optional)
+### Cách 4: Tạo Setup.exe với Auto-Update (Khuyến nghị cho triển khai) 🚀
 
-Để tạo file `.exe` installer, bạn có thể dùng:
+**Yêu cầu**: Inno Setup 6.0+ (tải từ https://jrsoftware.org/isinfo.php)
 
-**Option 1: Inno Setup** (Khuyến nghị)
-1. Tải Inno Setup: https://jrsoftware.org/isinfo.php
-2. Tạo file `installer.iss` (tham khảo template bên dưới)
-3. Compile với Inno Setup
+```powershell
+# Build và tạo setup.exe
+.\build\build-windows.ps1 -Version "1.0.0" -CreateSetup
+
+# Hoặc tùy chỉnh đường dẫn Inno Setup
+.\build\build-windows.ps1 -Version "1.0.0" -CreateSetup -InnoSetupPath "C:\Path\To\ISCC.exe"
+```
+
+**Output:**
+- `dist/windows/` - Files
+- `dist/VbdlisTools-Windows-x64-v1.0.0.zip` - ZIP
+- `dist/VbdlisTools-Setup-v1.0.0.exe` - **Setup installer**
+
+**Tính năng Setup.exe:**
+- ✅ Cài đặt vào `C:\Program Files\VBDLIS Tools\`
+- ✅ Tạo shortcut trên Desktop và Start Menu
+- ✅ Tự động uninstall phiên bản cũ khi cập nhật
+- ✅ Hỗ trợ silent install: `setup.exe /SILENT`
+- ✅ Đăng ký vào Add/Remove Programs
+- ✅ **Tự động kiểm tra và cập nhật từ GitHub Releases**
+
+**Auto-Update:**
+
+Ứng dụng tự động kiểm tra bản cập nhật mới từ GitHub Releases sau 5 giây khi khởi động.
+
+- Khi có bản mới: Hiển thị dialog thông báo với release notes
+- User chọn "Cập nhật ngay": Tự động tải và chạy installer mới
+- User chọn "Để sau": Bỏ qua lần này, kiểm tra lại lần sau
+
+**Cách phát hành update:**
+
+1. Build setup.exe với version mới:
+   ```powershell
+   .\build\build-windows.ps1 -Version "1.2.0" -CreateSetup
+   ```
+
+2. Tạo GitHub Release:
+   - Tag: `v1.2.0`
+   - Upload file: `VbdlisTools-Setup-v1.2.0.exe`
+   - Viết release notes
+
+3. Người dùng sẽ tự động nhận thông báo cập nhật!
+
+### Tạo Windows Installer thủ công (Nâng cao)
+
+**Option 1: Inno Setup** (Đã tích hợp trong build script)
+- File script: `build/installer.iss`
+- Compile: `ISCC.exe build\installer.iss`
 
 **Option 2: WiX Toolset**
 - Tạo Windows MSI installer

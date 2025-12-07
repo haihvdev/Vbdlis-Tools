@@ -83,6 +83,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                 Log.Information("Main window initialized and shown");
             });
+
+            // Check for updates after MainWindow is shown (non-blocking)
+            _ = CheckForUpdatesAsync();
         }
 
         private void ConfigureServices(ServiceCollection services)
@@ -95,6 +98,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
             // Register Credential service
             services.AddSingleton<ICredentialService, CredentialService>();
+
+            // Register Update service
+            services.AddSingleton<IUpdateService, UpdateService>();
 
             // Register ViewModels
             services.AddSingleton<MainWindowViewModel>();
@@ -264,6 +270,157 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 return await tcs.Task;
             }
         }
+
+        /// <summary>
+        /// Checks for application updates in the background
+        /// </summary>
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                // Wait a bit after app startup before checking
+                await Task.Delay(TimeSpan.FromSeconds(5));
+
+                if (_serviceProvider == null)
+                    return;
+
+                var updateService = _serviceProvider.GetService<IUpdateService>();
+                if (updateService == null)
+                    return;
+
+                Log.Information("Checking for updates...");
+                var updateInfo = await updateService.CheckForUpdatesAsync();
+
+                if (updateInfo != null)
+                {
+                    Log.Information("Update available: {Version}", updateInfo.Version);
+
+                    // Show update notification on UI thread
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        var result = await ShowUpdateDialogAsync(updateInfo);
+
+                        if (result)
+                        {
+                            // User wants to update
+                            Log.Information("User accepted update");
+                            await updateService.DownloadAndInstallUpdateAsync(updateInfo, progress =>
+                            {
+                                Log.Information("Download progress: {Progress}%", progress);
+                            });
+
+                            // Installer will launch and close this app
+                        }
+                    });
+                }
+                else
+                {
+                    Log.Information("No updates available");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error checking for updates");
+            }
+        }
+
+        /// <summary>
+        /// Shows update dialog to user
+        /// </summary>
+        private async Task<bool> ShowUpdateDialogAsync(UpdateInfo updateInfo)
+        {
+            // Simple message box for now - can be replaced with custom UI
+            try
+            {
+                var messageBox = new Window
+                {
+                    Title = "Cập nhật mới",
+                    Width = 450,
+                    Height = 250,
+                    CanResize = false,
+                    WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterOwner
+                };
+
+                var stackPanel = new Avalonia.Controls.StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 15
+                };
+
+                stackPanel.Children.Add(new Avalonia.Controls.TextBlock
+                {
+                    Text = $"Phiên bản mới {updateInfo.Version} đã sẵn sàng!",
+                    FontSize = 16,
+                    FontWeight = Avalonia.Media.FontWeight.Bold
+                });
+
+                stackPanel.Children.Add(new Avalonia.Controls.TextBlock
+                {
+                    Text = $"Phiên bản hiện tại: {updateService.CurrentVersion}",
+                    FontSize = 12,
+                    Foreground = Avalonia.Media.Brushes.Gray
+                });
+
+                if (!string.IsNullOrEmpty(updateInfo.ReleaseNotes))
+                {
+                    var scrollViewer = new Avalonia.Controls.ScrollViewer
+                    {
+                        Height = 80,
+                        Content = new Avalonia.Controls.TextBlock
+                        {
+                            Text = updateInfo.ReleaseNotes,
+                            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                            FontSize = 11
+                        }
+                    };
+                    stackPanel.Children.Add(scrollViewer);
+                }
+
+                var buttonPanel = new Avalonia.Controls.StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                    Spacing = 10
+                };
+
+                bool result = false;
+
+                var updateButton = new Avalonia.Controls.Button
+                {
+                    Content = "Cập nhật ngay",
+                    Padding = new Thickness(20, 8),
+                    Background = Avalonia.Media.Brushes.Green,
+                    Foreground = Avalonia.Media.Brushes.White
+                };
+                updateButton.Click += (s, e) => { result = true; messageBox.Close(); };
+
+                var laterButton = new Avalonia.Controls.Button
+                {
+                    Content = "Để sau",
+                    Padding = new Thickness(20, 8)
+                };
+                laterButton.Click += (s, e) => { result = false; messageBox.Close(); };
+
+                buttonPanel.Children.Add(updateButton);
+                buttonPanel.Children.Add(laterButton);
+                stackPanel.Children.Add(buttonPanel);
+
+                messageBox.Content = stackPanel;
+
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+                {
+                    await messageBox.ShowDialog(desktop.MainWindow);
+                }
+
+                return result;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private IUpdateService? updateService => _serviceProvider?.GetService<IUpdateService>();
 
         private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
         {

@@ -1,9 +1,13 @@
 # Script to build and package Windows installer
-# Requires: .NET 10.0 SDK
+# Requires:
+#   - .NET 10.0 SDK
+#   - Inno Setup 6.0+ (optional, for creating setup.exe)
 
 param(
     [string]$Configuration = "Release",
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.0.0",
+    [switch]$CreateSetup = $false,
+    [string]$InnoSetupPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 )
 
 $ErrorActionPreference = "Stop"
@@ -68,7 +72,48 @@ if (Test-Path $ZipPath) {
 
 Compress-Archive -Path "$OutputPath\*" -DestinationPath $ZipPath -CompressionLevel Optimal
 
+# Create setup.exe with Inno Setup (if requested and available)
+$SetupExePath = $null
+if ($CreateSetup) {
+    if (Test-Path $InnoSetupPath) {
+        Write-Host "`n=== Creating Setup.exe with Inno Setup ===" -ForegroundColor Green
+
+        # Update version in installer script
+        $InstallerScript = Join-Path $PSScriptRoot "installer.iss"
+        $TempScript = Join-Path $PSScriptRoot "installer_temp.iss"
+
+        # Read and update version
+        $content = Get-Content $InstallerScript -Raw
+        $content = $content -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$Version`""
+
+        # Write temp script
+        $content | Set-Content $TempScript -Encoding UTF8
+
+        # Compile with Inno Setup
+        Write-Host "Compiling installer..." -ForegroundColor Yellow
+        & $InnoSetupPath $TempScript /Q
+
+        # Clean up temp script
+        Remove-Item $TempScript -Force
+
+        # Check if setup was created
+        $SetupExePath = Join-Path (Split-Path $OutputPath -Parent) "VbdlisTools-Setup-v$Version.exe"
+        if (Test-Path $SetupExePath) {
+            Write-Host "Setup.exe created successfully!" -ForegroundColor Green
+            Write-Host "Setup file: $SetupExePath" -ForegroundColor Cyan
+        } else {
+            Write-Host "Failed to create setup.exe" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "`nInno Setup not found at: $InnoSetupPath" -ForegroundColor Yellow
+        Write-Host "Skipping setup.exe creation. Install from: https://jrsoftware.org/isinfo.php" -ForegroundColor Yellow
+    }
+}
+
 Write-Host "`n=== Build Completed Successfully ===" -ForegroundColor Green
 Write-Host "Output folder: $OutputPath" -ForegroundColor Cyan
 Write-Host "ZIP package: $ZipPath" -ForegroundColor Cyan
+if ($SetupExePath -and (Test-Path $SetupExePath)) {
+    Write-Host "Setup.exe: $SetupExePath" -ForegroundColor Cyan
+}
 Write-Host "`nNote: Playwright browsers are NOT included. They will be downloaded automatically on first run." -ForegroundColor Yellow
