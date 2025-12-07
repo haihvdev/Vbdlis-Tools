@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sidebarControls="using:Haihv.Vbdlis.Tools.Desktop.Views.Controls"
+    xmlns:views="using:Haihv.Vbdlis.Tools.Desktop.Views"
     xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
     Title="Công cụ VBDLIS"
     Width="1200"
@@ -72,7 +73,7 @@
                 </StackPanel>
 
                 <!--  Cung Cấp Thông Tin View  -->
-                <sidebarControls:CungCapThongTinControl IsVisible="{Binding CurrentView, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=CungCapThongTin}" />
+                <views:CungCapThongTinView IsVisible="{Binding CurrentView, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=CungCapThongTin}" />
             </Grid>
         </SplitView>
     </Panel>
