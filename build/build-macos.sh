@@ -6,7 +6,7 @@ set -e
 
 CONFIGURATION="${1:-Release}"
 VERSION="${2:-1.0.0}"
-ARCH="${3:-both}"  # x64, arm64, or both
+ARCH="${3:-arm64}"  # x64, arm64, or both
 
 echo "=== Building VBDLIS Tools for macOS ==="
 echo "Configuration: $CONFIGURATION"

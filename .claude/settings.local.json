@@ -10,7 +10,8 @@
       "Bash(qlmanage -t:*)",
       "Bash(sips:*)",
       "Bash(iconutil -c icns:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
