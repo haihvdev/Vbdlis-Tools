@@ -47,11 +47,21 @@
                 TextWrapping="Wrap" />
 
             <!--  Progress Bar  -->
-            <ProgressBar
-                Height="8"
-                IsIndeterminate="{Binding IsIndeterminate}"
-                Maximum="100"
-                Value="{Binding ProgressValue}" />
+            <StackPanel Spacing="8">
+                <ProgressBar
+                    Height="8"
+                    IsIndeterminate="{Binding IsIndeterminate}"
+                    Maximum="100"
+                    Value="{Binding ProgressValue}" />
+
+                <!--  Progress Percentage (only visible when not indeterminate)  -->
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="12"
+                    Foreground="Gray"
+                    IsVisible="{Binding !IsIndeterminate}"
+                    Text="{Binding ProgressValue, StringFormat='{}{0}%'}" />
+            </StackPanel>
 
             <!--  Error Message (only visible when there's an error)  -->
             <StackPanel Spacing="10" IsVisible="{Binding HasError}">

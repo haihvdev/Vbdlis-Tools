@@ -1,6 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Serilog;
 
@@ -113,7 +116,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         }
 
         /// <summary>
-        /// Installs Playwright browsers using Microsoft.Playwright.Program
+        /// Installs Playwright browsers using Microsoft.Playwright.Program with progress tracking
         /// </summary>
         public async Task<bool> InstallBrowsersAsync(Action<string>? progress = null)
         {
@@ -121,19 +124,67 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             {
                 var os = GetOperatingSystem();
                 _logger.Information("Starting Playwright browsers installation on {OS}", os);
-                progress?.Invoke($"Đang cài đặt Playwright browsers cho {os}...");
+                progress?.Invoke($"Đang khởi tạo cài đặt Playwright...");
 
-                // Run the installation in a background task to avoid blocking UI
+                // Redirect console output to capture progress
+                var originalOut = Console.Out;
+                var originalError = Console.Error;
+                var outputBuilder = new StringBuilder();
+
                 await Task.Run(() =>
                 {
                     try
                     {
+                        using var stringWriter = new StringWriter(outputBuilder);
+                        Console.SetOut(stringWriter);
+                        Console.SetError(stringWriter);
+
+                        // Track last reported percentage to avoid duplicate updates
+                        int lastPercent = -1;
+                        string lastMessage = "";
+
+                        // Periodically check output buffer for progress updates
+                        var timer = new System.Threading.Timer(_ =>
+                        {
+                            var output = outputBuilder.ToString();
+                            var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+                            if (lines.Length > 0)
+                            {
+                                var lastLine = lines[^1];
+
+                                // Parse and report progress
+                                var progressMessage = ParseInstallProgress(lastLine);
+                                if (!string.IsNullOrEmpty(progressMessage) && progressMessage != lastMessage)
+                                {
+                                    lastMessage = progressMessage;
+                                    _logger.Information("[Playwright] {Message}", progressMessage);
+                                    progress?.Invoke(progressMessage);
+
+                                    // Extract percentage if available
+                                    var match = Regex.Match(progressMessage, @"(\d+)%");
+                                    if (match.Success && int.TryParse(match.Groups[1].Value, out int percent))
+                                    {
+                                        if (percent != lastPercent)
+                                        {
+                                            lastPercent = percent;
+                                        }
+                                    }
+                                }
+                            }
+                        }, null, 0, 500); // Check every 500ms
+
                         progress?.Invoke("Đang tải xuống Chromium browser...");
                         _logger.Information("Executing: playwright install chromium");
 
                         // Call Playwright CLI to install browsers
-                        // This is equivalent to running: playwright install chromium
                         var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+
+                        timer.Dispose();
+
+                        // Restore original console
+                        Console.SetOut(originalOut);
+                        Console.SetError(originalError);
 
                         if (exitCode != 0)
                         {
@@ -145,6 +196,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     }
                     catch (Exception ex)
                     {
+                        Console.SetOut(originalOut);
+                        Console.SetError(originalError);
                         _logger.Error(ex, "Error during Playwright installation");
                         throw;
                     }
@@ -157,9 +210,47 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             catch (Exception ex)
             {
                 _logger.Error(ex, "Failed to install Playwright browsers");
-                progress?.Invoke($"Lỗi khi cài đặt Playwright: {ex.Message}");
+                progress?.Invoke($"Lỗi: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Parses installation progress from Playwright output
+        /// </summary>
+        private string ParseInstallProgress(string output)
+        {
+            // Match patterns like "Downloading Chromium 123.0.4567.8"
+            var downloadMatch = Regex.Match(output, @"Downloading (.+?) from");
+            if (downloadMatch.Success)
+            {
+                return $"Đang tải xuống {downloadMatch.Groups[1].Value}...";
+            }
+
+            // Match patterns like "|■■■■■■■■                    |  10% of 89.7 MiB"
+            var percentMatch = Regex.Match(output, @"\|\s*(.+?)\s*\|\s*(\d+)%\s+of\s+([\d.]+\s+\w+)");
+            if (percentMatch.Success)
+            {
+                var percent = percentMatch.Groups[2].Value;
+                var size = percentMatch.Groups[3].Value;
+                return $"Đang tải xuống... {percent}% / {size}";
+            }
+
+            // Match patterns like "Chromium 123.0.4567.8 downloaded to /path/..."
+            var completedMatch = Regex.Match(output, @"(.+?)\s+downloaded to");
+            if (completedMatch.Success)
+            {
+                return $"Đã tải xong {completedMatch.Groups[1].Value}";
+            }
+
+            // Return original message for other important messages
+            if (output.Contains("downloaded") || output.Contains("installed") ||
+                output.Contains("Installing") || output.Contains("Extracting"))
+            {
+                return output;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>

@@ -1,5 +1,6 @@
 using System.Linq;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
@@ -17,6 +18,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
     public partial class App : Application
     {
         private ServiceProvider? _serviceProvider;
+        private bool _isShuttingDown = false;
 
         public static IServiceProvider? Services { get; private set; }
 
@@ -39,6 +41,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
 
+                // Set ShutdownMode to OnExplicitShutdown to prevent auto-shutdown when windows close
+                desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnExplicitShutdown;
+
                 // Initialize MainWindow asynchronously after ensuring Playwright is ready
                 _ = InitializeMainWindowAsync(desktop);
 
@@ -55,34 +60,58 @@ namespace Haihv.Vbdlis.Tools.Desktop
         /// </summary>
         private async Task InitializeMainWindowAsync(IClassicDesktopStyleApplicationLifetime desktop)
         {
+            Log.Information("Starting main window initialization...");
+
             // First, ensure Playwright browsers are installed
             await EnsurePlaywrightBrowsersAsync();
 
-            // Then create and show the main window on UI thread
-            await Dispatcher.UIThread.InvokeAsync(() =>
+            Log.Information("Playwright check completed, preparing to show main window...");
+
+            // Check if app is shutting down before proceeding
+            if (_isShuttingDown)
             {
-                if (_serviceProvider == null)
+                Log.Information("Application is shutting down, skipping main window initialization");
+                return;
+            }
+
+            // Then create and show the main window on UI thread
+            try
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    Log.Error("Service provider is null, cannot initialize main window");
-                    return;
-                }
+                    if (_serviceProvider == null || _isShuttingDown)
+                    {
+                        Log.Error("Service provider is null or app is shutting down, cannot initialize main window");
+                        return;
+                    }
 
-                // Get MainWindowViewModel from DI container
-                var mainViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+                    Log.Information("Creating MainWindow and ViewModel...");
 
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = mainViewModel,
-                    MinWidth = 1100,
-                    MinHeight = 880,
-                    WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen
-                };
+                    // Get MainWindowViewModel from DI container
+                    var mainViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
 
-                // Show the main window
-                desktop.MainWindow.Show();
+                    desktop.MainWindow = new MainWindow
+                    {
+                        DataContext = mainViewModel,
+                        MinWidth = 1100,
+                        MinHeight = 880,
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen
+                    };
 
-                Log.Information("Main window initialized and shown");
-            });
+                    // Show the main window
+                    desktop.MainWindow.Show();
+
+                    // Now that MainWindow is shown, change shutdown mode to close when main window closes
+                    desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
+
+                    Log.Information("Main window initialized and shown");
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to initialize main window");
+                throw;
+            }
 
             // Check for updates after MainWindow is shown (non-blocking)
             _ = CheckForUpdatesAsync();
@@ -152,11 +181,12 @@ namespace Haihv.Vbdlis.Tools.Desktop
             while (shouldRetry)
             {
                 var result = await TryInstallPlaywrightAsync(installer, os);
+                Log.Information("Playwright installation result: {Result}", result);
 
                 switch (result)
                 {
                     case InstallResult.Success:
-                        Log.Information("Playwright installation completed successfully");
+                        Log.Information("Playwright installation completed successfully, continuing to main window...");
                         return;
 
                     case InstallResult.Retry:
@@ -166,6 +196,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                     case InstallResult.Exit:
                         Log.Warning("User chose to exit application due to Playwright installation failure");
+                        _isShuttingDown = true;
                         await Dispatcher.UIThread.InvokeAsync(() =>
                         {
                             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -244,10 +275,10 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     Log.Information("Playwright browsers installed successfully");
                     progressWindow?.CompleteInstallation();
 
-                    // Auto-close window after 3 seconds
+                    // Auto-close window after 2 seconds
                     if (progressWindow != null)
                     {
-                        await progressWindow.AutoCloseAfterDelayAsync(3000);
+                        await progressWindow.AutoCloseAfterDelayAsync(2000);
                     }
 
                     return InstallResult.Success;
@@ -356,7 +387,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                 stackPanel.Children.Add(new Avalonia.Controls.TextBlock
                 {
-                    Text = $"Phiên bản hiện tại: {updateService.CurrentVersion}",
+                    Text = $"Phiên bản hiện tại: {updateService?.CurrentVersion ?? "N/A"}",
                     FontSize = 12,
                     Foreground = Avalonia.Media.Brushes.Gray
                 });
@@ -424,6 +455,8 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
         private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
         {
+            _isShuttingDown = true;
+
             // Cleanup Playwright service
             if (_serviceProvider != null)
             {

@@ -59,6 +59,17 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             {
                 IsIndeterminate = isIndeterminate.Value;
             }
+
+            // Auto-detect progress percentage from message
+            if (message.Contains("%"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(message, @"(\d+)%");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int percent))
+                {
+                    ProgressValue = percent;
+                    IsIndeterminate = false;
+                }
+            }
         }
 
         /// <summary>
