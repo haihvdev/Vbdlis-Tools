@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
@@ -31,6 +32,16 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 
         [ObservableProperty]
         private bool _isIndeterminate = true;
+
+        /// <summary>
+        /// Event raised when user clicks Retry button
+        /// </summary>
+        public event EventHandler? RetryRequested;
+
+        /// <summary>
+        /// Event raised when user clicks Exit button
+        /// </summary>
+        public event EventHandler? ExitRequested;
 
         /// <summary>
         /// Updates the status message and optionally the progress
@@ -97,6 +108,24 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             IsIndeterminate = false;
             ProgressValue = 100;
             StatusMessage = "Playwright browsers đã được cài đặt sẵn";
+        }
+
+        /// <summary>
+        /// Command to retry installation
+        /// </summary>
+        [RelayCommand]
+        private void Retry()
+        {
+            RetryRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Command to exit application
+        /// </summary>
+        [RelayCommand]
+        private void Exit()
+        {
+            ExitRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

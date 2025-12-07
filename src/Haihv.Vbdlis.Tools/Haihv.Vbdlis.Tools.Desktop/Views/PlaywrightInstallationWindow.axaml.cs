@@ -9,12 +9,44 @@ namespace Haihv.Vbdlis.Tools.Desktop.Views
 {
     public partial class PlaywrightInstallationWindow : Window
     {
+        /// <summary>
+        /// Event raised when user requests retry
+        /// </summary>
+        public event EventHandler? RetryRequested;
+
+        /// <summary>
+        /// Event raised when user requests to exit application
+        /// </summary>
+        public event EventHandler? ExitRequested;
+
         public PlaywrightInstallationWindow()
         {
             InitializeComponent();
 #if DEBUG
             this.AttachDevTools();
 #endif
+            // Subscribe to ViewModel events when DataContext changes
+            DataContextChanged += OnDataContextChanged;
+        }
+
+        private void OnDataContextChanged(object? sender, EventArgs e)
+        {
+            // Unsubscribe from old ViewModel if any
+            if (sender is PlaywrightInstallationWindow window && window.ViewModel != null)
+            {
+                window.ViewModel.RetryRequested += OnViewModelRetryRequested;
+                window.ViewModel.ExitRequested += OnViewModelExitRequested;
+            }
+        }
+
+        private void OnViewModelRetryRequested(object? sender, EventArgs e)
+        {
+            RetryRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnViewModelExitRequested(object? sender, EventArgs e)
+        {
+            ExitRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

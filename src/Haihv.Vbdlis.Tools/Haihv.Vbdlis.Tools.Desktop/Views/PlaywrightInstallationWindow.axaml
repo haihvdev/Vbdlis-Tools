@@ -6,12 +6,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
     Title="Cài đặt Playwright"
-    Width="500"
-    Height="250"
+    Width="550"
+    Height="320"
     CanResize="False"
     WindowStartupLocation="CenterScreen"
-    d:DesignHeight="250"
-    d:DesignWidth="500"
+    d:DesignHeight="320"
+    d:DesignWidth="550"
     x:DataType="vm:PlaywrightInstallationViewModel"
     mc:Ignorable="d">
 
@@ -54,29 +54,49 @@
                 Value="{Binding ProgressValue}" />
 
             <!--  Error Message (only visible when there's an error)  -->
-            <Border
-                Padding="10"
-                Background="#FFFFE0E0"
-                BorderBrush="#FFFF6B6B"
-                BorderThickness="1"
-                CornerRadius="4"
-                IsVisible="{Binding HasError}">
-                <StackPanel Spacing="5">
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Foreground="#FFD32F2F"
-                        Text="Lỗi:" />
-                    <TextBlock
-                        Foreground="#FFD32F2F"
-                        Text="{Binding ErrorMessage}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        Foreground="Gray"
-                        FontSize="11"
-                        Text="Vui lòng cài đặt thủ công theo hướng dẫn trong file PLAYWRIGHT_SETUP.md"
-                        TextWrapping="Wrap" />
+            <StackPanel Spacing="10" IsVisible="{Binding HasError}">
+                <Border
+                    Padding="10"
+                    Background="#FFFFE0E0"
+                    BorderBrush="#FFFF6B6B"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                    <StackPanel Spacing="5">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="#FFD32F2F"
+                            Text="Lỗi:" />
+                        <TextBlock
+                            Foreground="#FFD32F2F"
+                            Text="{Binding ErrorMessage}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Foreground="#FF757575"
+                            FontSize="11"
+                            Text="Ứng dụng cần Playwright để hoạt động. Vui lòng thử lại hoặc cài đặt thủ công theo hướng dẫn trong file PLAYWRIGHT_SETUP.md"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Action Buttons  -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                    <Button
+                        Content="🔄 Thử lại"
+                        Command="{Binding RetryCommand}"
+                        Padding="15,8"
+                        Background="#FF2196F3"
+                        Foreground="White"
+                        CornerRadius="4" />
+                    <Button
+                        Content="❌ Đóng ứng dụng"
+                        Command="{Binding ExitCommand}"
+                        Padding="15,8"
+                        Background="#FFF44336"
+                        Foreground="White"
+                        CornerRadius="4" />
                 </StackPanel>
-            </Border>
+            </StackPanel>
 
             <!--  Success Message (only visible when completed)  -->
             <Border
