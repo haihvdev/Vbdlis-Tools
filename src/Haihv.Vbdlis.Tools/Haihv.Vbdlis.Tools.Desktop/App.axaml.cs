@@ -39,9 +39,33 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
 
-                // Check and install Playwright browsers if needed (async, non-blocking)
-                // This runs in background and logs progress
-                _ = EnsurePlaywrightBrowsersAsync();
+                // Initialize MainWindow asynchronously after ensuring Playwright is ready
+                _ = InitializeMainWindowAsync(desktop);
+
+                // Handle application exit to cleanup resources
+                desktop.ShutdownRequested += OnShutdownRequested;
+            }
+
+            base.OnFrameworkInitializationCompleted();
+        }
+
+        /// <summary>
+        /// Initializes the main window after ensuring Playwright browsers are installed.
+        /// This ensures the application is fully ready before showing the UI.
+        /// </summary>
+        private async Task InitializeMainWindowAsync(IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            // First, ensure Playwright browsers are installed
+            await EnsurePlaywrightBrowsersAsync();
+
+            // Then create and show the main window on UI thread
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (_serviceProvider == null)
+                {
+                    Log.Error("Service provider is null, cannot initialize main window");
+                    return;
+                }
 
                 // Get MainWindowViewModel from DI container
                 var mainViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
@@ -54,11 +78,11 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen
                 };
 
-                // Handle application exit to cleanup resources
-                desktop.ShutdownRequested += OnShutdownRequested;
-            }
+                // Show the main window
+                desktop.MainWindow.Show();
 
-            base.OnFrameworkInitializationCompleted();
+                Log.Information("Main window initialized and shown");
+            });
         }
 
         private void ConfigureServices(ServiceCollection services)
