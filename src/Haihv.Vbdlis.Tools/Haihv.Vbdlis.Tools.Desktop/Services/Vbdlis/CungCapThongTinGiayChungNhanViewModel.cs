@@ -30,16 +30,24 @@ public class CungCapThongTinGiayChungNhanService(
         string? soPhatHanh = null,
         string? soGiayTo = null)
     {
+        _logger.Information("SearchAsync called with soPhatHanh={SoPhatHanh}, soGiayTo={SoGiayTo}", soPhatHanh, soGiayTo);
+
         if (string.IsNullOrWhiteSpace(soPhatHanh) && string.IsNullOrWhiteSpace(soGiayTo))
         {
             throw new ArgumentNullException(nameof(soPhatHanh),
                 "Số phát hành hoặc Số giấy tờ phải được cung cấp để tìm kiếm.");
         }
 
+        _logger.Information("Ensuring CungCapThongTin page...");
         await EnsureCungCapThongTinPageAsync();
+        _logger.Information("Page ensured, creating payload...");
+
         var formData = CungCapThongTinGiayChungNhanPayload.GetAdvancedSearchGiayChungNhanPayload(
             soPhatHanh, soGiayTo);
+        _logger.Information("Payload created, posting search...");
+
         var json = await PostAdvancedSearchAsync(formData);
+        _logger.Information("Search completed, response length: {Length}", json?.Length ?? 0);
 
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -55,7 +63,7 @@ public class CungCapThongTinGiayChungNhanService(
             }
             return response;
         }
-        catch (System.Text.Json.JsonException ex)
+        catch (JsonException ex)
         {
             _logger.Error(ex, "Lỗi parse kết quả advanced search Giấy chứng nhận.");
             Debug.WriteLine($"AdvancedSearchGCN Parse Error: {ex.Message}");
@@ -99,7 +107,7 @@ public class CungCapThongTinGiayChungNhanService(
             }
             return response;
         }
-        catch (System.Text.Json.JsonException ex)
+        catch (JsonException ex)
         {
             _logger.Error(ex, "Lỗi parse kết quả advanced search Giấy chứng nhận.");
             Debug.WriteLine($"AdvancedSearchGCN Parse Error: {ex.Message}");
@@ -195,7 +203,7 @@ public class CungCapThongTinGiayChungNhanService(
             }
             return response;
         }
-        catch (System.Text.Json.JsonException ex)
+        catch (JsonException ex)
         {
             _logger.Error(ex, "Lỗi parse kết quả GetGiayChungNhanBienDong.");
             Debug.WriteLine($"GetGiayChungNhanBienDong Parse Error: {ex.Message}");
@@ -379,37 +387,42 @@ public class CungCapThongTinGiayChungNhanService(
     /// </summary>
     public async Task EnsureCungCapThongTinPageAsync()
     {
+        _logger.Information("EnsureCungCapThongTinPageAsync - IsInitialized: {IsInit}, Page null: {PageNull}",
+            _playwrightService.IsInitialized, _page == null);
+
         if (!_playwrightService.IsInitialized)
         {
+            _logger.Information("Initializing playwright service...");
             await _playwrightService.InitializeAsync();
         }
 
         // Tạo page mới nếu chưa có
         if (_page == null)
         {
+            _logger.Information("Creating new page...");
             _page = await _playwrightService.NewPageAsync();
+            _logger.Information("New page created");
         }
 
         try
         {
-            // Kiểm tra nếu page đã ở đúng URL
-            var currentUrl = _page.Url;
             var targetUrl = _loginSessionInfo.CungCapThongTinGiayChungNhanPageUrl;
 
-            if (!string.IsNullOrEmpty(currentUrl) && currentUrl.StartsWith(targetUrl))
-            {
-                _logger.Debug("Already on CungCapThongTin page");
-                return;
-            }
+            // LUÔN reload trang để tránh cache và tự động re-login nếu timeout
+            _logger.Information("Reloading page to avoid cache and ensure fresh session: {Url}", targetUrl);
 
-            // Navigate đến trang
             await _page.GotoAsync(targetUrl, new PageGotoOptions
             {
-                WaitUntil = WaitUntilState.NetworkIdle,
-                Timeout = 60000
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 30000
             });
 
-            _logger.Information("Navigated to CungCapThongTin page: {Url}", targetUrl);
+            _logger.Information("Page loaded, waiting for page to be ready...");
+
+            // Wait a bit for scripts to load
+            await Task.Delay(1000);
+
+            _logger.Information("Page ready at: {Url}", targetUrl);
         }
         catch (Exception ex)
         {

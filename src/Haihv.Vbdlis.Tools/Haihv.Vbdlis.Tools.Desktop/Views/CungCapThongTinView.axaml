@@ -3,6 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Haihv.Vbdlis.Tools.Desktop.Views.Controls"
+    xmlns:local="using:Haihv.Vbdlis.Tools.Desktop"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
@@ -27,66 +28,27 @@
             Grid.Row="1"
             Margin="0,0,0,10"
             IsVisible="{Binding IsSearching}"
-            Spacing="5">
+            Spacing="8">
             <TextBlock
-                FontSize="12"
-                Foreground="Gray"
+                FontSize="14"
+                FontWeight="SemiBold"
                 Text="{Binding SearchProgress}" />
-            <ProgressBar
-                Height="8"
-                Maximum="{Binding ProgressMaximum}"
-                Value="{Binding ProgressValue}" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <ProgressBar
+                    Width="400"
+                    Height="10"
+                    Maximum="{Binding ProgressMaximum}"
+                    Value="{Binding ProgressValue}" />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="Gray"
+                    Text="{Binding ProgressPercentage, StringFormat='{}Hoàn thành: {0:0}%'}" />
+            </StackPanel>
         </StackPanel>
 
-        <!--  Content: DataGrid and Detail  -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,300">
-            <!--  DataGrid  -->
-            <Border
-                Grid.Column="0"
-                Margin="0,0,10,0"
-                BorderBrush="#cccccc"
-                BorderThickness="1"
-                CornerRadius="5">
-                <DataGrid
-                    AutoGenerateColumns="False"
-                    GridLinesVisibility="All"
-                    IsReadOnly="True"
-                    ItemsSource="{Binding SearchResults}"
-                    SelectedItem="{Binding SelectedResult}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn
-                            Width="150"
-                            Binding="{Binding SearchQuery}"
-                            Header="Từ khóa" />
-                        <DataGridTextColumn
-                            Width="120"
-                            Binding="{Binding SearchType}"
-                            Header="Loại" />
-                        <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding ResultCount}"
-                            Header="Kết quả" />
-                        <DataGridTextColumn
-                            Width="100"
-                            Binding="{Binding Status}"
-                            Header="Trạng thái" />
-                        <DataGridTextColumn
-                            Width="*"
-                            Binding="{Binding SearchTime, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}"
-                            Header="Thời gian" />
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
-
-            <!--  Detail Panel  -->
-            <Border
-                Grid.Column="1"
-                BorderBrush="#cccccc"
-                BorderThickness="1"
-                CornerRadius="5"
-                IsVisible="{Binding IsDetailVisible}">
-                <controls:GiayChungNhanDetailControl DataContext="{Binding SelectedItem}" />
-            </Border>
-        </Grid>
+        <!--  Results DataGrid  -->
+        <local:KetQuaTimKiemDataGridControl
+            x:Name="ResultsDataGrid"
+            Grid.Row="2" />
     </Grid>
 </UserControl>

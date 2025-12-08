@@ -372,20 +372,20 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterOwner
                 };
 
-                var stackPanel = new Avalonia.Controls.StackPanel
+                var stackPanel = new StackPanel
                 {
                     Margin = new Thickness(20),
                     Spacing = 15
                 };
 
-                stackPanel.Children.Add(new Avalonia.Controls.TextBlock
+                stackPanel.Children.Add(new TextBlock
                 {
                     Text = $"Phiên bản mới {updateInfo.Version} đã sẵn sàng!",
                     FontSize = 16,
                     FontWeight = Avalonia.Media.FontWeight.Bold
                 });
 
-                stackPanel.Children.Add(new Avalonia.Controls.TextBlock
+                stackPanel.Children.Add(new TextBlock
                 {
                     Text = $"Phiên bản hiện tại: {updateService?.CurrentVersion ?? "N/A"}",
                     FontSize = 12,
@@ -394,10 +394,10 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                 if (!string.IsNullOrEmpty(updateInfo.ReleaseNotes))
                 {
-                    var scrollViewer = new Avalonia.Controls.ScrollViewer
+                    var scrollViewer = new ScrollViewer
                     {
                         Height = 80,
-                        Content = new Avalonia.Controls.TextBlock
+                        Content = new TextBlock
                         {
                             Text = updateInfo.ReleaseNotes,
                             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
@@ -407,7 +407,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     stackPanel.Children.Add(scrollViewer);
                 }
 
-                var buttonPanel = new Avalonia.Controls.StackPanel
+                var buttonPanel = new StackPanel
                 {
                     Orientation = Avalonia.Layout.Orientation.Horizontal,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
@@ -416,7 +416,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                 bool result = false;
 
-                var updateButton = new Avalonia.Controls.Button
+                var updateButton = new Button
                 {
                     Content = "Cập nhật ngay",
                     Padding = new Thickness(20, 8),
@@ -425,7 +425,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 };
                 updateButton.Click += (s, e) => { result = true; messageBox.Close(); };
 
-                var laterButton = new Avalonia.Controls.Button
+                var laterButton = new Button
                 {
                     Content = "Để sau",
                     Padding = new Thickness(20, 8)

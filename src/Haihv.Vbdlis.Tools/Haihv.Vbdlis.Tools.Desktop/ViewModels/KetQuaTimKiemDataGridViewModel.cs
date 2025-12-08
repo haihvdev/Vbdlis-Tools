@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Haihv.Vbdlis.Tools.Desktop.Extensions;
@@ -25,6 +27,10 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
     [ObservableProperty]
     private bool _isExporting;
 
+    private bool _isUpdatingCollection;
+    private List<KetQuaTimKiemModel>? _pendingModels;
+    private string? _pendingStatusMessage;
+
     public KetQuaTimKiemDataGridViewModel()
     {
         // Set EPPlus license context
@@ -36,22 +42,60 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
     /// </summary>
     public void UpdateData(AdvancedSearchGiayChungNhanResponse? response)
     {
-        KetQuaTimKiemList.Clear();
-
         if (response?.Data == null || response.Data.Count == 0)
         {
-            StatusMessage = "Không có dữ liệu";
+            UpdateCollectionOnUiThread(Array.Empty<KetQuaTimKiemModel>(), "Không có dữ liệu");
             return;
         }
 
-        // Sử dụng extension method để chuyển đổi
         var models = response.ToKetQuaTimKiemModels();
-        foreach (var model in models)
+        UpdateCollectionOnUiThread(models, $"Tìm thấy {models.Count} kết quả");
+    }
+
+    private void UpdateCollectionOnUiThread(IReadOnlyList<KetQuaTimKiemModel> models, string statusMessage)
+    {
+        void ApplyUpdates()
         {
-            KetQuaTimKiemList.Add(model);
+            if (_isUpdatingCollection)
+            {
+                _pendingModels = models.ToList();
+                _pendingStatusMessage = statusMessage;
+                return;
+            }
+
+            _isUpdatingCollection = true;
+
+            try
+            {
+                // Replace the entire collection to avoid triggering multiple change notifications
+                var newList = new ObservableCollection<KetQuaTimKiemModel>(models);
+                KetQuaTimKiemList = newList;
+                SelectedItem = null;
+                StatusMessage = statusMessage;
+            }
+            finally
+            {
+                _isUpdatingCollection = false;
+
+                if (_pendingModels != null)
+                {
+                    var pendingModels = _pendingModels;
+                    var pendingStatus = _pendingStatusMessage ?? statusMessage;
+                    _pendingModels = null;
+                    _pendingStatusMessage = null;
+                    UpdateCollectionOnUiThread(pendingModels, pendingStatus);
+                }
+            }
         }
 
-        StatusMessage = $"Tìm thấy {KetQuaTimKiemList.Count} kết quả";
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            ApplyUpdates();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(ApplyUpdates);
+        }
     }
 
     /// <summary>
@@ -83,15 +127,14 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                 worksheet.Cells[1, 1].Value = "STT";
                 worksheet.Cells[1, 2].Value = "Chủ sử dụng";
                 worksheet.Cells[1, 3].Value = "Số phát hành";
-                worksheet.Cells[1, 4].Value = "Ngày cấp";
-                worksheet.Cells[1, 5].Value = "Số vào sổ";
-                worksheet.Cells[1, 6].Value = "Ngày vào sổ";
-                worksheet.Cells[1, 7].Value = "Số tờ bản đồ";
-                worksheet.Cells[1, 8].Value = "Số thửa đất";
-                worksheet.Cells[1, 9].Value = "Địa chỉ tài sản";
+                worksheet.Cells[1, 4].Value = "Số vào sổ";
+                worksheet.Cells[1, 5].Value = "Ngày vào sổ";
+                worksheet.Cells[1, 6].Value = "Số tờ bản đồ";
+                worksheet.Cells[1, 7].Value = "Số thửa đất";
+                worksheet.Cells[1, 8].Value = "Địa chỉ tài sản";
 
                 // Format header
-                using (var range = worksheet.Cells[1, 1, 1, 9])
+                using (var range = worksheet.Cells[1, 1, 1, 8])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
@@ -106,18 +149,15 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     var row = i + 2;
 
                     worksheet.Cells[row, 1].Value = i + 1;
-                    worksheet.Cells[row, 2].Value = $"{item.ChuSuDung.HoTen} - {item.ChuSuDung.SoGiayTo}";
+                    worksheet.Cells[row, 2].Value = item.ChuSuDung.DanhSachChuSoHuu;
                     worksheet.Cells[row, 3].Value = item.GiayChungNhanModel.SoPhatHanh;
-                    worksheet.Cells[row, 4].Value = item.GiayChungNhanModel.NgayCap >= new DateTime(1993, 1, 1)
-                        ? item.GiayChungNhanModel.NgayCap.ToString("dd/MM/yyyy")
+                    worksheet.Cells[row, 4].Value = item.GiayChungNhanModel.SoVaoSo;
+                    worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
+                        ? item.GiayChungNhanModel.NgayVaoSo.Value.ToString("dd/MM/yyyy")
                         : "";
-                    worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.SoVaoSo;
-                    worksheet.Cells[row, 6].Value = item.GiayChungNhanModel.NgayVaoSo >= new DateTime(1993, 1, 1)
-                        ? item.GiayChungNhanModel.NgayVaoSo.ToString("dd/MM/yyyy")
-                        : "";
-                    worksheet.Cells[row, 7].Value = item.ThuaDatModel.SoToBanDo;
-                    worksheet.Cells[row, 8].Value = item.ThuaDatModel.SoThuaDat;
-                    worksheet.Cells[row, 9].Value = item.ThuaDatModel.DiaChi;
+                    worksheet.Cells[row, 6].Value = item.ThuaDatModel.SoToBanDo;
+                    worksheet.Cells[row, 7].Value = item.ThuaDatModel.SoThuaDat;
+                    worksheet.Cells[row, 8].Value = item.ThuaDatModel.DiaChi;
                 }
 
                 // Auto fit columns
@@ -167,33 +207,28 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
 
                 // Header - Chủ sử dụng
                 worksheet.Cells[1, 1].Value = "STT";
-                worksheet.Cells[1, 2].Value = "Họ tên";
-                worksheet.Cells[1, 3].Value = "Năm sinh";
-                worksheet.Cells[1, 4].Value = "Số giấy tờ";
-                worksheet.Cells[1, 5].Value = "Địa chỉ chủ sử dụng";
+                worksheet.Cells[1, 2].Value = "Chủ sử dụng";
 
                 // Header - Giấy chứng nhận
-                worksheet.Cells[1, 6].Value = "Số phát hành";
-                worksheet.Cells[1, 7].Value = "Ngày cấp";
-                worksheet.Cells[1, 8].Value = "Số vào sổ";
-                worksheet.Cells[1, 9].Value = "Ngày vào sổ";
+                worksheet.Cells[1, 3].Value = "Số phát hành";
+                worksheet.Cells[1, 4].Value = "Số vào sổ";
+                worksheet.Cells[1, 5].Value = "Ngày vào sổ";
 
                 // Header - Thửa đất
-                worksheet.Cells[1, 10].Value = "Số tờ bản đồ";
-                worksheet.Cells[1, 11].Value = "Số thửa đất";
-                worksheet.Cells[1, 12].Value = "Diện tích";
-                worksheet.Cells[1, 13].Value = "Mục đích sử dụng";
-                worksheet.Cells[1, 14].Value = "Địa chỉ thửa đất";
-
+                worksheet.Cells[1, 6].Value = "Số tờ bản đồ";
+                worksheet.Cells[1, 7].Value = "Số thửa đất";
+                worksheet.Cells[1, 8].Value = "Diện tích";
+                worksheet.Cells[1, 9].Value = "Mục đích sử dụng";
+                worksheet.Cells[1, 10].Value = "Địa chỉ thửa đất";
                 // Header - Tài sản
-                worksheet.Cells[1, 15].Value = "Loại tài sản";
-                worksheet.Cells[1, 16].Value = "Diện tích xây dựng";
-                worksheet.Cells[1, 17].Value = "Diện tích sử dụng";
-                worksheet.Cells[1, 18].Value = "Số tầng";
-                worksheet.Cells[1, 19].Value = "Địa chỉ tài sản";
+                worksheet.Cells[1, 11].Value = "Loại tài sản";
+                worksheet.Cells[1, 12].Value = "Diện tích xây dựng";
+                worksheet.Cells[1, 13].Value = "Diện tích sử dụng";
+                worksheet.Cells[1, 14].Value = "Số tầng";
+                worksheet.Cells[1, 15].Value = "Địa chỉ tài sản";
 
                 // Format header
-                using (var range = worksheet.Cells[1, 1, 1, 19])
+                using (var range = worksheet.Cells[1, 1, 1, 15])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
@@ -209,34 +244,26 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     var row = i + 2;
 
                     worksheet.Cells[row, 1].Value = i + 1;
-                    worksheet.Cells[row, 2].Value = item.ChuSuDung.HoTen;
-                    worksheet.Cells[row, 3].Value = item.ChuSuDung.NamSinh;
-                    worksheet.Cells[row, 4].Value = item.ChuSuDung.SoGiayTo;
-                    worksheet.Cells[row, 5].Value = item.ChuSuDung.DiaChi;
-
+                    worksheet.Cells[row, 2].Value = item.ChuSuDung.DanhSachChuSoHuu;
                     // Giấy chứng nhận
-                    worksheet.Cells[row, 6].Value = item.GiayChungNhanModel.SoPhatHanh;
-                    worksheet.Cells[row, 7].Value = item.GiayChungNhanModel.NgayCap >= new DateTime(1993, 1, 1)
-                        ? item.GiayChungNhanModel.NgayCap.ToString("dd/MM/yyyy")
-                        : "";
-                    worksheet.Cells[row, 8].Value = item.GiayChungNhanModel.SoVaoSo;
-                    worksheet.Cells[row, 9].Value = item.GiayChungNhanModel.NgayVaoSo >= new DateTime(1993, 1, 1)
-                        ? item.GiayChungNhanModel.NgayVaoSo.ToString("dd/MM/yyyy")
+                    worksheet.Cells[row, 3].Value = item.GiayChungNhanModel.SoPhatHanh;
+                    worksheet.Cells[row, 4].Value = item.GiayChungNhanModel.SoVaoSo;
+                    worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
+                        ? item.GiayChungNhanModel.NgayVaoSo.Value.ToString("dd/MM/yyyy")
                         : "";
 
                     // Thửa đất
-                    worksheet.Cells[row, 10].Value = item.ThuaDatModel.SoToBanDo;
-                    worksheet.Cells[row, 11].Value = item.ThuaDatModel.SoThuaDat;
-                    worksheet.Cells[row, 12].Value = item.ThuaDatModel.DienTich > 0 ? item.ThuaDatModel.DienTich : (object)"";
-                    worksheet.Cells[row, 13].Value = item.ThuaDatModel.MucDichSuDung;
-                    worksheet.Cells[row, 14].Value = item.ThuaDatModel.DiaChi;
-
+                    worksheet.Cells[row, 6].Value = item.ThuaDatModel.SoToBanDo;
+                    worksheet.Cells[row, 7].Value = item.ThuaDatModel.SoThuaDat;
+                    worksheet.Cells[row, 8].Value = item.ThuaDatModel.DienTich > 0 ? item.ThuaDatModel.DienTich : (object)"";
+                    worksheet.Cells[row, 9].Value = item.ThuaDatModel.MucDichSuDung;
+                    worksheet.Cells[row, 10].Value = item.ThuaDatModel.DiaChi;
                     // Tài sản
-                    worksheet.Cells[row, 15].Value = item.TaiSan.LoaiTaiSan;
-                    worksheet.Cells[row, 16].Value = item.TaiSan.DienTichXayDung > 0 ? item.TaiSan.DienTichXayDung : (object)"";
-                    worksheet.Cells[row, 17].Value = item.TaiSan.DienTichSuDung > 0 ? item.TaiSan.DienTichSuDung : (object)"";
-                    worksheet.Cells[row, 18].Value = item.TaiSan.SoTang;
-                    worksheet.Cells[row, 19].Value = item.TaiSan.DiaChi;
+                    worksheet.Cells[row, 11].Value = item.TaiSan.LoaiTaiSan;
+                    worksheet.Cells[row, 12].Value = item.TaiSan.DienTichXayDung > 0 ? item.TaiSan.DienTichXayDung : (object)"";
+                    worksheet.Cells[row, 13].Value = item.TaiSan.DienTichSuDung > 0 ? item.TaiSan.DienTichSuDung : (object)"";
+                    worksheet.Cells[row, 14].Value = item.TaiSan.SoTang;
+                    worksheet.Cells[row, 15].Value = item.TaiSan.DiaChi;
                 }
 
                 // Auto fit columns

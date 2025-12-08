@@ -8,15 +8,17 @@ using Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 using Haihv.Vbdlis.Tools.Desktop.Views;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
-public partial class CungCapThongTinViewModel : ViewModelBase
+public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanService searchService) : ViewModelBase
 {
-    private readonly CungCapThongTinGiayChungNhanService _searchService;
+    private readonly CungCapThongTinGiayChungNhanService _searchService = searchService;
+    private Action<AdvancedSearchGiayChungNhanResponse>? _updateDataGridAction;
 
     [ObservableProperty]
     private bool _isSearching;
@@ -31,31 +33,37 @@ public partial class CungCapThongTinViewModel : ViewModelBase
     private double _progressMaximum = 100;
 
     [ObservableProperty]
+    private double _progressPercentage;
+
+    [ObservableProperty]
     private SearchResultModel? _selectedResult;
 
     [ObservableProperty]
-    private GiayChungNhanItem? _selectedItem;
+    private GiayChungNhanItem? _currentItem;
 
     [ObservableProperty]
     private bool _isDetailVisible;
 
     public ObservableCollection<SearchResultModel> SearchResults { get; } = new();
 
-    public CungCapThongTinViewModel(CungCapThongTinGiayChungNhanService searchService)
+    /// <summary>
+    /// Đăng ký action để cập nhật DataGrid từ View
+    /// </summary>
+    public void RegisterDataGridUpdater(Action<AdvancedSearchGiayChungNhanResponse> updateAction)
     {
-        _searchService = searchService;
+        _updateDataGridAction = updateAction;
     }
 
     partial void OnSelectedResultChanged(SearchResultModel? value)
     {
         if (value?.Response != null && value.Response.Data?.Count > 0)
         {
-            SelectedItem = value.Response.Data[0];
+            CurrentItem = value.Response.Data[0];
             IsDetailVisible = true;
         }
         else
         {
-            SelectedItem = null;
+            CurrentItem = null;
             IsDetailVisible = false;
         }
     }
@@ -83,10 +91,21 @@ public partial class CungCapThongTinViewModel : ViewModelBase
             var items = ParseInput(result.Input);
             Log.Information("Parsed {Count} items: {Items}", items.Length, string.Join(", ", items));
 
-            await PerformSearchAsync(items, async (item) =>
+            try
             {
-                return await _searchService.SearchAsync(soGiayTo: item);
-            }, "số giấy tờ");
+                Log.Information("Starting PerformSearchAsync...");
+                await PerformSearchAsync(items, async (item) =>
+                {
+                    return await _searchService.SearchAsync(soGiayTo: item);
+                }, "số giấy tờ");
+                Log.Information("PerformSearchAsync completed");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in PerformSearchAsync");
+                SearchProgress = $"Lỗi: {ex.Message}";
+                IsSearching = false;
+            }
         }
         else
         {
@@ -113,7 +132,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
         }
     }
 
-    private Window? GetMainWindow()
+    private static Window? GetMainWindow()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -124,11 +143,10 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     private string[] ParseInput(string input)
     {
-        return input
-            .Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries)
+        return [.. input
+            .Split(['\n', '\r', ';'], StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .ToArray();
+            .Where(s => !string.IsNullOrWhiteSpace(s))];
     }
 
     private async Task PerformSearchAsync(
@@ -136,52 +154,112 @@ public partial class CungCapThongTinViewModel : ViewModelBase
         Func<string, Task<AdvancedSearchGiayChungNhanResponse?>> searchFunc,
         string searchType)
     {
+        Log.Information("PerformSearchAsync called with {Count} items", items.Length);
         if (items.Length == 0) return;
 
         IsSearching = true;
         ProgressMaximum = items.Length;
         ProgressValue = 0;
+        ProgressPercentage = 0;
 
         // Clear previous results
         SearchResults.Clear();
+
+        Log.Information("Starting search loop...");
+
+        // Tổng hợp tất cả kết quả vào một response duy nhất
+        var allData = new List<GiayChungNhanItem>();
+        int totalFound = 0;
 
         try
         {
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                SearchProgress = $"Đang tìm {searchType}: {item} ({i + 1}/{items.Length})";
+                SearchProgress = $"Đang tìm {searchType}: {item}";
+                Log.Information("Calling search service for item: {Item}", item);
 
                 try
                 {
                     var response = await searchFunc(item);
+                    Log.Information("Search service returned for item: {Item}, Response is null: {IsNull}", item, response == null);
 
                     if (response != null)
                     {
-                        // Add to results
-                        SearchResults.Add(new SearchResultModel
+                        var searchResult = new SearchResultModel
                         {
                             SearchQuery = item,
                             Response = response,
                             SearchType = searchType,
                             SearchTime = DateTime.Now
-                        });
+                        };
+
+                        // Add to results
+                        SearchResults.Add(searchResult);
+
+                        // Tổng hợp tất cả data[] vào danh sách chung
+                        if (response.Data?.Count > 0)
+                        {
+                            allData.AddRange(response.Data);
+                            totalFound += response.Data.Count;
+                            SearchProgress = $"Tìm thấy: {item} - {response.Data.Count} kết quả";
+                        }
+                        else
+                        {
+                            SearchProgress = $"Không tìm thấy: {item}";
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     // Log error but continue
-                    Console.WriteLine($"Error searching {item}: {ex.Message}");
+                    Log.Error(ex, "Error searching {Item}", item);
+                    SearchProgress = $"Lỗi khi tìm: {item}";
                 }
 
                 ProgressValue = i + 1;
+                ProgressPercentage = (ProgressValue / ProgressMaximum) * 100;
+
+                // Small delay to show progress
+                if (i < items.Length - 1)
+                {
+                    await Task.Delay(500);
+                }
             }
 
-            SearchProgress = $"Hoàn thành! Tìm được {SearchResults.Count} kết quả.";
+            SearchProgress = $"Hoàn thành! Đã tìm {items.Length} mục, tìm thấy {totalFound} kết quả.";
+
+            // Cập nhật DataGrid với tất cả kết quả
+            UpdateDataGridResults(allData);
         }
         finally
         {
             IsSearching = false;
         }
+    }
+
+    /// <summary>
+    /// Cập nhật kết quả vào DataGrid control
+    /// </summary>
+    private void UpdateDataGridResults(List<GiayChungNhanItem> allData)
+    {
+        if (allData.Count == 0)
+        {
+            Log.Information("No results to display in DataGrid");
+            return;
+        }
+
+        // Tạo response tổng hợp
+        var combinedResponse = new AdvancedSearchGiayChungNhanResponse
+        {
+            Data = allData,
+            RecordsTotal = allData.Count,
+            RecordsFiltered = allData.Count
+        };
+
+        Log.Information("Updating DataGrid with {Count} items", allData.Count);
+
+        // Gọi action để cập nhật DataGrid từ View
+        _updateDataGridAction?.Invoke(combinedResponse);
     }
 }

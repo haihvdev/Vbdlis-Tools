@@ -105,35 +105,113 @@
       GridLinesVisibility="All"
       IsReadOnly="True"
       ItemsSource="{Binding KetQuaTimKiemList}"
-      SelectedItem="{Binding SelectedItem}">
+      SelectedItem="{Binding SelectedItem, Mode=OneWay}">
       <DataGrid.Columns>
         <!--  Chủ sử dụng  -->
-        <DataGridTextColumn
+        <DataGridTemplateColumn
           Width="*"
-          MinWidth="250"
-          Binding="{Binding ChuSuDung.DisplayInfo}"
-          Header="Chủ sử dụng" />
+          MinWidth="300"
+          Header="Chủ sử dụng">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <SelectableTextBlock
+                Margin="4"
+                TextWrapping="Wrap"
+                Text="{Binding ChuSuDung.DanhSachChuSoHuu}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
 
         <!--  Giấy chứng nhận  -->
-        <DataGridTextColumn
+        <DataGridTemplateColumn
           Width="*"
           MinWidth="250"
-          Binding="{Binding GiayChungNhanModel.DisplayInfo}"
-          Header="Giấy chứng nhận" />
+          Header="Giấy chứng nhận">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel Margin="4" Spacing="2">
+                <SelectableTextBlock TextWrapping="Wrap">
+                  <Run Text="Số phát hành: " />
+                  <Run Text="{Binding GiayChungNhanModel.SoPhatHanh}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding GiayChungNhanModel.SoVaoSo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Số vào sổ: " />
+                  <Run Text="{Binding GiayChungNhanModel.SoVaoSo}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding GiayChungNhanModel.HasNgayVaoSo}">
+                  <Run Text="Ngày vào sổ: " />
+                  <Run Text="{Binding GiayChungNhanModel.NgayVaoSoFormatted}" FontWeight="Bold" />
+                </SelectableTextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
 
         <!--  Thửa đất  -->
-        <DataGridTextColumn
+        <DataGridTemplateColumn
           Width="*"
           MinWidth="250"
-          Binding="{Binding ThuaDatModel.DisplayInfo}"
-          Header="Thửa đất" />
+          Header="Thửa đất">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel Margin="4" Spacing="2">
+                <SelectableTextBlock TextWrapping="Wrap">
+                  <Run Text="Số tờ bản đồ: " />
+                  <Run Text="{Binding ThuaDatModel.SoToBanDo}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap">
+                  <Run Text="Số thửa đất: " />
+                  <Run Text="{Binding ThuaDatModel.SoThuaDat}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding ThuaDatModel.HasDienTich}">
+                  <Run Text="Diện tích: " />
+                  <Run Text="{Binding ThuaDatModel.DienTichFormatted}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding ThuaDatModel.MucDichSuDung, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Mục đích sử dụng: " />
+                  <Run Text="{Binding ThuaDatModel.MucDichSuDung}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding ThuaDatModel.DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Địa chỉ: " />
+                  <Run Text="{Binding ThuaDatModel.DiaChi}" FontWeight="Bold" />
+                </SelectableTextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
 
         <!--  Tài sản  -->
-        <DataGridTextColumn
+        <DataGridTemplateColumn
           Width="*"
           MinWidth="250"
-          Binding="{Binding TaiSan.DisplayInfo}"
-          Header="Tài sản" />
+          Header="Tài sản">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel Margin="4" Spacing="2">
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding TaiSan.LoaiTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Loại tài sản: " />
+                  <Run Text="{Binding TaiSan.LoaiTaiSan}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding TaiSan.HasDienTichXayDung}">
+                  <Run Text="Diện tích xây dựng: " />
+                  <Run Text="{Binding TaiSan.DienTichXayDungFormatted}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding TaiSan.HasDienTichSuDung}">
+                  <Run Text="Diện tích sử dụng: " />
+                  <Run Text="{Binding TaiSan.DienTichSuDungFormatted}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding TaiSan.SoTang, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Số tầng: " />
+                  <Run Text="{Binding TaiSan.SoTang}" FontWeight="Bold" />
+                </SelectableTextBlock>
+                <SelectableTextBlock TextWrapping="Wrap" IsVisible="{Binding TaiSan.DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <Run Text="Địa chỉ: " />
+                  <Run Text="{Binding TaiSan.DiaChi}" FontWeight="Bold" />
+                </SelectableTextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
       </DataGrid.Columns>
     </DataGrid>
   </DockPanel>

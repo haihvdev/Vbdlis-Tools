@@ -7,59 +7,55 @@ namespace Haihv.Vbdlis.Tools.Desktop.Models;
 /// </summary>
 public record KetQuaTimKiemModel(ChuSuDungModel ChuSuDung, GiayChungNhanModel GiayChungNhanModel, ThuaDatModel ThuaDatModel, TaiSanModel TaiSan);
 
-public record ChuSuDungModel(string HoTen, string NamSinh, string SoGiayTo, string DiaChi)
+public record ChuSuDungModel(string DanhSachChuSoHuu);
+
+public class GiayChungNhanModel(string id, string soPhatHanh, string soVaoSo, DateTime? ngayVaoSo)
 {
-    public string DisplayInfo
-    {
-        get
-        {
-            var namSinhStr = string.IsNullOrWhiteSpace(NamSinh) ? "" : $"Năm sinh: {NamSinh}\n";
-            var soGiayToStr = string.IsNullOrWhiteSpace(SoGiayTo) ? "" : $"Số giấy tờ: {SoGiayTo}\n";
-            var diaChiStr = string.IsNullOrWhiteSpace(DiaChi) ? "" : $"Địa chỉ: {DiaChi}\n";
-            return $"Họ tên: {HoTen}\n" + namSinhStr + soGiayToStr + diaChiStr;
-        }
-    }
+    public string Id { get; } = id;
+    public string SoPhatHanh { get; } = soPhatHanh;
+    public string SoVaoSo { get; } = soVaoSo;
+    public DateTime? NgayVaoSo { get; } = ngayVaoSo;
+
+    public string NgayVaoSoFormatted => NgayVaoSo.HasValue && NgayVaoSo.Value >= new DateTime(1900, 1, 1)
+        ? NgayVaoSo.Value.ToString("dd/MM/yyyy")
+        : "";
+
+    public bool HasNgayVaoSo => NgayVaoSo.HasValue && NgayVaoSo.Value >= new DateTime(1900, 1, 1);
 }
 
-public record GiayChungNhanModel(string SoPhatHanh, DateTime NgayCap, string SoVaoSo, DateTime NgayVaoSo)
+
+public class ThuaDatModel(string soToBanDo, string soThuaDat, double? dienTich, string mucDichSuDung, string diaChi)
 {
-    public string DisplayInfo
-    {
-        get
-        {
-            var ngayCapStr = NgayCap >= new DateTime(1993, 1, 1) ? $"Ngày cấp: {NgayCap:dd/MM/yyyy}\n" : "";
-            var ngayVaoSoStr = NgayVaoSo >= new DateTime(1993, 1, 1) ? $"Ngày vào sổ: {NgayVaoSo:dd/MM/yyyy}\n" : "";
-            var soVaoSoStr = string.IsNullOrWhiteSpace(SoVaoSo) ? "" : $"Số vào sổ: {SoVaoSo}\n";
-            return $"Số phát hành: {SoPhatHanh}\n" + ngayCapStr + soVaoSoStr + ngayVaoSoStr;
-        }
-    }
+    public string SoToBanDo { get; } = soToBanDo;
+    public string SoThuaDat { get; } = soThuaDat;
+    public double? DienTich { get; } = dienTich;
+    public string MucDichSuDung { get; } = mucDichSuDung;
+    public string DiaChi { get; } = diaChi;
+
+    public string DienTichFormatted => DienTich.HasValue && DienTich.Value > 0
+        ? $"{DienTich.Value} m²"
+        : "";
+
+    public bool HasDienTich => DienTich.HasValue && DienTich.Value > 0;
 }
 
-public record ThuaDatModel(string SoToBanDo, string SoThuaDat, double DienTich, string MucDichSuDung, string DiaChi)
+public class TaiSanModel(string loaiTaiSan, double? dienTichXayDung, double? dienTichSuDung, string soTang, string diaChi)
 {
-    public string DisplayInfo
-    {
-        get
-        {
-            var dienTichStr = DienTich <= 0 ? "" : $"Diện tích: {DienTich} m²\n";
-            var mucDichSuDungStr = string.IsNullOrWhiteSpace(MucDichSuDung) ? "" : $"Mục đích sử dụng: {MucDichSuDung}\n";
-            var diaChiStr = string.IsNullOrWhiteSpace(DiaChi) ? "" : $"Địa chỉ: {DiaChi}\n";
-            return $"Số tờ bản đồ: {SoToBanDo}\n" + $"Số thửa đất: {SoThuaDat}\n" + dienTichStr + mucDichSuDungStr + diaChiStr;
-        }
-    }
-}
+    public string LoaiTaiSan { get; } = loaiTaiSan;
+    public double? DienTichXayDung { get; } = dienTichXayDung;
+    public double? DienTichSuDung { get; } = dienTichSuDung;
+    public string SoTang { get; } = soTang;
+    public string DiaChi { get; } = diaChi;
 
-public record TaiSanModel(string LoaiTaiSan, double DienTichXayDung, double DienTichSuDung, string SoTang, string DiaChi)
-{
-    public string DisplayInfo
-    {
-        get
-        {
-            var dienTichXayDungStr = DienTichXayDung <= 0 ? "" : $"Diện tích xây dựng: {DienTichXayDung} m²\n";
-            var dienTichSuDungStr = DienTichSuDung <= 0 ? "" : $"Diện tích sử dụng: {DienTichSuDung} m²\n";
-            var soTangStr = string.IsNullOrWhiteSpace(SoTang) ? "" : $"Số tầng: {SoTang}\n";
-            var diaChiStr = string.IsNullOrWhiteSpace(DiaChi) ? "" : $"Địa chỉ: {DiaChi}\n";
-            return $"Loại tài sản: {LoaiTaiSan}\n" + dienTichXayDungStr + dienTichSuDungStr + soTangStr + diaChiStr;
-        }
-    }
+    public string DienTichXayDungFormatted => DienTichXayDung.HasValue && DienTichXayDung.Value > 0
+        ? $"{DienTichXayDung.Value} m²"
+        : "";
+
+    public bool HasDienTichXayDung => DienTichXayDung.HasValue && DienTichXayDung.Value > 0;
+
+    public string DienTichSuDungFormatted => DienTichSuDung.HasValue && DienTichSuDung.Value > 0
+        ? $"{DienTichSuDung.Value} m²"
+        : "";
+
+    public bool HasDienTichSuDung => DienTichSuDung.HasValue && DienTichSuDung.Value > 0;
 }
