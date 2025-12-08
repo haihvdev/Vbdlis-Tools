@@ -250,7 +250,7 @@ public static class KetQuaTimKiemExxtensions
                     // Xử lý Nhà riêng lẻ (typeItem = 7)
                     else if (dangky.NhaRiengLe != null)
                     {
-                        var loaiTaiSan = dangky.NhaRiengLe.LoaiNhaRiengLe?.Detail ?? "Nhà ở riêng lẻ";
+                        var tenTaiSan = dangky.NhaRiengLe.LoaiNhaRiengLe?.Detail ?? "Nhà ở riêng lẻ";
                         var dienTichXayDung = dangky.NhaRiengLe.DienTichXayDung;
                         var dienTichSuDung = dangky.NhaRiengLe.DienTichSuDung;
                         var soTang = dangky.NhaRiengLe.SoTang ?? "";
@@ -260,14 +260,14 @@ public static class KetQuaTimKiemExxtensions
                             ?? "";
 
                         // Tạo key để kiểm tra trùng lặp
-                        var taiSanKey = $"{loaiTaiSan}|{dienTichXayDung}|{soTang}|{diaChi}";
+                        var taiSanKey = $"{tenTaiSan}|{dienTichXayDung}|{soTang}|{diaChi}";
 
                         if (!uniqueTaiSan.Contains(taiSanKey))
                         {
                             uniqueTaiSan.Add(taiSanKey);
 
                             var taiSanModel = new TaiSanModel(
-                                loaiTaiSan: loaiTaiSan,
+                                tenTaiSan: tenTaiSan,
                                 dienTichXayDung: dienTichXayDung,
                                 dienTichSuDung: dienTichSuDung,
                                 soTang: soTang,
@@ -288,14 +288,14 @@ public static class KetQuaTimKiemExxtensions
                         var soHieuOrTen = dangky.CanHo.SoHieuCanHo ?? dangky.CanHo.TenCanHo ?? "";
                         var tenChungCu = dangky.CanHo.NhaChungCu?.TenChungCu;
 
-                        string loaiTaiSan;
+                        string tenTaiSan;
                         if (!string.IsNullOrWhiteSpace(tenChungCu))
                         {
-                            loaiTaiSan = $"Căn hộ {soHieuOrTen} ({tenChungCu})".Trim();
+                            tenTaiSan = $"Căn hộ {soHieuOrTen} ({tenChungCu})".Trim();
                         }
                         else
                         {
-                            loaiTaiSan = $"Căn hộ {soHieuOrTen}".Trim();
+                            tenTaiSan = $"Căn hộ {soHieuOrTen}".Trim();
                         }
                         var dienTichXayDung = dangky.CanHo.DienTichSan;
                         var dienTichSuDung = dangky.CanHo.DienTichSuDung;
@@ -303,14 +303,14 @@ public static class KetQuaTimKiemExxtensions
                         var diaChi = dangky.CanHo.DiaChiCanHo ?? "";
 
                         // Tạo key để kiểm tra trùng lặp
-                        var taiSanKey = $"{loaiTaiSan}|{dienTichXayDung}|{soTang}|{diaChi}";
+                        var taiSanKey = $"{tenTaiSan}|{dienTichXayDung}|{soTang}|{diaChi}";
 
                         if (!uniqueTaiSan.Contains(taiSanKey))
                         {
                             uniqueTaiSan.Add(taiSanKey);
 
                             var taiSanModel = new TaiSanModel(
-                                loaiTaiSan: loaiTaiSan,
+                                tenTaiSan: tenTaiSan,
                                 dienTichXayDung: dienTichXayDung,
                                 dienTichSuDung: dienTichSuDung,
                                 soTang: soTang,

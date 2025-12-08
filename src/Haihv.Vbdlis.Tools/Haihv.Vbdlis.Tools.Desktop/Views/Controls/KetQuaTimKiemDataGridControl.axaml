@@ -200,9 +200,9 @@
                 DataContext="{Binding TaiSan}"
                 IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}"
                 Spacing="2">
-                <SelectableTextBlock IsVisible="{Binding LoaiTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Loại tài sản: " />
-                  <Run FontWeight="Bold" Text="{Binding LoaiTaiSan}" />
+                <SelectableTextBlock IsVisible="{Binding TenTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
+                  <Run Text="Tên tài sản: " />
+                  <Run FontWeight="Bold" Text="{Binding TenTaiSan}" />
                 </SelectableTextBlock>
                 <SelectableTextBlock IsVisible="{Binding HasDienTichXayDung}" TextWrapping="Wrap">
                   <Run Text="Diện tích xây dựng: " />

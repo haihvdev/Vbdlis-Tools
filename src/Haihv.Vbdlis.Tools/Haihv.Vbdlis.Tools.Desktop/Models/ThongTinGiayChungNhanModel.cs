@@ -101,9 +101,9 @@ public class NguonGocSuDungDatInfo(string tenNguonGocChuyenQuyen, string tenLoai
     public double DienTich { get; } = dienTich;
 }
 
-public class TaiSanModel(string loaiTaiSan, double? dienTichXayDung, double? dienTichSuDung, string soTang, string diaChi)
+public class TaiSanModel(string tenTaiSan, double? dienTichXayDung, double? dienTichSuDung, string soTang, string diaChi)
 {
-    public string LoaiTaiSan { get; } = loaiTaiSan;
+    public string TenTaiSan { get; } = tenTaiSan;
     public double? DienTichXayDung { get; } = dienTichXayDung;
     public double? DienTichSuDung { get; } = dienTichSuDung;
     public string SoTang { get; } = soTang;
