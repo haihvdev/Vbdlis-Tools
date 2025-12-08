@@ -56,4 +56,8 @@
   <ItemGroup>
     <Folder Include="Extensions\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Haihv.Helpers.Strings/Haihv.Helpers.Strings.csproj" />
+  </ItemGroup>
 </Project>

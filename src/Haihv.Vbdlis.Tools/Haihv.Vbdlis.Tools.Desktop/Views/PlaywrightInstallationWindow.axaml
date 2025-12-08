@@ -8,12 +8,12 @@
     Title="Cài đặt Playwright"
     Width="550"
     Height="320"
-    CanResize="False"
-    WindowStartupLocation="CenterScreen"
-    Icon="/Assets/appicon.png"
     d:DesignHeight="320"
     d:DesignWidth="550"
     x:DataType="vm:PlaywrightInstallationViewModel"
+    CanResize="False"
+    Icon="/Assets/appicon.png"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
     <Design.DataContext>
@@ -65,7 +65,7 @@
             </StackPanel>
 
             <!--  Error Message (only visible when there's an error)  -->
-            <StackPanel Spacing="10" IsVisible="{Binding HasError}">
+            <StackPanel IsVisible="{Binding HasError}" Spacing="10">
                 <Border
                     Padding="10"
                     Background="#FFFFE0E0"
@@ -83,29 +83,32 @@
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,5,0,0"
-                            Foreground="#FF757575"
                             FontSize="11"
+                            Foreground="#FF757575"
                             Text="Ứng dụng cần Playwright để hoạt động. Vui lòng thử lại hoặc cài đặt thủ công theo hướng dẫn trong file PLAYWRIGHT_SETUP.md"
                             TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 
                 <!--  Action Buttons  -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="10">
                     <Button
-                        Content="🔄 Thử lại"
-                        Command="{Binding RetryCommand}"
                         Padding="15,8"
                         Background="#FF2196F3"
-                        Foreground="White"
-                        CornerRadius="4" />
+                        Command="{Binding RetryCommand}"
+                        Content="🔄 Thử lại"
+                        CornerRadius="4"
+                        Foreground="White" />
                     <Button
-                        Content="❌ Đóng ứng dụng"
-                        Command="{Binding ExitCommand}"
                         Padding="15,8"
                         Background="#FFF44336"
-                        Foreground="White"
-                        CornerRadius="4" />
+                        Command="{Binding ExitCommand}"
+                        Content="❌ Đóng ứng dụng"
+                        CornerRadius="4"
+                        Foreground="White" />
                 </StackPanel>
             </StackPanel>
 

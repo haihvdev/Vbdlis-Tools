@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Haihv.Tools.Hsq.Helpers;
 using Haihv.Vbdlis.Tools.Desktop.Models;
 using Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 using Haihv.Vbdlis.Tools.Desktop.Views;
@@ -96,7 +97,53 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
                 Log.Information("Starting PerformSearchAsync...");
                 await PerformSearchAsync(items, async (item) =>
                 {
-                    return await _searchService.SearchAsync(soGiayTo: item);
+                    if (string.IsNullOrWhiteSpace(item))
+                    {
+                        Log.Information("Empty item, skipping search");
+                        return null;
+                    }
+                    var modifiedItem = item.NormalizePersonalId();
+                    if (modifiedItem == null)
+                    {
+                        Log.Information("Item normalization returned null for item: {Item}", item);
+                        return null;
+                    }
+                    Log.Information("Searching for item: {Item}", modifiedItem);
+                    var result = await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                    if (result != null)
+                    {
+                        Log.Information("SearchAsync returned {Count} results for item: {Item}", result.Data?.Count ?? 0, item);
+                        return result;
+                    }
+                    else
+                    {
+                        Log.Information("Thử lại sau khi bỏ số 0 ở đầu cho item: {Item}", item);
+                        modifiedItem = modifiedItem.TrimStart('0');
+                        if (item.Length == modifiedItem.Length)
+                        {
+                            Log.Information("No leading zeros to remove for item: {Item}", item);
+                            return null;
+                        }
+                        result = await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                        if (result != null)
+                        {
+                            Log.Information("SearchAsync returned {Count} results for modified item: {Item}", result.Data?.Count ?? 0, item);
+                            return result;
+                        }
+                        else
+                        {
+                            Log.Information("Thử lại sau khi bỏ 0 ở đầu cho item lần 2: {Item}", item);
+                            modifiedItem = modifiedItem.TrimStart('0');
+                            if (item.Length == modifiedItem.Length)
+                            {
+                                Log.Information("No leading zeros to remove for item: {Item}", item);
+                                return null;
+                            }
+                            return await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                        }
+
+                    }
+
                 }, "số giấy tờ");
                 Log.Information("PerformSearchAsync completed");
             }
@@ -120,14 +167,15 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
         if (mainWindow == null) return;
 
         var dialog = new SearchInputWindow("Tìm kiếm theo Số Phát Hành", "Nhập số phát hành (mỗi dòng hoặc phân cách bằng ;):");
-        var result = await dialog.ShowDialog(mainWindow);
+        var (IsConfirmed, Input) = await dialog.ShowDialog(mainWindow);
 
-        if (result.IsConfirmed && !string.IsNullOrWhiteSpace(result.Input))
+        if (IsConfirmed && !string.IsNullOrWhiteSpace(Input))
         {
-            var items = ParseInput(result.Input);
+            var items = ParseInput(Input);
             await PerformSearchAsync(items, async (item) =>
             {
-                return await _searchService.SearchAsync(soPhatHanh: item);
+                var modifiedItem = item.NormalizedSoPhatHanh();
+                return await _searchService.SearchAsync(soPhatHanh: modifiedItem);
             }, "số phát hành");
         }
     }

@@ -335,7 +335,7 @@ public static partial class StringHelper
             {
                 var dateStr = yyyyMMddMatch.Groups[1].Value;
                 // Lấy 4 chữ số đầu là năm
-                if (int.TryParse(dateStr.Substring(0, 4), out var yearFromCompact))
+                if (int.TryParse(dateStr.AsSpan(0, 4), out var yearFromCompact))
                 {
                     // Kiểm tra năm hợp lệ (từ 1900 đến năm hiện tại)
                     if (IsValidYear(yearFromCompact))
@@ -387,7 +387,7 @@ public static partial class StringHelper
                 return null;
 
             // Loại bỏ các ký tự không phải số
-            var digitsOnly = new string(text.Where(char.IsDigit).ToArray());
+            var digitsOnly = new string([.. text.Where(char.IsDigit)]);
 
             return digitsOnly.Length is > 12 or < 10
                 ?
