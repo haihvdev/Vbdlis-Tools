@@ -156,27 +156,28 @@
             <DataTemplate>
               <StackPanel
                 Margin="4"
-                IsVisible="{Binding ThuaDatModel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                DataContext="{Binding ThuaDatModel}"
+                IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}"
                 Spacing="2">
-                <SelectableTextBlock IsVisible="{Binding ThuaDatModel.SoToBanDo, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding SoToBanDo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Số tờ bản đồ: " />
-                  <Run FontWeight="Bold" Text="{Binding ThuaDatModel.SoToBanDo, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding SoToBanDo}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding ThuaDatModel.SoThuaDat, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding SoThuaDat, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Số thửa đất: " />
-                  <Run FontWeight="Bold" Text="{Binding ThuaDatModel.SoThuaDat, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding SoThuaDat}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding ThuaDatModel.HasDienTich, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding HasDienTich}" TextWrapping="Wrap">
                   <Run Text="Diện tích: " />
-                  <Run FontWeight="Bold" Text="{Binding ThuaDatModel.DienTichFormatted, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding DienTichFormatted}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding ThuaDatModel.MucDichSuDung, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding MucDichSuDung, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Mục đích sử dụng: " />
-                  <Run FontWeight="Bold" Text="{Binding ThuaDatModel.MucDichSuDung, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding MucDichSuDung}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding ThuaDatModel.DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Địa chỉ: " />
-                  <Run FontWeight="Bold" Text="{Binding ThuaDatModel.DiaChi, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding DiaChi}" />
                 </SelectableTextBlock>
               </StackPanel>
             </DataTemplate>
@@ -192,27 +193,28 @@
             <DataTemplate>
               <StackPanel
                 Margin="4"
-                IsVisible="{Binding TaiSan, Converter={x:Static ObjectConverters.IsNotNull}}"
+                DataContext="{Binding TaiSan}"
+                IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}"
                 Spacing="2">
-                <SelectableTextBlock IsVisible="{Binding TaiSan.LoaiTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding LoaiTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Loại tài sản: " />
-                  <Run FontWeight="Bold" Text="{Binding TaiSan.LoaiTaiSan, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding LoaiTaiSan}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding TaiSan.HasDienTichXayDung, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding HasDienTichXayDung}" TextWrapping="Wrap">
                   <Run Text="Diện tích xây dựng: " />
-                  <Run FontWeight="Bold" Text="{Binding TaiSan.DienTichXayDungFormatted, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding DienTichXayDungFormatted}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding TaiSan.HasDienTichSuDung, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding HasDienTichSuDung}" TextWrapping="Wrap">
                   <Run Text="Diện tích sử dụng: " />
-                  <Run FontWeight="Bold" Text="{Binding TaiSan.DienTichSuDungFormatted, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding DienTichSuDungFormatted}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding TaiSan.SoTang, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding SoTang, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Số tầng: " />
-                  <Run FontWeight="Bold" Text="{Binding TaiSan.SoTang, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding SoTang}" />
                 </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding TaiSan.DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}" TextWrapping="Wrap">
+                <SelectableTextBlock IsVisible="{Binding DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
                   <Run Text="Địa chỉ: " />
-                  <Run FontWeight="Bold" Text="{Binding TaiSan.DiaChi, FallbackValue='', TargetNullValue=''}" />
+                  <Run FontWeight="Bold" Text="{Binding DiaChi}" />
                 </SelectableTextBlock>
               </StackPanel>
             </DataTemplate>
