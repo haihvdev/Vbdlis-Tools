@@ -1,22 +1,20 @@
 using System;
-using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Serilog;
+using Velopack;
+using Velopack.Sources;
 
 namespace Haihv.Vbdlis.Tools.Desktop.Services
 {
     /// <summary>
-    /// Service for checking and downloading application updates from GitHub Releases
+    /// Service for checking and downloading application updates using Velopack
     /// </summary>
     public class UpdateService : IUpdateService
     {
         private readonly ILogger _logger;
-        private readonly HttpClient _httpClient;
+        private readonly UpdateManager? _updateManager;
         private const string GitHubRepoOwner = "haitnmt";
         private const string GitHubRepoName = "Vbdlis-Tools";
 
@@ -25,89 +23,66 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         public UpdateService()
         {
             _logger = Log.ForContext<UpdateService>();
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "VbdlisTools-UpdateChecker");
 
             // Get current version from assembly
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             CurrentVersion = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
 
             _logger.Information("UpdateService initialized. Current version: {Version}", CurrentVersion);
+
+            // Initialize Velopack UpdateManager
+            try
+            {
+                // Use GitHub as update source
+                var source = new GithubSource($"https://github.com/{GitHubRepoOwner}/{GitHubRepoName}", null, false);
+                _updateManager = new UpdateManager(source);
+                _logger.Information("Velopack UpdateManager initialized with GitHub source");
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Failed to initialize Velopack UpdateManager. Updates will be disabled.");
+                _updateManager = null;
+            }
         }
 
+
         /// <summary>
-        /// Checks GitHub Releases for new version
+        /// Checks for new version using Velopack
         /// </summary>
         public async Task<UpdateInfo?> CheckForUpdatesAsync()
         {
+            if (_updateManager == null)
+            {
+                _logger.Warning("UpdateManager not initialized. Cannot check for updates.");
+                return null;
+            }
+
             try
             {
-                _logger.Information("Checking for updates...");
+                _logger.Information("Checking for updates using Velopack...");
 
-                var apiUrl = $"https://api.github.com/repos/{GitHubRepoOwner}/{GitHubRepoName}/releases/latest";
-                var response = await _httpClient.GetAsync(apiUrl);
+                var updateInfo = await _updateManager.CheckForUpdatesAsync();
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.Warning("Failed to check for updates. Status: {Status}", response.StatusCode);
-                    return null;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                var latestVersion = root.GetProperty("tag_name").GetString()?.TrimStart('v') ?? "";
-                var publishedAt = root.GetProperty("published_at").GetDateTime();
-                var releaseNotes = root.GetProperty("body").GetString() ?? "";
-
-                // Compare versions
-                if (!IsNewerVersion(latestVersion, CurrentVersion))
+                if (updateInfo == null)
                 {
                     _logger.Information("Already on latest version: {Version}", CurrentVersion);
                     return null;
                 }
 
-                // Find Windows installer asset
-                string? downloadUrl = null;
-                long fileSize = 0;
+                var newVersion = updateInfo.TargetFullRelease.Version.ToString();
 
-                if (root.TryGetProperty("assets", out var assets))
+                _logger.Information("Update available: {CurrentVersion} -> {NewVersion}",
+                    CurrentVersion, newVersion);
+
+                return new UpdateInfo
                 {
-                    foreach (var asset in assets.EnumerateArray())
-                    {
-                        var name = asset.GetProperty("name").GetString() ?? "";
-
-                        // Look for setup.exe or .msi file
-                        if (name.EndsWith("setup.exe", StringComparison.OrdinalIgnoreCase) ||
-                            name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ||
-                            name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadUrl = asset.GetProperty("browser_download_url").GetString();
-                            fileSize = asset.GetProperty("size").GetInt64();
-                            break;
-                        }
-                    }
-                }
-
-                if (string.IsNullOrEmpty(downloadUrl))
-                {
-                    _logger.Warning("No Windows installer found in release");
-                    return null;
-                }
-
-                var updateInfo = new UpdateInfo
-                {
-                    Version = latestVersion,
-                    DownloadUrl = downloadUrl,
-                    ReleaseNotes = releaseNotes,
-                    PublishedAt = publishedAt,
-                    FileSize = fileSize,
-                    IsRequired = false // Có thể cấu hình từ release notes
+                    Version = newVersion,
+                    DownloadUrl = "", // Velopack handles download internally
+                    ReleaseNotes = "", // Could be fetched from GitHub API separately if needed
+                    PublishedAt = DateTime.Now, // Velopack doesn't provide this
+                    FileSize = updateInfo.TargetFullRelease.Size,
+                    IsRequired = false
                 };
-
-                _logger.Information("Update available: {Version} -> {NewVersion}", CurrentVersion, latestVersion);
-                return updateInfo;
             }
             catch (Exception ex)
             {
@@ -116,91 +91,48 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             }
         }
 
+
         /// <summary>
-        /// Downloads and installs the update
+        /// Downloads and installs the update using Velopack
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(UpdateInfo updateInfo, Action<int>? progress = null)
         {
+            if (_updateManager == null)
+            {
+                _logger.Warning("UpdateManager not initialized. Cannot download updates.");
+                return false;
+            }
+
             try
             {
-                _logger.Information("Downloading update from: {Url}", updateInfo.DownloadUrl);
+                _logger.Information("Downloading update to version: {Version}", updateInfo.Version);
 
-                // Download to temp folder
-                var tempPath = Path.Combine(Path.GetTempPath(), "VbdlisTools-Update");
-                Directory.CreateDirectory(tempPath);
+                // Check for updates again to get the UpdateInfo object from Velopack
+                var velopackUpdateInfo = await _updateManager.CheckForUpdatesAsync();
 
-                var fileName = Path.GetFileName(new Uri(updateInfo.DownloadUrl).LocalPath);
-                var filePath = Path.Combine(tempPath, fileName);
-
-                // Download with progress
-                using (var response = await _httpClient.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                if (velopackUpdateInfo == null)
                 {
-                    response.EnsureSuccessStatusCode();
-
-                    var totalBytes = response.Content.Headers.ContentLength ?? updateInfo.FileSize;
-                    using var contentStream = await response.Content.ReadAsStreamAsync();
-                    using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-                    var buffer = new byte[8192];
-                    long totalRead = 0;
-                    int bytesRead;
-
-                    while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead);
-                        totalRead += bytesRead;
-
-                        if (totalBytes > 0)
-                        {
-                            var progressPercent = (int)((totalRead * 100) / totalBytes);
-                            progress?.Invoke(progressPercent);
-                        }
-                    }
-                }
-
-                _logger.Information("Download completed: {Path}", filePath);
-
-                // Launch installer and exit current application
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = filePath,
-                        UseShellExecute = true,
-                        Arguments = "/SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS" // Inno Setup silent args
-                    };
-
-                    Process.Start(startInfo);
-
-                    _logger.Information("Installer launched. Application will exit.");
-                    return true;
-                }
-                else
-                {
-                    _logger.Warning("Auto-install not supported on this platform");
+                    _logger.Warning("No update available");
                     return false;
                 }
+
+                // Download updates with progress callback
+                await _updateManager.DownloadUpdatesAsync(velopackUpdateInfo, (percent) =>
+                {
+                    progress?.Invoke(percent);
+                });
+
+                _logger.Information("Update downloaded successfully. Applying update and restarting...");
+
+                // Apply updates and restart (this will terminate the current process)
+                _updateManager.ApplyUpdatesAndRestart(velopackUpdateInfo);
+
+                // This line won't be reached as the app will restart
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error downloading/installing update");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Compares two version strings
-        /// </summary>
-        private bool IsNewerVersion(string newVersion, string currentVersion)
-        {
-            try
-            {
-                var newVer = Version.Parse(newVersion);
-                var curVer = Version.Parse(currentVersion);
-                return newVer > curVer;
-            }
-            catch
-            {
                 return false;
             }
         }

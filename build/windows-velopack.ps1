@@ -25,7 +25,8 @@ try {
     $null = vpk --version 2>&1
     $velopackInstalled = $true
     Write-Host "Velopack CLI found!" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "Velopack CLI not found. Installing..." -ForegroundColor Yellow
     dotnet tool install --global vpk
     $velopackInstalled = $true
@@ -36,39 +37,61 @@ $ProjectPath = Join-Path $PSScriptRoot "..\src\Haihv.Vbdlis.Tools\Haihv.Vbdlis.T
 $ProjectFile = Join-Path $ProjectPath "Haihv.Vbdlis.Tools.Desktop.csproj"
 $PublishPath = Join-Path $ProjectPath "bin\publish\velopack"
 $OutputPath = Join-Path $PSScriptRoot "..\dist\velopack"
+$VersionLogFile = Join-Path $PSScriptRoot "version.json"
 
-# Read current version info from .csproj
-Write-Host "`nReading version from .csproj..." -ForegroundColor Yellow
+# Read or create version log
+Write-Host "`nReading version log..." -ForegroundColor Yellow
+$versionLog = $null
+if (Test-Path $VersionLogFile) {
+    $versionLog = Get-Content $VersionLogFile -Raw | ConvertFrom-Json
+    Write-Host "Found existing version log" -ForegroundColor Green
+}
+else {
+    Write-Host "Creating new version log" -ForegroundColor Yellow
+    $versionLog = @{
+        majorMinor      = "1.0"
+        currentVersion  = "1.0.0"
+        assemblyVersion = "1.0.0.0"
+        lastBuildDate   = ""
+        buildNumber     = 0
+        platforms       = @{
+            windows = @{ lastBuilt = $null; version = $null }
+            macos   = @{ lastBuilt = $null; version = $null }
+        }
+    }
+}
+
+# Read Major.Minor from .csproj (only once, to initialize)
 $csprojContent = Get-Content $ProjectFile -Raw
-$versionParts = @()
 if ($csprojContent -match '<Version>([\d\.]+)</Version>') {
     $currentVersion = $matches[1]
-    # Extract Major.Minor (first two parts)
     $versionParts = $currentVersion.Split('.')
     $majorMinor = "$($versionParts[0]).$($versionParts[1])"
-    Write-Host "Current Major.Minor version: $majorMinor" -ForegroundColor Cyan
-} else {
-    Write-Host "Could not read version from .csproj, using default 1.0" -ForegroundColor Yellow
-    $majorMinor = "1.0"
+    Write-Host "Major.Minor from .csproj: $majorMinor" -ForegroundColor Cyan
+}
+else {
+    $majorMinor = $versionLog.majorMinor
+    Write-Host "Using Major.Minor from version log: $majorMinor" -ForegroundColor Cyan
 }
 
 # Generate date parts: YYMM and DD
 $yearMonthString = Get-Date -Format "yyMM"  # e.g., "2512"
 $yearMonth = [int]$yearMonthString          # still <= 65535
 $dayString = Get-Date -Format "dd"          # always two digits, e.g., "09"
+$todayString = Get-Date -Format "yyyy-MM-dd"
 
-# Determine today's build number based on previous .csproj version
+# Determine today's build number from version log
 Write-Host "Calculating build number for today..." -ForegroundColor Yellow
 $buildNumber = 1
-if ($versionParts.Count -ge 4) {
-    $previousYearMonth = $versionParts[2]
-    $previousDayBuild = $versionParts[3].PadLeft(4, '0')
-    $previousDay = $previousDayBuild.Substring(0, 2)
-    $previousBuild = $previousDayBuild.Substring(2, 2)
-
-    if (($previousYearMonth -eq $yearMonthString) -and ($previousDay -eq $dayString)) {
-        $buildNumber = ([int]$previousBuild) + 1
-    }
+if ($versionLog.lastBuildDate -eq $todayString) {
+    # Same day, increment build number
+    $buildNumber = $versionLog.buildNumber + 1
+    Write-Host "Same day build detected. Incrementing to build #$buildNumber" -ForegroundColor Cyan
+}
+else {
+    # New day, reset to 1
+    $buildNumber = 1
+    Write-Host "New day detected. Starting with build #$buildNumber" -ForegroundColor Cyan
 }
 
 # Create two different version formats:
@@ -126,6 +149,21 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# Update version log after successful build
+Write-Host "`nUpdating version log..." -ForegroundColor Yellow
+$versionLog.majorMinor = $majorMinor
+$versionLog.currentVersion = $packageVersion
+$versionLog.assemblyVersion = $assemblyVersion
+$versionLog.lastBuildDate = $todayString
+$versionLog.buildNumber = $buildNumber
+$versionLog.platforms.windows.lastBuilt = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ss")
+$versionLog.platforms.windows.version = $packageVersion
+
+$versionLog | ConvertTo-Json -Depth 10 | Set-Content $VersionLogFile -Encoding UTF8
+Write-Host "Version log updated: $VersionLogFile" -ForegroundColor Green
+Write-Host "  Current Version: $packageVersion" -ForegroundColor Cyan
+Write-Host "  Build Number: $buildNumber" -ForegroundColor Cyan
+
 # Remove Playwright browsers
 Write-Host "`nRemoving Playwright browsers..." -ForegroundColor Yellow
 $PlaywrightPath = Join-Path $PublishPath ".playwright"
@@ -157,7 +195,8 @@ $VpkArgs = @(
 if ($IconPath -and (Test-Path $IconPath)) {
     Write-Host "Using icon: $IconPath" -ForegroundColor Green
     $VpkArgs += "--icon", $IconPath
-} else {
+}
+else {
     Write-Host "Warning: No .ico file found in Assets folder. Setup will use default icon." -ForegroundColor Yellow
     Write-Host "Tip: Copy your .ico file to $ProjectAssetsPath" -ForegroundColor Yellow
 }
