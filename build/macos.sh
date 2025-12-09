@@ -285,8 +285,26 @@ Version: $PACKAGE_VERSION
 
 INSTALLATION:
 1. Drag VbdlisTools.app to Applications folder
-2. First run: Right-click → Open (to bypass Gatekeeper)
-3. Enjoy!
+2. Open Terminal and run this command:
+   xattr -cr /Applications/VbdlisTools.app
+3. Now you can open the app normally
+
+⚠️ "App is damaged" ERROR?
+If you see "VbdlisTools is damaged and can't be opened":
+1. Open Terminal (Applications → Utilities → Terminal)
+2. Copy and paste this command:
+   xattr -cr /Applications/VbdlisTools.app
+3. Press Enter
+4. Now open VbdlisTools normally
+
+WHY THIS HAPPENS:
+- App is not signed with Apple Developer certificate
+- macOS Gatekeeper blocks unsigned apps
+- The command removes quarantine attribute
+
+ALTERNATIVE METHOD:
+1. Right-click VbdlisTools.app → Show Package Contents
+2. Or: sudo spctl --master-disable (disable Gatekeeper - not recommended)
 
 FEATURES:
 - Native Apple Silicon ($ARCH_NAME) support

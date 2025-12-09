@@ -141,11 +141,18 @@ jobs:
           1. Tải file `VbdlisTools-$VERSION-osx-arm64.dmg`
           2. Mở DMG file
           3. Kéo `VbdlisTools.app` vào thư mục Applications
-          4. Lần đầu chạy: Right-click → Open (để bypass Gatekeeper)
-          5. Ứng dụng tự động update khi có phiên bản mới
+          4. **Fix "App is damaged" error:**
+             - Mở Terminal (Applications → Utilities → Terminal)
+             - Chạy lệnh: `xattr -cr /Applications/VbdlisTools.app`
+          5. Giờ có thể mở app bình thường
+          6. Ứng dụng tự động update khi có phiên bản mới
 
           ### ⚠️ Important Notes
 
+          - **macOS "App is damaged" Error**: 
+            - App chưa được ký số bởi Apple Developer
+            - Chạy lệnh `xattr -cr /Applications/VbdlisTools.app` trong Terminal để fix
+            - Hoặc: Right-click app → Show Package Contents (workaround)
           - **Playwright Browsers**: Sẽ tự động tải xuống khi chạy lần đầu tiên
           - **Auto-Update**: Ứng dụng tự động kiểm tra và cập nhật phiên bản mới
           - **Minimum Requirements**:
