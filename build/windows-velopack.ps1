@@ -1,19 +1,22 @@
 # Script to build Velopack installer (successor to Squirrel.Windows)
 # Velopack provides ClickOnce-like auto-update for modern .NET apps
 # Requires: .NET 10.0 SDK, Velopack CLI
+#
+# Version format: Major.Minor.YYMMDDBB
+# Example: 1.0.25110901 (version 1.0, built on 2025-11-09, 1st build of the day)
+# - Major.Minor: Read from .csproj (e.g., 1.0)
+# - YYMMDDBB: Date + Build number as single number (25110901 = 2025-11-09, build 01)
+# Note: Uses 3-part SemVer2 format (Major.Minor.Patch) required by Velopack
 
 param(
     [string]$Configuration = "Release",
-    [string]$Version = "1.0.4",
-    [string]$UpdateUrl = "",  # URL where releases will be hosted
-    [string]$IconPath = ""
+    [string]$UpdateUrl = ""  # URL where releases will be hosted
 )
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "=== Building VBDLIS Tools with Velopack ===" -ForegroundColor Green
 Write-Host "Configuration: $Configuration" -ForegroundColor Cyan
-Write-Host "Version: $Version" -ForegroundColor Cyan
 
 # Check if Velopack is installed
 Write-Host "`nChecking for Velopack CLI..." -ForegroundColor Yellow
@@ -34,18 +37,80 @@ $ProjectFile = Join-Path $ProjectPath "Haihv.Vbdlis.Tools.Desktop.csproj"
 $PublishPath = Join-Path $ProjectPath "bin\publish\velopack"
 $OutputPath = Join-Path $PSScriptRoot "..\dist\velopack"
 
+# Read current version info from .csproj
+Write-Host "`nReading version from .csproj..." -ForegroundColor Yellow
+$csprojContent = Get-Content $ProjectFile -Raw
+$versionParts = @()
+if ($csprojContent -match '<Version>([\d\.]+)</Version>') {
+    $currentVersion = $matches[1]
+    # Extract Major.Minor (first two parts)
+    $versionParts = $currentVersion.Split('.')
+    $majorMinor = "$($versionParts[0]).$($versionParts[1])"
+    Write-Host "Current Major.Minor version: $majorMinor" -ForegroundColor Cyan
+} else {
+    Write-Host "Could not read version from .csproj, using default 1.0" -ForegroundColor Yellow
+    $majorMinor = "1.0"
+}
+
+# Generate date parts: YYMM and DD
+$yearMonthString = Get-Date -Format "yyMM"  # e.g., "2512"
+$yearMonth = [int]$yearMonthString          # still <= 65535
+$dayString = Get-Date -Format "dd"          # always two digits, e.g., "09"
+
+# Determine today's build number based on previous .csproj version
+Write-Host "Calculating build number for today..." -ForegroundColor Yellow
+$buildNumber = 1
+if ($versionParts.Count -ge 4) {
+    $previousYearMonth = $versionParts[2]
+    $previousDayBuild = $versionParts[3].PadLeft(4, '0')
+    $previousDay = $previousDayBuild.Substring(0, 2)
+    $previousBuild = $previousDayBuild.Substring(2, 2)
+
+    if (($previousYearMonth -eq $yearMonthString) -and ($previousDay -eq $dayString)) {
+        $buildNumber = ([int]$previousBuild) + 1
+    }
+}
+
+# Create two different version formats:
+# 1. Assembly version (4-part): Major.Minor.YYMM.DDBB
+#    All parts <= 65535: Major=1, Minor=0, YYMM=2512, DDBB=0901 (day 09, build 01)
+$buildNumberString = $buildNumber.ToString("00")
+$dayBuildString = "$dayString$buildNumberString"
+$assemblyVersion = "$majorMinor.$yearMonthString.$dayBuildString"
+
+# 2. Package version (3-part SemVer2): Major.Minor.YYMMDDBB
+$dateString = Get-Date -Format "yyMMdd"
+$patchNumber = "$dateString$buildNumberString"
+$packageVersion = "$majorMinor.$patchNumber"
+
+Write-Host "Auto-generated versions:" -ForegroundColor Green
+Write-Host "  Assembly: $assemblyVersion (for .NET - 4 parts, each <= 65535)" -ForegroundColor Gray
+Write-Host "  Package:  $packageVersion (for Velopack - 3-part SemVer2)" -ForegroundColor Gray
+Write-Host "  Date: YYMM=$yearMonthString, DD=$dayString, Build #$buildNumber" -ForegroundColor Gray
+
+# Update version in .csproj (use 4-part assembly version)
+Write-Host "`nUpdating version in .csproj to $assemblyVersion..." -ForegroundColor Yellow
+$csprojContent = $csprojContent -replace '<AssemblyVersion>[\d\.]+</AssemblyVersion>', "<AssemblyVersion>$assemblyVersion</AssemblyVersion>"
+$csprojContent = $csprojContent -replace '<FileVersion>[\d\.]+</FileVersion>', "<FileVersion>$assemblyVersion</FileVersion>"
+$csprojContent = $csprojContent -replace '<Version>[\d\.]+</Version>', "<Version>$assemblyVersion</Version>"
+Set-Content -Path $ProjectFile -Value $csprojContent -NoNewline
+Write-Host "Updated .csproj: AssemblyVersion=$assemblyVersion" -ForegroundColor Green
+
+# Use packageVersion for Velopack
+$Version = $packageVersion
+
 # Clean previous builds
 Write-Host "`nCleaning previous builds..." -ForegroundColor Yellow
 if (Test-Path $PublishPath) {
     Remove-Item -Path $PublishPath -Recurse -Force
 }
-if (Test-Path $OutputPath) {
-    Remove-Item -Path $OutputPath -Recurse -Force
+if (-not (Test-Path $OutputPath)) {
+    New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
 }
-New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
 
 # Step 1: Publish application
 Write-Host "`nPublishing application..." -ForegroundColor Yellow
+# Use assemblyVersion for build (not packageVersion)
 dotnet publish $ProjectFile `
     --configuration $Configuration `
     --runtime win-x64 `
@@ -54,7 +119,7 @@ dotnet publish $ProjectFile `
     -p:PublishReadyToRun=true `
     -p:PublishSingleFile=false `
     -p:PublishTrimmed=false `
-    -p:Version=$Version
+    -p:Version=$assemblyVersion
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
@@ -74,6 +139,10 @@ if (Test-Path $PlaywrightPath) {
 # Step 2: Create Velopack release
 Write-Host "`nCreating Velopack release..." -ForegroundColor Yellow
 
+# Find icon file (.ico in Assets folder)
+$ProjectAssetsPath = Join-Path $ProjectPath "Assets"
+$IconPath = Get-ChildItem -Path $ProjectAssetsPath -Filter "*.ico" -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $_.FullName }
+
 $VpkArgs = @(
     "pack"
     "--packId", "VbdlisTools"
@@ -86,7 +155,11 @@ $VpkArgs = @(
 )
 
 if ($IconPath -and (Test-Path $IconPath)) {
+    Write-Host "Using icon: $IconPath" -ForegroundColor Green
     $VpkArgs += "--icon", $IconPath
+} else {
+    Write-Host "Warning: No .ico file found in Assets folder. Setup will use default icon." -ForegroundColor Yellow
+    Write-Host "Tip: Copy your .ico file to $ProjectAssetsPath" -ForegroundColor Yellow
 }
 
 if ($UpdateUrl) {
@@ -162,12 +235,23 @@ AUTO-UPDATE:
 PUBLISHING NEW VERSION:
 ----------------------
 1. Build new version:
-   .\build\build-squirrel.ps1 -Version "1.0.5"
+   .\build\windows-velopack.ps1
+   (Version is auto-generated: Major.Minor.YYMMDDBB)
 
 2. Upload new files:
    - Upload all files to same location
    - Velopack creates delta packages automatically
    - Users auto-update on next launch
+
+VERSION FORMAT:
+--------------
+Major.Minor.YYMMDDBB (3-part SemVer2)
+- Major.Minor: From .csproj (e.g., 1.0)
+- YYMMDDBB: Patch number combining date + build (e.g., 25110901)
+  - YYMMDD: Date (251109 = 2025-11-09)
+  - BB: Build number (01, 02, 03...)
+
+Example: 1.0.25110901 = Version 1.0, built on 2025-11-09, 1st build
 
 UNINSTALL:
 ---------
@@ -179,6 +263,7 @@ For more info: https://docs.velopack.io/
 Set-Content -Path $ReadmePath -Value $ReadmeContent -Encoding UTF8
 
 Write-Host "`n=== Build Completed Successfully ===" -ForegroundColor Green
+Write-Host "Version: $Version" -ForegroundColor Cyan
 Write-Host "Output folder: $OutputPath" -ForegroundColor Cyan
 Write-Host "Setup file: $OutputPath\VbdlisTools-$Version-win-Setup.exe" -ForegroundColor Cyan
 Write-Host "`nNext steps:" -ForegroundColor Yellow
@@ -187,4 +272,4 @@ Write-Host "2. Upload files to web server or network share for auto-update" -For
 if ($UpdateUrl) {
     Write-Host "3. Ensure UpdateUrl in code points to: $UpdateUrl" -ForegroundColor White
 }
-Write-Host "`nNote: Add 'Velopack' NuGet package to enable auto-update in your app" -ForegroundColor Yellow
+Write-Host "`nNote: To change Major.Minor version, edit the .csproj file" -ForegroundColor Yellow

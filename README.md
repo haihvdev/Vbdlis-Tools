@@ -23,7 +23,7 @@ xcopy /E /I "dist\network-share\*" "\\server\Setups\VbdlisTools\"
 # Output: dist/macos/*.dmg
 ```
 
-**→ Xem chi tiết:** [START_HERE.md](START_HERE.md)
+**→ Xem chi tiết:** [BUILD_DEPLOY.md](BUILD_DEPLOY.md)
 
 ---
 
@@ -43,8 +43,6 @@ xcopy /E /I "dist\network-share\*" "\\server\Setups\VbdlisTools\"
 
 ## 📚 Documentation
 
-- **[START_HERE.md](START_HERE.md)** - ⭐ Bắt đầu từ đây
-- **[SUMMARY.md](SUMMARY.md)** - Tổng kết migration từ ClickOnce
 - **[build/README.md](build/README.md)** - Hướng dẫn build scripts
 - **[BUILD_DEPLOY.md](BUILD_DEPLOY.md)** - Chi tiết deployment
 - **[DEPLOYMENT_COMPARISON.md](DEPLOYMENT_COMPARISON.md)** - So sánh phương pháp
@@ -138,6 +136,6 @@ xcopy /E /I "dist\network-share\*" "\\server\Setups\VbdlisTools\"
 ## 🆘 Support
 
 Gặp vấn đề? Check:
-1. [START_HERE.md](START_HERE.md) - Quick start
-2. [SUMMARY.md](SUMMARY.md) - Tổng kết
-3. [build/README.md](build/README.md) - Build scripts guide
+1. [BUILD_DEPLOY.md](BUILD_DEPLOY.md) - Chi tiết deployment
+2. [build/README.md](build/README.md) - Build scripts guide
+3. [VELOPACK_AVALONIA_SETUP.md](VELOPACK_AVALONIA_SETUP.md) - Auto-update

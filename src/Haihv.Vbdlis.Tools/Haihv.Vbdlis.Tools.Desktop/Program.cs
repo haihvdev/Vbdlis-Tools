@@ -5,6 +5,7 @@ using Avalonia;
 using Haihv.Vbdlis.Tools.Desktop.Extensions;
 using Serilog;
 using Serilog.Events;
+using Velopack;
 
 namespace Haihv.Vbdlis.Tools.Desktop
 {
@@ -16,6 +17,10 @@ namespace Haihv.Vbdlis.Tools.Desktop
         [STAThread]
         public static void Main(string[] args)
         {
+            // CRITICAL: VelopackApp.Build().Run() must be called BEFORE any Avalonia initialization
+            // This handles Velopack update lifecycle events (install, update, uninstall)
+            VelopackApp.Build().Run();
+
             SerilogExtensions.ConfigureSerilog();
             try
             {

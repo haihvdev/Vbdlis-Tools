@@ -4,7 +4,7 @@
 
 | Phương pháp | Auto-Update | Cần Admin | Tương thích .NET 10 | Độ phức tạp | Khuyến nghị |
 |-------------|-------------|-----------|---------------------|-------------|-------------|
-| **Squirrel.Windows** | ✅ Có | ❌ Không | ✅ Có | ⭐⭐ Dễ | **🏆 Tốt nhất** |
+| **Velopack (Squirrel)** | ✅ Có | ❌ Không | ✅ Có | ⭐⭐ Dễ | **🏆 Tốt nhất** |
 | **MSIX** | ✅ Có* | ❌ Không | ✅ Có | ⭐⭐⭐ Trung bình | Tốt cho Store |
 | **Inno Setup** | ❌ Không | ✅ Có | ✅ Có | ⭐⭐ Dễ | Backup option |
 | **ZIP Archive** | ❌ Không | ❌ Không | ✅ Có | ⭐ Rất dễ | Dev/Test only |
@@ -14,7 +14,7 @@
 
 ---
 
-## 1. Squirrel.Windows (Khuyến nghị) 🚀
+## 1. Velopack (Squirrel successor) 🚀
 
 ### Ưu điểm
 - ✅ **Auto-update tích hợp**: Delta updates, tiết kiệm bandwidth
@@ -33,11 +33,11 @@
 - ✅ Triển khai cho nhiều users
 - ✅ Cần auto-update
 - ✅ Không có certificate signing
-- ✅ Deploy qua web server hoặc GitHub
+- ✅ Deploy qua network share hoặc web server
 
 ### Script
 ```powershell
-.\build\build-squirrel.ps1 -Version "1.0.5"
+.\build\windows-velopack.ps1 -Version "1.0.5"
 ```
 
 ### Kích thước
@@ -69,7 +69,7 @@
 
 ### Script
 ```powershell
-.\build\build-msix.ps1 -Version "1.0.5.0" -Sign -CertificatePath "cert.pfx"
+.\build\windows-msix.ps1 -Version "1.0.5.0" -Sign -CertificatePath "cert.pfx"
 ```
 
 ### Kích thước
@@ -99,7 +99,7 @@
 
 ### Script
 ```powershell
-.\build\build-windows.ps1 -Version "1.0.5" -CreateSetup
+.\build\windows-innosetup.ps1 -Version "1.0.5" -CreateSetup
 ```
 
 ### Kích thước
@@ -127,7 +127,7 @@
 
 ### Script
 ```powershell
-.\build\build-windows.ps1 -Version "1.0.5"
+.\build\windows-simple.ps1 -Version "1.0.5"
 ```
 
 ---
@@ -147,21 +147,21 @@ Parsing and DOM creation of the manifest resulted in error
 ```
 
 ### Thay thế
-Dùng **Squirrel.Windows** - tính năng tương tự, tương thích .NET modern
+Dùng **Velopack** - tính năng tương tự ClickOnce nhưng tương thích .NET modern
 
 ---
 
 ## Khuyến nghị theo use case
 
 ### 🏢 Doanh nghiệp nội bộ (LAN)
-**→ Squirrel.Windows + Network Share**
-- Deploy Releases/ folder lên network share
+**→ Velopack + Network Share**
+- Deploy `dist/velopack/` lên network share
 - Users chạy Setup.exe từ share
 - Auto-update từ share
 
 ### 🌐 Internet deployment (Public)
-**→ Squirrel.Windows + Web Server**
-- Upload Releases/ lên web server
+**→ Velopack + Web Server**
+- Upload `dist/velopack/` lên web server
 - Users download Setup.exe
 - Auto-update từ web URL
 
@@ -192,14 +192,14 @@ Dùng **Squirrel.Windows** - tính năng tương tự, tương thích .NET moder
 
 ## Migration Path
 
-### Từ ZIP → Squirrel
-1. Build với Squirrel: `.\build\build-squirrel.ps1`
-2. Users chạy Setup.exe (uninstall ZIP manually)
-3. Từ nay auto-update
+### Từ ZIP → Velopack
+1. Build với Velopack: `.\build\windows-velopack.ps1`
+2. Users chạy Setup.exe (uninstall bản portable nếu muốn)
+3. Từ nay app tự update
 
-### Từ Inno Setup → Squirrel
+### Từ Inno Setup → Velopack
 1. Users uninstall version cũ (qua Add/Remove Programs)
-2. Chạy Squirrel Setup.exe
+2. Chạy Velopack Setup.exe
 3. Từ nay auto-update, không cần admin
 
 ### Từ ZIP/Inno → MSIX
@@ -210,18 +210,18 @@ Dùng **Squirrel.Windows** - tính năng tương tự, tương thích .NET moder
 
 ---
 
-## Code ví dụ: Auto-update với Squirrel
+## Code ví dụ: Auto-update với Velopack
 
 ### 1. Thêm NuGet package
 
 ```bash
-dotnet add package Clowd.Squirrel
+dotnet add package Velopack
 ```
 
 ### 2. Implement update check
 
 ```csharp
-using Squirrel;
+using Velopack;
 
 public class UpdateService
 {
@@ -231,18 +231,14 @@ public class UpdateService
     {
         try
         {
-            using var mgr = new UpdateManager(UpdateUrl);
+            var mgr = new UpdateManager(UpdateUrl);
 
-            // Check for updates
-            var updateInfo = await mgr.CheckForUpdate();
-
-            if (updateInfo.ReleasesToApply.Any())
+            var release = await mgr.CheckForUpdatesAsync();
+            if (release != null)
             {
-                // Download and apply updates in background
-                await mgr.UpdateApp();
-
-                // Return true to signal restart needed
-                return true;
+                await mgr.DownloadUpdatesAsync(release);
+                mgr.ApplyUpdatesAndRestart(release);
+                return true; // sẽ restart sau khi apply
             }
 
             return false; // No updates
@@ -289,7 +285,7 @@ public partial class App : Application
 
 ## Tổng kết
 
-### 🥇 Lựa chọn #1: Squirrel.Windows
+### 🥇 Lựa chọn #1: Velopack
 - Tốt nhất cho hầu hết trường hợp
 - Auto-update miễn phí
 - Không cần admin
@@ -308,4 +304,4 @@ public partial class App : Application
 ### ❌ Tránh: ClickOnce
 - Không tương thích .NET 10.0
 - Lỗi manifest
-- Dùng Squirrel thay thế
+- Dùng Velopack thay thế

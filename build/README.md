@@ -296,7 +296,6 @@ chmod +x build/macos.sh
 
 ## 📚 More Info
 
-- **[../START_HERE.md](../START_HERE.md)** - Quick start guide
 - **[../BUILD_DEPLOY.md](../BUILD_DEPLOY.md)** - Detailed deployment guide
 - **[../DEPLOYMENT_COMPARISON.md](../DEPLOYMENT_COMPARISON.md)** - Compare all methods
 - **[../VELOPACK_AVALONIA_SETUP.md](../VELOPACK_AVALONIA_SETUP.md)** - Velopack integration

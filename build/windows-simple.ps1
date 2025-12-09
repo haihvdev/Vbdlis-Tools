@@ -99,7 +99,7 @@ UPDATE:
 Để update lên version mới:
 
 1. Build version mới:
-   .\build\build-network-share.ps1 -Version "1.0.5"
+   .\build\windows-simple.ps1 -Version "1.0.5"
 
 2. Copy files mới lên network share (ghi đè):
    xcopy /Y /E /I "dist\network-share\*" "\\server\Setups\VbdlisTools\"

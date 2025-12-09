@@ -296,7 +296,7 @@ public partial class App : Application
 
 ```powershell
 # Build installer
-.\build\build-squirrel.ps1 -Version "1.0.4"
+.\build\windows-velopack.ps1 -Version "1.0.4"
 ```
 
 **Output:**
@@ -345,7 +345,7 @@ Copy-Item "dist\velopack\*" "C:\inetpub\wwwroot\vbdlis-tools" -Recurse -Force
 # <Version>1.0.5</Version>
 
 # 2. Build version mới
-.\build\build-squirrel.ps1 -Version "1.0.5"
+.\build\windows-velopack.ps1 -Version "1.0.5"
 
 # 3. Copy lên cùng vị trí (ghi đè)
 Copy-Item "dist\velopack\*" "\\file\Setups\vbdlis-tools" -Recurse -Force
@@ -466,13 +466,13 @@ if (File.Exists(releasesPath))
 
 **Bắt đầu với Network Share** (đơn giản):
 ```powershell
-.\build\build-network-share.ps1
+.\build\windows-simple.ps1
 ```
 
 **Sau này nâng cấp lên Velopack** khi cần auto-update:
 1. Cài .NET 9.0 Runtime
 2. Thêm Velopack code (steps above)
-3. Build với `build-squirrel.ps1`
+3. Build với `windows-velopack.ps1`
 4. Deploy và test
 
 ---
@@ -480,4 +480,4 @@ if (File.Exists(releasesPath))
 Xem thêm:
 - [Official Avalonia Sample](https://github.com/velopack/velopack/tree/develop/samples/CSharpAvalonia)
 - [Velopack Docs](https://docs.velopack.io/)
-- [START_HERE.md](START_HERE.md) - Quick start guide
+- [BUILD_DEPLOY.md](BUILD_DEPLOY.md) - Hướng dẫn triển khai chi tiết

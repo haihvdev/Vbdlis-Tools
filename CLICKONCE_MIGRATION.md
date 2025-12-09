@@ -78,7 +78,7 @@ vpk --version
 
 ```powershell
 # Build installer
-.\build\build-squirrel.ps1 -Version "1.0.4"
+.\build\windows-velopack.ps1 -Version "1.0.4"
 ```
 
 Output files:
@@ -201,7 +201,7 @@ graph LR
 
 ```powershell
 # 1. Build version mới
-.\build\build-squirrel.ps1 -Version "1.0.5"
+.\build\windows-velopack.ps1 -Version "1.0.5"
 
 # 2. Copy files mới lên network share (ghi đè)
 Copy-Item -Path "dist\velopack\*" `
@@ -224,15 +224,15 @@ Copy-Item -Path "dist\velopack\*" `
 
 - [x] Xóa ClickOnce properties khỏi .csproj
 - [x] Cài Velopack CLI (`dotnet tool install --global vpk`)
-- [x] Tạo build script Velopack (`build/build-squirrel.ps1`)
+- [x] Tạo build script Velopack (`build/windows-velopack.ps1`)
 - [x] Update tài liệu BUILD_DEPLOY.md
-- [x] Tạo QUICKSTART_VELOPACK.md
+- [x] Tạo tài liệu Velopack (`VELOPACK_AVALONIA_SETUP.md`)
 
 ### 📋 Cần làm thêm:
 
 - [ ] Build installer với Velopack
   ```powershell
-  .\build\build-squirrel.ps1 -Version "1.0.4"
+  .\build\windows-velopack.ps1 -Version "1.0.4"
   ```
 
 - [ ] Test installer trên máy clean
@@ -251,7 +251,7 @@ Copy-Item -Path "dist\velopack\*" `
   ```
 
 - [ ] Thêm update code vào App.axaml.cs
-  - Xem QUICKSTART_VELOPACK.md phần "Bước 4"
+  - Xem VELOPACK_AVALONIA_SETUP.md phần "Bước 4"
 
 - [ ] Test auto-update
   - Build version mới (1.0.5)
@@ -294,7 +294,7 @@ dotnet tool uninstall --global vpk
 dotnet tool install --global vpk
 
 # Rebuild
-.\build\build-squirrel.ps1
+.\build\windows-velopack.ps1
 ```
 
 ### Users không thấy update?
@@ -336,7 +336,7 @@ dotnet tool install --global vpk
 
 1. **Build installer:**
    ```powershell
-   .\build\build-squirrel.ps1
+   .\build\windows-velopack.ps1
    ```
 
 2. **Test local:**
@@ -350,7 +350,7 @@ dotnet tool install --global vpk
    ```
 
 4. **Add auto-update** (optional):
-   - Xem [QUICKSTART_VELOPACK.md](QUICKSTART_VELOPACK.md)
+   - Xem [VELOPACK_AVALONIA_SETUP.md](VELOPACK_AVALONIA_SETUP.md)
 
 5. **Document for users:**
    - Link cài đặt: `\\server\Setups\vbdlis-tools\VbdlisTools-1.0.4-win-Setup.exe`
@@ -361,7 +361,7 @@ dotnet tool install --global vpk
 ## References
 
 - **Velopack Docs:** https://docs.velopack.io/
-- **Build Script:** [build/build-squirrel.ps1](build/build-squirrel.ps1)
-- **Quick Start:** [QUICKSTART_VELOPACK.md](QUICKSTART_VELOPACK.md)
+- **Build Script:** [build/windows-velopack.ps1](build/windows-velopack.ps1)
+- **Quick Start:** [VELOPACK_AVALONIA_SETUP.md](VELOPACK_AVALONIA_SETUP.md)
 - **Full Docs:** [BUILD_DEPLOY.md](BUILD_DEPLOY.md)
 - **Comparison:** [DEPLOYMENT_COMPARISON.md](DEPLOYMENT_COMPARISON.md)

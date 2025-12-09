@@ -14,7 +14,7 @@
     d:DesignHeight="700"
     d:DesignWidth="1200"
     x:DataType="vm:MainWindowViewModel"
-    Icon="/Assets/appicon.png"
+    Icon="avares://Haihv.Vbdlis.Tools.Desktop/Assets/appicon.ico"
     mc:Ignorable="d">
 
     <Design.DataContext>
