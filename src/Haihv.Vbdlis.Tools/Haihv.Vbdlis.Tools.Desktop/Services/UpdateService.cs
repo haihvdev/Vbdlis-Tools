@@ -29,7 +29,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             var infoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             if (!string.IsNullOrEmpty(infoVersion))
             {
-                CurrentVersion = infoVersion;
+                // Remove git commit hash if present (e.g., "1.0.25120911+01403dd..." -> "1.0.25120911")
+                var plusIndex = infoVersion.IndexOf('+');
+                CurrentVersion = plusIndex > 0 ? infoVersion.Substring(0, plusIndex) : infoVersion;
             }
             else
             {
@@ -69,6 +71,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
 
             try
             {
+                // Check if app is installed via Velopack
+                if (!_updateManager.IsInstalled)
+                {
+                    _logger.Information("App is running in portable/development mode. Auto-update disabled.");
+                    return null;
+                }
+
                 _logger.Information("Checking for updates using Velopack...");
 
                 var updateInfo = await _updateManager.CheckForUpdatesAsync();
