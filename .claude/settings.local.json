@@ -14,7 +14,11 @@
       "Bash(chmod:*)",
       "Bash(tree:*)",
       "Bash(dotnet clean:*)",
-      "Bash(dotnet add package:*)"
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet tool search:*)",
+      "Bash(dotnet tool install:*)",
+      "Bash(pwsh -File build/build-squirrel.ps1 -Version \"1.0.4\")",
+      "Bash(powershell.exe:*)"
     ],
     "deny": [],
     "ask": []

@@ -65,7 +65,185 @@ dotnet publish `
 Remove-Item -Path "publish\win-x64\.playwright" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-### Cách 4: Tạo Setup.exe với Auto-Update (Khuyến nghị cho triển khai) 🚀
+### Cách 4: Velopack - Auto-Update Installer (Khuyến nghị cho .NET modern) 🚀
+
+**LƯU Ý QUAN TRỌNG**: ClickOnce truyền thống **KHÔNG tương thích** với .NET 10.0 và Avalonia. Sử dụng **Velopack** thay thế - một giải pháp tương tự ClickOnce cho .NET modern.
+
+**Velopack** (kế thừa Squirrel.Windows) cung cấp tính năng tương tự ClickOnce: cài đặt dễ dàng, tự động cập nhật, delta updates.
+
+**Yêu cầu**:
+- .NET 10.0 SDK
+- Velopack CLI tool (vpk)
+
+```powershell
+# Cài đặt Velopack tool (chỉ cần 1 lần)
+dotnet tool install --global vpk
+
+# Build với Velopack
+.\build\build-squirrel.ps1
+
+# Build với version cụ thể
+.\build\build-squirrel.ps1 -Version "1.0.5"
+
+# Build với update URL
+.\build\build-squirrel.ps1 -Version "1.0.5" -UpdateUrl "https://your-server.com/vbdlis-tools/"
+```
+
+**Output:**
+- `dist/velopack/VbdlisTools-1.0.5-win-Setup.exe` - Installer cho người dùng mới
+- `dist/velopack/VbdlisTools-1.0.5-win-full.nupkg` - Full package
+- `dist/velopack/RELEASES` - Manifest file cho auto-update
+
+**Tính năng:**
+- ✅ **Tự động cập nhật** với delta updates (chỉ tải phần thay đổi)
+- ✅ Không cần quyền Administrator
+- ✅ Cài đặt vào `%LOCALAPPDATA%` (an toàn)
+- ✅ Hỗ trợ rollback về phiên bản cũ
+- ✅ Background updates (không làm gián đoạn người dùng)
+- ✅ Tương thích với .NET 10.0 và Avalonia
+
+**Cách triển khai:**
+
+1. **Build installer:**
+   ```powershell
+   .\build\build-squirrel.ps1 -Version "1.0.5"
+   ```
+
+2. **Phân phối cho người dùng mới:**
+   - Chia sẻ file `dist/velopack/VbdlisTools-1.0.5-win-Setup.exe`
+   - Người dùng chạy Setup.exe để cài đặt
+
+3. **Setup auto-update (tùy chọn):**
+   - Upload tất cả files trong `dist/velopack/` lên web server hoặc network share
+   - URL ví dụ: `https://your-server.com/vbdlis-tools/`
+   - Network share: `\\server\share\vbdlis-tools\`
+
+4. **Thêm code auto-update vào ứng dụng:**
+   ```bash
+   # Thêm NuGet package
+   dotnet add package Velopack
+   ```
+
+   ```csharp
+   // Thêm vào code
+   using Velopack;
+
+   public async Task CheckForUpdates()
+   {
+       try
+       {
+           var updateUrl = "https://your-server.com/vbdlis-tools/";
+           // Hoặc network share: var updateUrl = @"\\server\share\vbdlis-tools";
+
+           var mgr = new UpdateManager(updateUrl);
+           var newVersion = await mgr.CheckForUpdatesAsync();
+
+           if (newVersion != null)
+           {
+               // Download updates
+               await mgr.DownloadUpdatesAsync(newVersion);
+
+               // Apply and restart
+               mgr.ApplyUpdatesAndRestart(newVersion);
+           }
+       }
+       catch (Exception ex)
+       {
+           // Log error, continue without update
+       }
+   }
+   ```
+
+**Cách phát hành bản cập nhật:**
+
+1. Build version mới:
+   ```powershell
+   .\build\build-squirrel.ps1 -Version "1.0.6"
+   ```
+
+2. Copy tất cả files mới lên cùng vị trí
+   - Upload lên web server hoặc network share
+   - Velopack tự động tạo delta packages
+   - Người dùng chỉ tải phần thay đổi
+
+3. Ứng dụng tự động phát hiện và cập nhật
+
+**Ưu điểm so với ClickOnce:**
+- ✅ **Tương thích .NET 10.0** và Avalonia
+- ✅ Delta updates (tiết kiệm bandwidth)
+- ✅ Background updates (UX tốt hơn)
+- ✅ **Hỗ trợ network share** (không bắt buộc web server)
+- ✅ Open source, active development
+
+**So với Inno Setup:**
+- ✅ Auto-update tích hợp sẵn
+- ✅ Không cần quyền admin
+- ✅ Delta updates tiết kiệm băng thông
+- ❌ Không cài vào Program Files
+
+---
+
+### Cách 5: MSIX Package (Chuẩn mới của Microsoft) 📦
+
+**MSIX** là định dạng package hiện đại của Microsoft, thay thế ClickOnce và MSI.
+
+**Yêu cầu**:
+- .NET 10.0 SDK
+- Windows SDK 10.0.19041.0+
+- Certificate để ký (bắt buộc)
+
+```powershell
+# Build MSIX package
+.\build\build-msix.ps1
+
+# Build với version và ký số
+.\build\build-msix.ps1 -Version "1.0.5.0" -Sign -CertificatePath "cert.pfx" -CertificatePassword "pass"
+```
+
+**Output:**
+- `dist/msix/VbdlisTools-1.0.5.0.msix` - MSIX package
+
+**Tính năng:**
+- ✅ Chuẩn mới nhất của Windows
+- ✅ Cài đặt an toàn (sandbox)
+- ✅ Tích hợp Microsoft Store
+- ✅ Auto-update qua Store hoặc App Installer
+- ✅ Dễ uninstall, không để lại rác
+
+**Cài đặt:**
+
+```powershell
+# Cài đặt MSIX
+Add-AppxPackage -Path "VbdlisTools-1.0.5.0.msix"
+
+# Hoặc double-click file .msix
+```
+
+**Lưu ý:**
+- ⚠️ **BẮT BUỘC** phải ký với certificate tin cậy
+- ⚠️ Người dùng cần trust certificate trước
+- ✅ Phù hợp cho triển khai qua Microsoft Store
+- ✅ Phù hợp cho doanh nghiệp có PKI infrastructure
+
+---
+
+### ⚠️ ClickOnce Không Tương Thích
+
+**ClickOnce truyền thống (build-clickonce.ps1) KHÔNG hoạt động** với:
+- .NET 5, 6, 7, 8, 9, 10+
+- Avalonia UI
+- Cross-platform apps
+
+**Lý do**: ClickOnce chỉ hỗ trợ .NET Framework 4.x (WPF/WinForms cũ)
+
+**Giải pháp**:
+- ✅ Dùng **Velopack** (dễ nhất, khuyến nghị, hỗ trợ network share)
+- ✅ Dùng **MSIX** (chuẩn mới, cần certificate)
+- ✅ Dùng **Inno Setup** (truyền thống, không auto-update)
+
+---
+
+### Cách 5: Tạo Setup.exe với Inno Setup (Alternative)
 
 **Yêu cầu**: Inno Setup 6.0+ (tải từ https://jrsoftware.org/isinfo.php)
 
@@ -88,29 +266,6 @@ Remove-Item -Path "publish\win-x64\.playwright" -Recurse -Force -ErrorAction Sil
 - ✅ Tự động uninstall phiên bản cũ khi cập nhật
 - ✅ Hỗ trợ silent install: `setup.exe /SILENT`
 - ✅ Đăng ký vào Add/Remove Programs
-- ✅ **Tự động kiểm tra và cập nhật từ GitHub Releases**
-
-**Auto-Update:**
-
-Ứng dụng tự động kiểm tra bản cập nhật mới từ GitHub Releases sau 5 giây khi khởi động.
-
-- Khi có bản mới: Hiển thị dialog thông báo với release notes
-- User chọn "Cập nhật ngay": Tự động tải và chạy installer mới
-- User chọn "Để sau": Bỏ qua lần này, kiểm tra lại lần sau
-
-**Cách phát hành update:**
-
-1. Build setup.exe với version mới:
-   ```powershell
-   .\build\build-windows.ps1 -Version "1.2.0" -CreateSetup
-   ```
-
-2. Tạo GitHub Release:
-   - Tag: `v1.2.0`
-   - Upload file: `VbdlisTools-Setup-v1.2.0.exe`
-   - Viết release notes
-
-3. Người dùng sẽ tự động nhận thông báo cập nhật!
 
 ### Tạo Windows Installer thủ công (Nâng cao)
 
