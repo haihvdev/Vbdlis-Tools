@@ -285,35 +285,62 @@ Version: $PACKAGE_VERSION
 
 INSTALLATION:
 1. Drag VbdlisTools.app to Applications folder
-2. Open Terminal and run this command:
+2. Open Terminal and run this command to fix "damaged app" error:
    xattr -cr /Applications/VbdlisTools.app
-3. Now you can open the app normally
+3. Now you can open the app normally (double-click or Spotlight)
 
 ⚠️ "App is damaged" ERROR?
 If you see "VbdlisTools is damaged and can't be opened":
+
+METHOD 1 (Recommended - Terminal):
 1. Open Terminal (Applications → Utilities → Terminal)
 2. Copy and paste this command:
    xattr -cr /Applications/VbdlisTools.app
 3. Press Enter
 4. Now open VbdlisTools normally
 
-WHY THIS HAPPENS:
-- App is not signed with Apple Developer certificate
-- macOS Gatekeeper blocks unsigned apps
-- The command removes quarantine attribute
+METHOD 2 (Right-click):
+1. DON'T double-click the app
+2. Right-click (or Control+Click) on VbdlisTools.app
+3. Select "Open" from menu
+4. Click "Open" in the security dialog
+5. App will open and remember this choice
 
-ALTERNATIVE METHOD:
-1. Right-click VbdlisTools.app → Show Package Contents
-2. Or: sudo spctl --master-disable (disable Gatekeeper - not recommended)
+WHY THIS HAPPENS:
+- App is not signed with Apple Developer certificate (\$99/year)
+- macOS Gatekeeper blocks unsigned apps downloaded from internet
+- This is a FREE open-source app, so we don't have Apple signing
+- The commands above safely bypass this security check
+
+⚠️ FIRST RUN - PLAYWRIGHT INSTALLATION:
+On first launch, app will:
+1. Show "Installing Playwright browsers..." window
+2. Download Chromium browser (~150MB)
+3. This may take 5-10 minutes depending on internet speed
+4. Installation happens once, not every time
+
+If Playwright installation fails:
+- Check internet connection
+- Check if you have enough disk space (~200MB)
+- Try quitting and restarting the app
+- Check logs at: ~/Library/Logs/VbdlisTools/
 
 FEATURES:
 - Native Apple Silicon ($ARCH_NAME) support
-- Auto-update via Velopack
+- Auto-update via Velopack (checks on startup)
 - No admin rights required
+- Fully functional offline after first Playwright install
 
-FIRST RUN:
-- Playwright browsers will download on first use
-- May take a few minutes
+TROUBLESHOOTING:
+- Logs: ~/Library/Logs/VbdlisTools/
+- Cache: ~/Library/Caches/VbdlisTools/
+- Playwright: ~/Library/Caches/ms-playwright/
+
+SYSTEM REQUIREMENTS:
+- macOS 10.15 (Catalina) or later
+- Apple Silicon (M1/M2/M3/M4)
+- ~200MB free disk space
+- Internet connection (first run only)
 
 For more info: https://github.com/haitnmt/Vbdlis-Tools
 EOF

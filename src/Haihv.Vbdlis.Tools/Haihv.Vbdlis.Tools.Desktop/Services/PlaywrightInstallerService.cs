@@ -198,6 +198,92 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                         _logger.Information("App base directory: {AppDir}", appDir);
                         _logger.Information("User profile: {Profile}", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                         _logger.Information("Playwright cache path: {Path}", GetPlaywrightBrowsersPath());
+                        _logger.Information("OS: {OS}", GetOperatingSystem());
+
+                        // macOS: Log permissions and environment
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                        {
+                            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                            var libraryCaches = Path.Combine(homeDir, "Library", "Caches");
+
+                            _logger.Information("HOME directory: {Home}", homeDir);
+                            _logger.Information("Library/Caches: {Path}, Exists: {Exists}",
+                                libraryCaches, Directory.Exists(libraryCaches));
+
+                            // Check .playwright folder in app bundle
+                            var playwrightInApp = Path.Combine(appDir, ".playwright");
+                            if (Directory.Exists(playwrightInApp))
+                            {
+                                _logger.Information("Found .playwright in app bundle: {Path}", playwrightInApp);
+
+                                // List files in .playwright to verify structure
+                                try
+                                {
+                                    var files = Directory.GetFiles(playwrightInApp, "*", SearchOption.AllDirectories);
+                                    _logger.Information(".playwright contains {Count} files", files.Length);
+
+                                    // Check for node executable
+                                    var nodeExe = Path.Combine(playwrightInApp, "node", "mac", "node");
+                                    if (File.Exists(nodeExe))
+                                    {
+                                        _logger.Information("Found node executable: {Path}", nodeExe);
+
+                                        // Ensure node executable has execute permission on macOS
+                                        try
+                                        {
+                                            var chmodProcess = new Process
+                                            {
+                                                StartInfo = new ProcessStartInfo
+                                                {
+                                                    FileName = "chmod",
+                                                    Arguments = $"+x \"{nodeExe}\"",
+                                                    RedirectStandardOutput = true,
+                                                    RedirectStandardError = true,
+                                                    UseShellExecute = false,
+                                                    CreateNoWindow = true
+                                                }
+                                            };
+                                            chmodProcess.Start();
+                                            chmodProcess.WaitForExit(3000);
+
+                                            if (chmodProcess.ExitCode == 0)
+                                            {
+                                                _logger.Information("Set execute permission on node executable");
+                                            }
+                                            else
+                                            {
+                                                _logger.Warning("Failed to chmod +x node executable: {Error}",
+                                                    chmodProcess.StandardError.ReadToEnd());
+                                            }
+                                        }
+                                        catch (Exception chmodEx)
+                                        {
+                                            _logger.Warning(chmodEx, "Could not set execute permission on node (not critical)");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _logger.Warning("Node executable NOT found at: {Path}", nodeExe);
+                                    }
+                                }
+                                catch (Exception listEx)
+                                {
+                                    _logger.Warning(listEx, "Could not list .playwright contents");
+                                }
+                            }
+                            else
+                            {
+                                _logger.Error(".playwright folder NOT found in app bundle at: {Path}", playwrightInApp);
+                            }
+
+                            // Check environment variables
+                            var envVars = new[] { "HOME", "USER", "TMPDIR", "PATH", "PLAYWRIGHT_BROWSERS_PATH" };
+                            foreach (var envVar in envVars)
+                            {
+                                var value = Environment.GetEnvironmentVariable(envVar);
+                                _logger.Information("ENV {Var} = {Value}", envVar, value ?? "(not set)");
+                            }
+                        }
 
                         // Change to app directory to ensure Playwright can find its assets
                         var originalDir = currentDir;

@@ -118,7 +118,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
             _ = CheckForUpdatesAsync();
         }
 
-        private void ConfigureServices(ServiceCollection services)
+        private static void ConfigureServices(ServiceCollection services)
         {
             // Register Playwright installer service
             services.AddSingleton<IPlaywrightInstallerService, PlaywrightInstallerService>();
