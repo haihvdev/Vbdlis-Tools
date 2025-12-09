@@ -1,4 +1,12 @@
-# PowerShell script to create a new release tag and trigger GitHub Actions
+# PowerShell script to create a GitHub release using the version from local build
+# This script:
+# 1. Reads version from version.json (created by build-local.ps1)
+# 2. Creates a git tag
+# 3. Pushes tag to GitHub to trigger automated release workflow
+#
+# Workflow:
+# Step 1: .\build-local.ps1        (builds locally, increments version)
+# Step 2: .\create-release.ps1     (uses that version for release)
 
 param(
     [string]$Version = "",
@@ -7,7 +15,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== VBDLIS Tools - Create Release ===" -ForegroundColor Green
+Write-Host "=== VBDLIS Tools - Create GitHub Release ===" -ForegroundColor Green
+Write-Host "This script creates a release using the version from build-local.ps1" -ForegroundColor Cyan
 Write-Host ""
 
 # Read current version from version.json
@@ -16,13 +25,22 @@ $VersionFile = Join-Path $ScriptDir "build\version.json"
 
 if (-not (Test-Path $VersionFile)) {
     Write-Host "❌ version.json not found!" -ForegroundColor Red
+    Write-Host "   Please run .\build-local.ps1 first to build and generate version." -ForegroundColor Yellow
     exit 1
 }
 
 $VersionContent = Get-Content $VersionFile -Raw | ConvertFrom-Json
 $CurrentVersion = $VersionContent.currentVersion
 
-Write-Host "📦 Current version: $CurrentVersion" -ForegroundColor Cyan
+if ([string]::IsNullOrEmpty($CurrentVersion)) {
+    Write-Host "❌ No version found in version.json!" -ForegroundColor Red
+    Write-Host "   Please run .\build-local.ps1 first to build and generate version." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "📦 Version from local build: $CurrentVersion" -ForegroundColor Cyan
+Write-Host "📅 Last build date: $($VersionContent.lastBuildDate)" -ForegroundColor Cyan
+Write-Host "🔢 Build number: $($VersionContent.buildNumber)" -ForegroundColor Cyan
 Write-Host ""
 
 # Determine version to use
@@ -140,13 +158,17 @@ Write-Host ""
 Write-Host "✅ Release tag created successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "📺 GitHub Actions will now:" -ForegroundColor Cyan
-Write-Host "   1. Build Windows (Velopack)" -ForegroundColor White
-Write-Host "   2. Build macOS arm64 (Apple Silicon M1/M2/M3/M4)" -ForegroundColor White
+Write-Host "   1. Build Windows with version: $Version" -ForegroundColor White
+Write-Host "   2. Build macOS arm64 with version: $Version" -ForegroundColor White
 Write-Host "   3. Create GitHub Release with all artifacts" -ForegroundColor White
 Write-Host ""
 Write-Host "🔗 Check progress at:" -ForegroundColor Cyan
 Write-Host "   https://github.com/$RepoPath/actions" -ForegroundColor White
 Write-Host ""
 Write-Host "⏱️  Build will take approximately 10-15 minutes" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "💡 Workflow:" -ForegroundColor Cyan
+Write-Host "   Local build (.\build-local.ps1) → Version $Version" -ForegroundColor White
+Write-Host "   GitHub release → Uses same version $Version" -ForegroundColor White
 Write-Host ""
 Write-Host "🎉 Done!" -ForegroundColor Green
