@@ -128,7 +128,7 @@ $versionLog.buildNumber = $buildNum
 if (-not $versionLog.platforms) {
     $versionLog | Add-Member -MemberType NoteProperty -Name "platforms" -Value @{
         windows = @{ lastBuilt = ""; version = "" }
-        macos = @{ lastBuilt = ""; version = "" }
+        macos   = @{ lastBuilt = ""; version = "" }
     }
 }
 if (-not $versionLog.platforms.windows) {
