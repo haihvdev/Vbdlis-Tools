@@ -252,6 +252,62 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# Step 3: Create ZIP archive of Setup.exe (avoid browser warning)
+Write-Host "`nStep 3: Creating ZIP archive of Setup.exe..." -ForegroundColor Yellow
+
+# Find the Setup.exe file
+$SetupExe = Get-ChildItem -Path $OutputPath -Filter "*-Setup.exe" | Select-Object -First 1
+
+if ($SetupExe) {
+    $ZipFileName = $SetupExe.Name -replace "-Setup\.exe$", "-Setup.zip"
+    $ZipPath = Join-Path $OutputPath $ZipFileName
+    
+    # Create README for installer ZIP
+    $ReadmeInstallerPath = Join-Path $OutputPath "README-INSTALLER.txt"
+    @"
+VBDLIS Tools - Installer Package
+Version: $Version
+=================================
+
+CONTENTS:
+- VbdlisTools-$Version-Setup.exe (Velopack Installer)
+
+INSTALLATION:
+1. Extract this ZIP file
+2. Run VbdlisTools-$Version-Setup.exe
+3. Follow the installation wizard
+
+FEATURES:
+- Full installer with auto-update support
+- Installs to %LOCALAPPDATA%\VbdlisTools
+- Creates Start Menu shortcut
+- Automatic Velopack updates
+
+WHY ZIP?
+- Avoids browser download warnings for .exe files
+- Safer distribution method
+- Easy to share
+
+SYSTEM REQUIREMENTS:
+- Windows 10 64-bit or later
+- .NET 10.0 (included)
+
+For more info: https://github.com/haitnmt/Vbdlis-Tools
+"@ | Out-File -FilePath $ReadmeInstallerPath -Encoding UTF8
+    
+    # Create ZIP with Setup.exe and README
+    Write-Host "Creating ZIP: $ZipFileName..." -ForegroundColor Cyan
+    Compress-Archive -Path $SetupExe.FullName, $ReadmeInstallerPath -DestinationPath $ZipPath -Force
+    
+    # Remove the README after zipping
+    Remove-Item -Path $ReadmeInstallerPath -Force
+    
+    Write-Host "✅ Setup ZIP created: $ZipFileName" -ForegroundColor Green
+}
+else {
+    Write-Warning "Setup.exe not found, skipping ZIP creation"
+}
+
 # Create deployment guide
 $ReadmePath = Join-Path $OutputPath "README.txt"
 $ReadmeContent = @"

@@ -45,7 +45,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-          dotnet-quality: "preview"
 
       - name: Install Velopack CLI
         run: dotnet tool install --global vpk
@@ -59,7 +58,7 @@ jobs:
         with:
           name: windows-release
           path: |
-            dist/velopack/*.zip
+            dist/velopack/*-Setup.zip
             dist/velopack/*.nupkg
             dist/velopack/RELEASES
           retention-days: 5
@@ -76,7 +75,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-          dotnet-quality: "preview"
 
       - name: Install Velopack CLI
         run: dotnet tool install --global vpk
