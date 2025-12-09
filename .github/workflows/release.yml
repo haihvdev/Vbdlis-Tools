@@ -1,187 +1,189 @@
 name: Build and Release
 
 on:
-    push:
-        tags:
-            - "v*.*.*" # Triggers on version tags like v1.0.25120905
-    workflow_dispatch: # Allow manual trigger
+  push:
+    tags:
+      - "v*.*.*" # Triggers on version tags like v1.0.25120905
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
-    prepare-version:
-        name: Prepare Version
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.get-version.outputs.version }}
-            tag-name: ${{ steps.get-version.outputs.tag-name }}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  prepare-version:
+    name: Prepare Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      tag-name: ${{ steps.get-version.outputs.tag-name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Get version from tag or version.json
-              id: get-version
-              run: |
-                  if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-                    # Extract version from tag (e.g., v1.0.25120905 -> 1.0.25120905)
-                    VERSION="${GITHUB_REF#refs/tags/v}"
-                    TAG_NAME="${GITHUB_REF#refs/tags/}"
-                  else
-                    # Read from version.json
-                    VERSION=$(cat build/version.json | grep -o '"currentVersion"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
-                    TAG_NAME="v$VERSION"
-                  fi
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "tag-name=$TAG_NAME" >> $GITHUB_OUTPUT
-                  echo "📦 Building version: $VERSION"
+      - name: Get version from tag or version.json
+        id: get-version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Extract version from tag (e.g., v1.0.25120905 -> 1.0.25120905)
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+          else
+            # Read from version.json
+            VERSION=$(cat build/version.json | grep -o '"currentVersion"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+            TAG_NAME="v$VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag-name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Building version: $VERSION"
 
-    build-windows:
-        name: Build Windows
-        needs: prepare-version
-        runs-on: windows-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  build-windows:
+    name: Build Windows
+    needs: prepare-version
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v4
-              with:
-                  dotnet-version: "10.0.x"
-                  dotnet-quality: "preview"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
 
-            - name: Install Velopack CLI
-              run: dotnet tool install --global vpk
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk
 
-            - name: Build Windows with Velopack
-              run: .\build\windows-velopack.ps1
-              shell: pwsh
+      - name: Build Windows with Velopack
+        run: .\build\windows-velopack.ps1
+        shell: pwsh
 
-            - name: Upload Windows artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: windows-release
-                  path: |
-                      dist/velopack/*.exe
-                      dist/velopack/*.nupkg
-                      dist/velopack/RELEASES
-                  retention-days: 5
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/velopack/*.zip
+            dist/velopack/*.nupkg
+            dist/velopack/RELEASES
+          retention-days: 5
 
-    build-macos:
-        name: Build macOS (Apple Silicon)
-        needs: prepare-version
-        runs-on: macos-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  build-macos:
+    name: Build macOS (Apple Silicon)
+    needs: prepare-version
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v4
-              with:
-                  dotnet-version: "10.0.x"
-                  dotnet-quality: "preview"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
 
-            - name: Install Velopack CLI
-              run: dotnet tool install --global vpk
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk
 
-            - name: Build macOS with Velopack
-              run: |
-                  chmod +x ./build/macos.sh
-                  ./build/macos.sh Release arm64
+      - name: Build macOS with Velopack
+        run: |
+          chmod +x ./build/macos.sh
+          ./build/macos.sh Release arm64
 
-            - name: Upload macOS artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: macos-arm64-release
-                  path: |
-                      dist/velopack-macos/arm64/*.zip
-                      dist/velopack-macos/arm64/RELEASES
-                  retention-days: 5
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-release
+          path: |
+            dist/velopack-macos/arm64/*.dmg
+          retention-days: 5
 
-    create-release:
-        name: Create GitHub Release
-        needs: [prepare-version, build-windows, build-macos]
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  create-release:
+    name: Create GitHub Release
+    needs: [prepare-version, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-            - name: Display structure of downloaded files
-              run: ls -R artifacts
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
 
-            - name: Generate release notes
-              id: release-notes
-              run: |
-                  VERSION="${{ needs.prepare-version.outputs.version }}"
-                  cat > release-notes.md << 'EOF'
-                  ## 🎉 VBDLIS Tools v$VERSION
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          VERSION="${{ needs.prepare-version.outputs.version }}"
+          cat > release-notes.md << 'EOF'
+          ## 🎉 VBDLIS Tools v$VERSION
 
-                  ### 📦 Downloads
+          ### 📦 Downloads
 
-                  #### Windows
-                  - **VbdlisTools-$VERSION-win-Setup.exe** - Installer cho người dùng mới
-                  - Hỗ trợ auto-update qua Velopack
+          #### Windows
+          - **VbdlisTools-$VERSION-Setup.zip** - Installer cho Windows (giải nén và chạy Setup.exe)
+          - Hỗ trợ auto-update qua Velopack
+          - **Lưu ý:** Tải file ZIP để tránh cảnh báo của trình duyệt
 
-                  #### macOS
-                  - **VbdlisTools-$VERSION-osx-arm64.zip** - Cho Mac M1/M2/M3/M4 (Apple Silicon)
-                  - Hỗ trợ auto-update qua Velopack
-                  - **Lưu ý:** Chỉ hỗ trợ Apple Silicon. Mac Intel (x64) không còn được hỗ trợ.
+          #### macOS
+          - **VbdlisTools-$VERSION-osx-arm64.dmg** - Cho Mac M1/M2/M3/M4 (Apple Silicon)
+          - Drag & drop vào Applications folder
+          - **Lưu ý:** Chỉ hỗ trợ Apple Silicon. Mac Intel (x64) không còn được hỗ trợ.
 
-                  ### 🚀 Installation
+          ### 🚀 Installation
 
-                  **Windows:**
-                  1. Tải file `VbdlisTools-$VERSION-win-Setup.exe`
-                  2. Chạy installer
-                  3. Ứng dụng tự động update khi có phiên bản mới
+          **Windows:**
+          1. Tải file `VbdlisTools-$VERSION-Setup.zip`
+          2. Giải nén ZIP file
+          3. Chạy `VbdlisTools-$VERSION-Setup.exe`
+          4. Ứng dụng tự động update khi có phiên bản mới
 
-                  **macOS (Apple Silicon only):**
-                  1. Tải file `VbdlisTools-$VERSION-osx-arm64.zip`
-                  2. Giải nén và kéo `VbdlisTools.app` vào thư mục Applications
-                  3. Lần đầu chạy: Right-click → Open (để bypass Gatekeeper)
-                  4. Ứng dụng tự động update khi có phiên bản mới
+          **macOS (Apple Silicon only):**
+          1. Tải file `VbdlisTools-$VERSION-osx-arm64.dmg`
+          2. Mở DMG file
+          3. Kéo `VbdlisTools.app` vào thư mục Applications
+          4. Lần đầu chạy: Right-click → Open (để bypass Gatekeeper)
+          5. Ứng dụng tự động update khi có phiên bản mới
 
-                  ### ⚠️ Important Notes
+          ### ⚠️ Important Notes
 
-                  - **Playwright Browsers**: Sẽ tự động tải xuống khi chạy lần đầu tiên
-                  - **Auto-Update**: Ứng dụng tự động kiểm tra và cập nhật phiên bản mới
-                  - **Minimum Requirements**:
-                    - Windows: Windows 10 64-bit or later
-                    - macOS: macOS 10.15 (Catalina) or later
+          - **Playwright Browsers**: Sẽ tự động tải xuống khi chạy lần đầu tiên
+          - **Auto-Update**: Ứng dụng tự động kiểm tra và cập nhật phiên bản mới
+          - **Minimum Requirements**:
+            - Windows: Windows 10 64-bit or later
+            - macOS: macOS 10.15 (Catalina) or later, Apple Silicon only
 
-                  ### 🐛 Bug Fixes & Improvements
+          ### 🐛 Bug Fixes & Improvements
 
-                  - Cải thiện hiệu suất
-                  - Sửa lỗi và tối ưu hóa
+          - Cải thiện hiệu suất
+          - Sửa lỗi và tối ưu hóa
 
-                  ---
+          ---
 
-                  **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...v$VERSION
-                  EOF
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...v$VERSION
+          EOF
 
-                  # Replace $VERSION with actual version
-                  sed -i "s/\$VERSION/$VERSION/g" release-notes.md
+          # Replace $VERSION with actual version
+          sed -i "s/\$VERSION/$VERSION/g" release-notes.md
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{ needs.prepare-version.outputs.tag-name }}
-                  name: Release ${{ needs.prepare-version.outputs.version }}
-                  body_path: release-notes.md
-                  draft: false
-                  prerelease: false
-                  files: |
-                      artifacts/windows-release/*
-                      artifacts/macos-arm64-release/*
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-version.outputs.tag-name }}
+          name: Release ${{ needs.prepare-version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/windows-release/*
+            artifacts/macos-arm64-release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Upload to release server (optional)
-              if: false # Enable this if you have a custom release server
-              run: |
-                  # Example: rsync or scp to your web server
-                  # rsync -avz artifacts/ user@server:/path/to/releases/
-                  echo "Upload to custom server disabled. Enable by setting 'if: true' above."
+      - name: Upload to release server (optional)
+        if: false # Enable this if you have a custom release server
+        run: |
+          # Example: rsync or scp to your web server
+          # rsync -avz artifacts/ user@server:/path/to/releases/
+          echo "Upload to custom server disabled. Enable by setting 'if: true' above."
