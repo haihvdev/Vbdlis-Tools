@@ -427,3 +427,10 @@ FodyWeavers.xsd
 ._*
 # nul file
 .nul
+
+# Build output directories
+dist/
+!dist/.gitkeep
+
+# Version log (optional: comment out if you want to commit it)
+# build/version.json

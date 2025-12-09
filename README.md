@@ -43,11 +43,50 @@ xcopy /E /I "dist\network-share\*" "\\server\Setups\VbdlisTools\"
 
 ## 📚 Documentation
 
+- **[GITHUB_RELEASES.md](GITHUB_RELEASES.md)** - 🌟 Hướng dẫn tạo releases trên GitHub
+- **[build/VERSION_MANAGEMENT.md](build/VERSION_MANAGEMENT.md)** - Quản lý version đồng bộ
 - **[build/README.md](build/README.md)** - Hướng dẫn build scripts
 - **[BUILD_DEPLOY.md](BUILD_DEPLOY.md)** - Chi tiết deployment
 - **[DEPLOYMENT_COMPARISON.md](DEPLOYMENT_COMPARISON.md)** - So sánh phương pháp
 - **[VELOPACK_AVALONIA_SETUP.md](VELOPACK_AVALONIA_SETUP.md)** - Setup auto-update
 - **[CLICKONCE_MIGRATION.md](CLICKONCE_MIGRATION.md)** - Vì sao không dùng ClickOnce
+
+---
+
+## 🎯 Creating Releases
+
+### Quick Release (Recommended)
+
+```powershell
+# 1. Build and test locally
+.\build-all.ps1
+
+# 2. Create release tag
+.\create-release.ps1
+
+# GitHub Actions will automatically:
+# - Build for Windows, macOS (arm64 + x64)
+# - Create GitHub Release
+# - Upload all installers
+```
+
+### Manual Steps
+
+```bash
+# Commit changes
+git add .
+git commit -m "feat: new features"
+git push
+
+# Create release tag
+git tag -a "v1.0.25120905" -m "Release v1.0.25120905"
+git push origin "v1.0.25120905"
+
+# GitHub Actions runs automatically
+# Check: https://github.com/haitnmt/Vbdlis-Tools/actions
+```
+
+**→ Chi tiết:** [GITHUB_RELEASES.md](GITHUB_RELEASES.md)
 
 ---
 
