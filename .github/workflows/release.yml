@@ -56,36 +56,6 @@ jobs:
       - name: Install Velopack CLI
         run: dotnet tool install --global vpk
 
-      - name: Install Playwright browsers
-        run: |
-          Write-Host "Installing Playwright CLI..." -ForegroundColor Yellow
-          dotnet tool install --global Microsoft.Playwright.CLI
-
-          Write-Host "`nInstalling Chromium browser..." -ForegroundColor Yellow
-          Write-Host "Working directory: $(Get-Location)" -ForegroundColor Gray
-
-          # Change to project directory
-          cd src\Haihv.Vbdlis.Tools\Haihv.Vbdlis.Tools.Desktop
-          Write-Host "Changed to: $(Get-Location)" -ForegroundColor Gray
-
-          # Install browsers (will go to %LOCALAPPDATA%\ms-playwright)
-          playwright install chromium
-
-          # Verify installation
-          $PlaywrightCache = Join-Path $env:LOCALAPPDATA "ms-playwright"
-          Write-Host "`nPlaywright cache location: $PlaywrightCache" -ForegroundColor Cyan
-
-          if (Test-Path "$PlaywrightCache\chromium-*") {
-              $chromiumDirs = Get-ChildItem -Path $PlaywrightCache -Directory -Filter "chromium-*"
-              Write-Host "✅ Chromium installed:" -ForegroundColor Green
-              foreach ($dir in $chromiumDirs) {
-                  Write-Host "   - $($dir.Name)" -ForegroundColor White
-              }
-          } else {
-              Write-Host "⚠️  Warning: Chromium not found in cache!" -ForegroundColor Yellow
-          }
-        shell: pwsh
-
       - name: Display locked version info
         run: |
           Write-Host "🔒 Building Windows with LOCKED version from version.json" -ForegroundColor Green

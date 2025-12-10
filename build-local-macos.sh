@@ -6,13 +6,12 @@ set -e
 
 CONFIGURATION="${1:-Release}"
 ARCH="${2:-arm64}"
-BUNDLE_PLAYWRIGHT="${BUNDLE_PLAYWRIGHT:-0}"   # set to 0 to skip bundling browsers (smaller DMG, requires download on first run)
 
 echo "=== Local macOS Build Script with Auto-Increment Version ==="
 echo "Configuration: $CONFIGURATION"
 echo "Architecture: $ARCH"
 echo "Build Mode: LOCAL (auto-increment version)"
-echo "Bundle Playwright browsers: $([ "$BUNDLE_PLAYWRIGHT" = "1" ] && echo "Yes" || echo "No (will download on first run)")"
+echo "Playwright browsers: NOT bundled (app will auto-download)"
 
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -149,65 +148,10 @@ find "$PUBLISH_PATH" -type f -name "*.map" -delete 2>/dev/null || true
 
 echo "Build completed successfully!"
 
-# Install Playwright browsers locally (for bundling into DMG)
-if [ "$BUNDLE_PLAYWRIGHT" = "1" ]; then
-    echo -e "\nInstalling Playwright browsers for bundling..."
-
-    # Check if Playwright browsers are already installed globally
-    PLAYWRIGHT_CACHE_DIR="$HOME/Library/Caches/ms-playwright"
-    CHROMIUM_FOUND=$(find "$PLAYWRIGHT_CACHE_DIR" -maxdepth 1 -type d -name "chromium-*" 2>/dev/null | wc -l)
-
-    if [ "$CHROMIUM_FOUND" -gt 0 ]; then
-        echo "✅ Playwright browsers found in cache: $PLAYWRIGHT_CACHE_DIR"
-
-        # Copy browsers from cache to app output
-        echo "Copying Playwright browsers to app bundle..."
-        mkdir -p "$PUBLISH_PATH/.playwright-browsers"
-
-        # Copy required components for chromium install
-        REQUIRED_PATTERNS=("chromium-*" "chromium_headless_shell-*" "ffmpeg-*")
-        MISSING_COMPONENTS=0
-
-        for PATTERN in "${REQUIRED_PATTERNS[@]}"; do
-            if compgen -G "$PLAYWRIGHT_CACHE_DIR/$PATTERN" > /dev/null; then
-                cp -R "$PLAYWRIGHT_CACHE_DIR"/$PATTERN "$PUBLISH_PATH/.playwright-browsers/" 2>/dev/null || true
-            else
-                echo "⚠️  Missing $PATTERN in cache; bundle will be incomplete"
-                MISSING_COMPONENTS=$((MISSING_COMPONENTS + 1))
-            fi
-        done
-
-        BROWSER_COUNT=$(find "$PUBLISH_PATH/.playwright-browsers" -maxdepth 1 -type d -name "chromium-*" 2>/dev/null | wc -l)
-        if [ "$BROWSER_COUNT" -gt 0 ] && [ "$MISSING_COMPONENTS" -eq 0 ]; then
-            echo "✅ Chromium and required components copied to app bundle"
-            BROWSERS_BUNDLED=true
-        else
-            echo "⚠️  Bundled browsers are incomplete."
-            BROWSERS_BUNDLED=false
-        fi
-    else
-        echo "⚠️  Playwright browsers not found in cache"
-        echo "   Users will need to download Chromium (~150MB) on first run"
-        echo ""
-        echo "💡 To include browsers in DMG (recommended):"
-        echo "   1. Install browsers once: pwsh -c 'playwright install chromium'"
-        echo "   2. Run this build script again"
-        echo "   3. Browsers will be bundled into DMG"
-        BROWSERS_BUNDLED=false
-    fi
-
-    if [ "$BROWSERS_BUNDLED" != true ]; then
-        echo "❌ Chromium is missing from the app bundle. Install it to your cache then rerun the build:"
-        echo "   pwsh -c \"playwright install chromium\""
-        exit 1
-    fi
-else
-    echo -e "\nSkipping Playwright browser bundling (BUNDLE_PLAYWRIGHT=0)."
-    echo "App will download browsers on first run (~350MB)."
-fi
-
-# Keep .playwright driver (needed for installation)
-echo "Keeping Playwright driver tools in .playwright folder"
+# Playwright browsers - NOT bundled (app will auto-download on first run)
+echo -e "\nPlaywright browsers: NOT bundled"
+echo "   Application will auto-download Chromium on first run (~150MB)"
+echo "   Users will need internet connection on first launch"
 
 # Create app bundle structure
 echo -e "\nCreating macOS app bundle..."

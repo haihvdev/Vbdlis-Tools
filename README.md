@@ -2,67 +2,66 @@
 
 Công cụ hỗ trợ làm việc với hệ thống VBDLIS.
 
-## 🚀 Quick Start
+## 🚀 Bắt đầu nhanh
 
-### Local Build (Windows)
+### Build local (Windows)
 
 ```powershell
-# Build locally with auto-increment version
+# Build local với tự động tăng version
 .\build-local.ps1
 
 # Output: dist/velopack/VbdlisTools-{version}-Setup.zip
 ```
 
-### Local Build (macOS)
+### Build local (macOS)
 
 ```bash
-# Build locally with auto-increment version
-# Set BUNDLE_PLAYWRIGHT=1 to include browsers (~200MB DMG)
-BUNDLE_PLAYWRIGHT=1 ./build-local-macos.sh
+# Build local với tự động tăng version
+./build-local-macos.sh
 
 # Output: dist/velopack-macos-local/VbdlisTools-{version}-osx-arm64.dmg
 ```
 
 ---
 
-## 📦 Create GitHub Release
+## 📦 Tạo GitHub Release
 
 ```powershell
-# Step 1: Build locally (auto-increments version)
+# Bước 1: Build local (tự động tăng version)
 .\build-local.ps1
 
-# Step 2: Create release (uses version from build-local.ps1)
+# Bước 2: Tạo release (sử dụng version từ build-local.ps1)
 .\create-release.ps1
 
-# GitHub Actions will:
-# - Build Windows ONLY (no version increment)
-# - Create GitHub Release
+# GitHub Actions sẽ:
+# - Build Windows ONLY (không tăng version)
+# - Tạo GitHub Release
 # - Upload Windows installer
 ```
 
-**Note:** macOS builds must be done locally and manually uploaded to GitHub Release.
+**Lưu ý:** macOS builds phải build local và upload thủ công lên GitHub Release.
 
 ---
 
 ## 🔧 Build Scripts
 
-| Script | Platform | Purpose |
+| Script | Platform | Mục đích |
 |--------|----------|---------|
-| **build-local.ps1** | Windows | Local build with auto-increment version |
-| **build-local-macos.sh** | macOS | Local build with auto-increment version |
-| **build\windows-velopack.ps1** | Windows | Build script (called by build-local.ps1 and GitHub Actions) |
+| **build-local.ps1** | Windows | Build local với tự động tăng version |
+| **build-local-macos.sh** | macOS | Build local với tự động tăng version |
+| **build\windows-velopack.ps1** | Windows | Script build (được gọi bởi build-local.ps1 và GitHub Actions) |
 
 ---
 
-## 📝 Version Management
+## 📝 Quản lý Version
 
-Version format: `Major.Minor.YYMMDDBB`
-- Example: `1.0.25121001`
+Format version: `Major.Minor.YYMMDDBB`
+- Ví dụ: `1.0.25121001`
   - `1.0` - Major.Minor version
-  - `251210` - Date (2025-12-10)
-  - `01` - Build number (increments per day)
+  - `251210` - Ngày (2025-12-10)
+  - `01` - Build number (tăng theo ngày)
 
-### Version File: `build/version.json`
+### File Version: `build/version.json`
 
 ```json
 {
@@ -84,17 +83,17 @@ Version format: `Major.Minor.YYMMDDBB`
 }
 ```
 
-### Auto-Increment Behavior
+### Cơ chế tự động tăng Version
 
-- **Local builds** (`build-local.ps1` or `build-local-macos.sh`):
-  - ✅ Auto-increments version
-  - ✅ Updates `build/version.json`
-  - ✅ Updates `.csproj` file
+- **Local builds** (`build-local.ps1` hoặc `build-local-macos.sh`):
+  - ✅ Tự động tăng version
+  - ✅ Cập nhật `build/version.json`
+  - ✅ Cập nhật file `.csproj`
 
 - **GitHub Actions** (`.github/workflows/release.yml`):
-  - 🔒 Uses LOCKED version from `build/version.json`
-  - ❌ Does NOT auto-increment
-  - ✅ Builds Windows ONLY
+  - 🔒 Sử dụng version ĐÃ KHÓA từ `build/version.json`
+  - ❌ KHÔNG tự động tăng version
+  - ✅ Build Windows ONLY
 
 ---
 
@@ -110,41 +109,41 @@ Version format: `Major.Minor.YYMMDDBB`
 
 ---
 
-## 📋 Requirements
+## 📋 Yêu cầu hệ thống
 
-### For Building:
+### Để Build:
 - **.NET 10.0 SDK**
-- **Velopack CLI** (auto-installed by build scripts)
-- **Playwright browsers** (auto-installed: `playwright install chromium`)
+- **Velopack CLI** (tự động cài bởi build scripts)
 
-### For Running:
-- **Windows 10+** or **macOS 10.15+**
-- **.NET 10.0 Runtime** (included in installer)
-- **Internet connection** (first run only)
+### Để chạy ứng dụng:
+- **Windows 10+** hoặc **macOS 10.15+**
+- **.NET 10.0 Runtime** (đã bao gồm trong installer)
+- **Kết nối Internet** (lần chạy đầu tiên - ứng dụng sẽ tự động tải Chromium ~150MB)
 
 ---
 
-## ⚠️ Playwright Installation Issue
+## 🌐 Playwright Browsers
 
-If you encounter the error:
-```
-Couldn't find project using Playwright. Ensure a project or a solution exists
-```
+Ứng dụng sử dụng Playwright để tự động hóa browser. **Chromium browser KHÔNG được bundle** trong installer/DMG để giữ kích thước file nhỏ (~50MB thay vì ~200MB).
 
-**Fix:**
-```powershell
-# Windows
-cd src\Haihv.Vbdlis.Tools\Haihv.Vbdlis.Tools.Desktop
-dotnet build
-playwright install chromium
+### Hành vi lần chạy đầu tiên
 
-# macOS
-cd src/Haihv.Vbdlis.Tools/Haihv.Vbdlis.Tools.Desktop
-dotnet build
-playwright install chromium
-```
+Khi chạy lần đầu, ứng dụng sẽ tự động:
+1. Phát hiện Chromium chưa được cài đặt
+2. Tải Chromium (~150MB)
+3. Cài đặt vào thư mục cache của user
+4. Khởi động bình thường
 
-The build scripts now handle Playwright browser installation automatically.
+**Yêu cầu:**
+- Kết nối Internet khi chạy lần đầu
+- ~150MB dung lượng trống
+- Cho phép download trong firewall/antivirus
+
+**Lợi ích:**
+- ✅ Installer/DMG nhẹ hơn (~50MB)
+- ✅ Download và cài đặt nhanh hơn
+- ✅ Chromium luôn được cập nhật từ Playwright
+- ⚠️ Cần internet lần chạy đầu tiên
 
 ---
 
@@ -154,6 +153,6 @@ The build scripts now handle Playwright browser installation automatically.
 
 ---
 
-## 🆘 Support
+## 🆘 Hỗ trợ
 
-For issues or questions, please open an issue on GitHub.
+Nếu gặp vấn đề hoặc có câu hỏi, vui lòng mở issue trên GitHub.

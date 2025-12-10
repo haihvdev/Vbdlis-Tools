@@ -205,43 +205,10 @@ Write-Host "Version log updated: $VersionLogFile" -ForegroundColor Green
 Write-Host "  Current Version: $packageVersion" -ForegroundColor Cyan
 Write-Host "  Build Number: $buildNumber" -ForegroundColor Cyan
 
-# Bundle Playwright browsers (for bundling into installer)
-Write-Host "`nBundling Playwright browsers..." -ForegroundColor Yellow
-
-# Check if Playwright browsers are already installed in system cache
-$PlaywrightCacheDir = Join-Path $env:LOCALAPPDATA "ms-playwright"
-$BundledBrowsersPath = Join-Path $PublishPath ".playwright-browsers"
-
-if (Test-Path "$PlaywrightCacheDir\chromium-*") {
-    Write-Host "✅ Playwright browsers found in cache: $PlaywrightCacheDir" -ForegroundColor Green
-
-    # Copy browsers from cache to app output
-    Write-Host "Copying Playwright browsers to app bundle..." -ForegroundColor Cyan
-    New-Item -ItemType Directory -Path $BundledBrowsersPath -Force | Out-Null
-
-    # Copy only chromium (smallest and most compatible)
-    $chromiumDirs = Get-ChildItem -Path $PlaywrightCacheDir -Directory -Filter "chromium-*" -ErrorAction SilentlyContinue
-    if ($chromiumDirs) {
-        foreach ($dir in $chromiumDirs) {
-            Copy-Item -Path $dir.FullName -Destination $BundledBrowsersPath -Recurse -Force
-            Write-Host "✅ Copied $($dir.Name) to app bundle" -ForegroundColor Green
-        }
-    }
-    else {
-        Write-Host "⚠️  No browsers copied. Installer will NOT include browsers." -ForegroundColor Yellow
-    }
-}
-else {
-    Write-Host "⚠️  Playwright browsers not found in cache: $PlaywrightCacheDir" -ForegroundColor Yellow
-    Write-Host "   Installer will NOT include browsers (~150MB)" -ForegroundColor Yellow
-    Write-Host "" -ForegroundColor Yellow
-    Write-Host "💡 To include browsers in installer (recommended):" -ForegroundColor Cyan
-    Write-Host "   1. Install browsers once: playwright install chromium" -ForegroundColor White
-    Write-Host "   2. Run this build script again" -ForegroundColor White
-    Write-Host "   3. Browsers will be bundled into installer" -ForegroundColor White
-}
-
-Write-Host "Keeping Playwright driver tools in .playwright folder" -ForegroundColor Cyan
+# Playwright browsers - NOT bundled (app will auto-download on first run)
+Write-Host "`nPlaywright browsers: NOT bundled" -ForegroundColor Yellow
+Write-Host "   Application will auto-download Chromium on first run (~150MB)" -ForegroundColor Cyan
+Write-Host "   Users will need internet connection on first launch" -ForegroundColor Gray
 
 # Step 2: Create Velopack release
 Write-Host "`nCreating Velopack release..." -ForegroundColor Yellow
