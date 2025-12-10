@@ -221,21 +221,35 @@ namespace Haihv.Vbdlis.Tools.Desktop
         /// </summary>
         private async Task CheckForUpdatesAsync()
         {
+            Log.Information("╔════════════════════════════════════════════════════════════════════╗");
+            Log.Information("║          KIỂM TRA CẬP NHẬT TỰ ĐỘNG (AUTO-UPDATE CHECK)            ║");
+            Log.Information("╚════════════════════════════════════════════════════════════════════╝");
+
             try
             {
                 if (_serviceProvider == null)
+                {
+                    Log.Warning("ServiceProvider chưa khởi tạo. Bỏ qua kiểm tra cập nhật.");
                     return;
+                }
 
                 var updateService = _serviceProvider.GetService<IUpdateService>();
                 if (updateService == null)
+                {
+                    Log.Warning("UpdateService không được đăng ký. Bỏ qua kiểm tra cập nhật.");
                     return;
+                }
 
-                Log.Information("Checking for updates before app startup...");
+                Log.Information("Đang gọi UpdateService.CheckForUpdatesAsync()...");
                 var updateInfo = await updateService.CheckForUpdatesAsync();
 
                 if (updateInfo != null)
                 {
-                    Log.Information("Update available: {Version}", updateInfo.Version);
+                    Log.Information("╔════════════════════════════════════════════════════════════════════╗");
+                    Log.Information("║                   CÓ PHIÊN BẢN MỚI KHẢ DỤNG!                      ║");
+                    Log.Information("╚════════════════════════════════════════════════════════════════════╝");
+                    Log.Information("Phiên bản mới: {Version}", updateInfo.Version);
+                    Log.Information("Đang hiển thị dialog cập nhật cho người dùng...");
 
                     // Show update notification on UI thread
                     await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -244,26 +258,43 @@ namespace Haihv.Vbdlis.Tools.Desktop
 
                         if (result)
                         {
-                            // User wants to update
-                            Log.Information("User accepted update");
-                            await updateService.DownloadAndInstallUpdateAsync(updateInfo, progress =>
+                            Log.Information("✅ Người dùng chọn CẬP NHẬT NGAY");
+                            Log.Information("Đang bắt đầu quá trình tải và cài đặt...");
+
+                            var success = await updateService.DownloadAndInstallUpdateAsync(updateInfo, progress =>
                             {
-                                Log.Information("Download progress: {Progress}%", progress);
+                                Log.Debug("Tiến trình tải: {Progress}%", progress);
                             });
 
-                            // Installer will launch and close this app
+                            if (success)
+                            {
+                                Log.Information("✅ Cập nhật thành công! Ứng dụng sẽ khởi động lại...");
+                            }
+                            else
+                            {
+                                Log.Error("❌ Cập nhật thất bại! Vui lòng thử lại sau.");
+                            }
+                        }
+                        else
+                        {
+                            Log.Information("⏭️  Người dùng chọn ĐỂ SAU. Tiếp tục khởi động ứng dụng...");
                         }
                     });
                 }
                 else
                 {
-                    Log.Information("No updates available");
+                    Log.Information("✅ Đã sử dụng phiên bản mới nhất. Không có cập nhật.");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error checking for updates");
+                Log.Error(ex, "❌ LỖI khi kiểm tra cập nhật");
+                Log.Error("Chi tiết: {Message}", ex.Message);
             }
+
+            Log.Information("╔════════════════════════════════════════════════════════════════════╗");
+            Log.Information("║            KẾT THÚC KIỂM TRA CẬP NHẬT TỰ ĐỘNG                     ║");
+            Log.Information("╚════════════════════════════════════════════════════════════════════╝");
         }
 
         /// <summary>

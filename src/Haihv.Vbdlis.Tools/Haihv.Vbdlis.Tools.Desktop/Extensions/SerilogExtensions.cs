@@ -18,9 +18,9 @@ public static class SerilogExtensions
             .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
             .WriteTo.File(
                 path: logFilePath,
-                restrictedToMinimumLevel: LogEventLevel.Warning,
+                restrictedToMinimumLevel: LogEventLevel.Information,
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 30,
+                retainedFileCountLimit: 31,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
