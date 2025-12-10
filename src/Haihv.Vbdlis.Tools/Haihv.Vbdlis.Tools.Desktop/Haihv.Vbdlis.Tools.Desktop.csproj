@@ -9,10 +9,10 @@
     <ApplicationIcon>Assets\appicon.ico</ApplicationIcon>
 
     <!-- Assembly Information -->
-    <AssemblyVersion>1.0.2512.1020</AssemblyVersion>
-    <FileVersion>1.0.2512.1020</FileVersion>
-    <Version>1.0.2512.1020</Version>
-    <InformationalVersion>1.0.25121020</InformationalVersion>
+    <AssemblyVersion>1.0.2512.1022</AssemblyVersion>
+    <FileVersion>1.0.2512.1022</FileVersion>
+    <Version>1.0.2512.1022</Version>
+    <InformationalVersion>1.0.25121022</InformationalVersion>
     <Copyright>© 2025 vpdkbacninh.vn | haihv.vn</Copyright>
     <Company>vpdkbacninh.vn | haihv.vn</Company>
     <Product>Vbdlis Tools</Product>

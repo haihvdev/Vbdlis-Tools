@@ -215,7 +215,7 @@ Write-Host "`nStep 2: Creating Velopack installer..." -ForegroundColor Yellow
 
 $VelopackArgs = @(
     "pack"
-    "--packId", "VbdlisTools"
+    "--packId", "Haihv.Vbdlis.Tools.Desktop"
     "--packVersion", $Version
     "--packDir", $PublishPath
     "--mainExe", "Haihv.Vbdlis.Tools.Desktop.exe"
