@@ -424,6 +424,24 @@ Write-Host "   Portable: Haihv.Vbdlis.Tools.Desktop-osx-Portable.zip" -Foregroun
 Write-Host "`n🚀 RECOMMENDED FOR USERS:" -ForegroundColor Yellow
 Write-Host "   Share the DMG file - easiest to install!" -ForegroundColor White
 Write-Host "   User just needs to run: xattr -cr `"/Applications/VBDLIS Tools.app`"" -ForegroundColor White
-Write-Host "`n📝 NOTE: This is a LOCAL build for testing." -ForegroundColor Yellow
-Write-Host "   To create a RELEASE, use: ./create-release.ps1" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "                    NEXT STEPS" -ForegroundColor Green
+Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "📝 This is a LOCAL build for testing." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "To create a RELEASE on GitHub:" -ForegroundColor Cyan
+Write-Host "   ./create-release-macos.sh" -ForegroundColor White
+Write-Host "   or" -ForegroundColor DarkGray
+Write-Host "   .\create-release.ps1" -ForegroundColor White
+Write-Host ""
+Write-Host "This will:" -ForegroundColor Cyan
+Write-Host "   1. Create git tag v$packageVersion" -ForegroundColor White
+Write-Host "   2. Push to GitHub" -ForegroundColor White
+Write-Host "   3. Trigger GitHub Actions to build Windows version" -ForegroundColor White
+Write-Host "   4. You can manually upload macOS DMG with:" -ForegroundColor White
+Write-Host "      gh release upload v$packageVersion $OutputPath/VbdlisTools-$packageVersion-osx-$Arch.dmg" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host ""
