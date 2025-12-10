@@ -1,17 +1,17 @@
-{
-  "majorMinor": "1.0",
-  "currentVersion": "1.0.25120918",
-  "assemblyVersion": "1.0.2512.0918",
-  "lastBuildDate": "2025-12-09",
-  "buildNumber": 18,
-  "platforms": {
-    "windows": {
-      "lastBuilt": "2025-12-09T16:50:52",
-      "version": "1.0.25120916"
-    },
-    "macos": {
-      "lastBuilt": "2025-12-09T18:41:12",
-      "version": "1.0.25120918"
-    }
-  }
+﻿{
+    "majorMinor":  "1.0",
+    "currentVersion":  "1.0.25121001",
+    "assemblyVersion":  "1.0.2512.1001",
+    "lastBuildDate":  "2025-12-10",
+    "buildNumber":  1,
+    "platforms":  {
+                      "windows":  {
+                                      "lastBuilt":  "2025-12-10T07:39:19",
+                                      "version":  "1.0.25121001"
+                                  },
+                      "macos":  {
+                                    "lastBuilt":  "2025-12-09T18:41:12",
+                                    "version":  "1.0.25120918"
+                                }
+                  }
 }
