@@ -50,7 +50,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         public event EventHandler? LoginCancelled;
 
         [RelayCommand(CanExecute = nameof(CanLogin))]
-        private async Task LoginAsync()
+        public async Task LoginAsync()
         {
             try
             {

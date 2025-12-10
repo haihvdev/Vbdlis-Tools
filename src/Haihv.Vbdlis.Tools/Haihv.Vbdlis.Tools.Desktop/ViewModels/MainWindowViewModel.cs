@@ -56,7 +56,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             // Initialize LoginViewModel with PlaywrightService
             _loginViewModel = new LoginViewModel(playwrightService)
             {
-                Server = "https://bgi.mplis.gov.vn/dc/"
+                Server = "https://bgi.mplis.gov.vn/dc/",
+                HeadlessBrowser = true
             };
 
             // Subscribe to login events
@@ -80,6 +81,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 LoginViewModel.Password = credentials.Password;
                 LoginViewModel.HeadlessBrowser = credentials.HeadlessBrowser;
                 LoginViewModel.RememberMe = true; // User had saved credentials, so check RememberMe
+                // Nếu có thông tin đăng nhập đã lưu, tự động đăng nhập
+                await LoginViewModel.LoginAsync();
             }
         }
 

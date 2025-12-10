@@ -7,5 +7,5 @@ namespace Haihv.Vbdlis.Tools.Desktop.Models
         string Server,
         string Username,
         string Password,
-        bool HeadlessBrowser);
+        bool HeadlessBrowser = true);
 }
