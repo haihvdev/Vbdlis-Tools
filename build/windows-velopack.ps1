@@ -20,16 +20,13 @@ Write-Host "Configuration: $Configuration" -ForegroundColor Cyan
 
 # Check if Velopack is installed
 Write-Host "`nChecking for Velopack CLI..." -ForegroundColor Yellow
-$velopackInstalled = $false
 try {
     $null = vpk --version 2>&1
-    $velopackInstalled = $true
     Write-Host "Velopack CLI found!" -ForegroundColor Green
 }
 catch {
     Write-Host "Velopack CLI not found. Installing..." -ForegroundColor Yellow
     dotnet tool install --global vpk
-    $velopackInstalled = $true
 }
 
 # Paths
@@ -76,7 +73,6 @@ else {
 
 # Generate date parts: YYMM and DD
 $yearMonthString = Get-Date -Format "yyMM"  # e.g., "2512"
-$yearMonth = [int]$yearMonthString          # still <= 65535
 $dayString = Get-Date -Format "dd"          # always two digits, e.g., "09"
 $todayString = Get-Date -Format "yyyy-MM-dd"
 
@@ -230,12 +226,12 @@ if (Test-Path "$PlaywrightCacheDir\chromium-*") {
             Copy-Item -Path $dir.FullName -Destination $BundledBrowsersPath -Recurse -Force
             Write-Host "✅ Copied $($dir.Name) to app bundle" -ForegroundColor Green
         }
-        $BrowsersBundled = $true
-    } else {
-        Write-Host "⚠️  No browsers copied. Installer will NOT include browsers." -ForegroundColor Yellow
-        $BrowsersBundled = $false
     }
-} else {
+    else {
+        Write-Host "⚠️  No browsers copied. Installer will NOT include browsers." -ForegroundColor Yellow
+    }
+}
+else {
     Write-Host "⚠️  Playwright browsers not found in cache: $PlaywrightCacheDir" -ForegroundColor Yellow
     Write-Host "   Installer will NOT include browsers (~150MB)" -ForegroundColor Yellow
     Write-Host "" -ForegroundColor Yellow
@@ -243,7 +239,6 @@ if (Test-Path "$PlaywrightCacheDir\chromium-*") {
     Write-Host "   1. Install browsers once: playwright install chromium" -ForegroundColor White
     Write-Host "   2. Run this build script again" -ForegroundColor White
     Write-Host "   3. Browsers will be bundled into installer" -ForegroundColor White
-    $BrowsersBundled = $false
 }
 
 Write-Host "Keeping Playwright driver tools in .playwright folder" -ForegroundColor Cyan
