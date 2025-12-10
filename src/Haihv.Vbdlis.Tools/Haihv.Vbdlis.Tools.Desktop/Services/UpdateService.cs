@@ -85,13 +85,62 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     return null;
                 }
 
-                _logger.Information("[UPDATE] Kết nối GitHub: https://github.com/{Owner}/{Repo}", GitHubRepoOwner, GitHubRepoName);
+                // Log detailed info before calling Velopack
+                try
+                {
+                    var currentDir = Environment.CurrentDirectory;
+                    var exePath = Environment.ProcessPath;
+                    _logger.Information("[UPDATE] Current Directory: {CurrentDir}", currentDir);
+                    _logger.Information("[UPDATE] Process Path: {ExePath}", exePath);
+                    _logger.Information("[UPDATE] OS: {OS}", RuntimeInformation.OSDescription);
+                }
+                catch (Exception locEx)
+                {
+                    _logger.Warning(locEx, "[UPDATE] Không thể lấy thông tin app location");
+                }
 
-                var updateInfo = await _updateManager.CheckForUpdatesAsync();
+                _logger.Information("[UPDATE] Kết nối GitHub: https://github.com/{Owner}/{Repo}", GitHubRepoOwner, GitHubRepoName);
+                _logger.Information("[UPDATE] Đang gọi _updateManager.CheckForUpdatesAsync()...");
+
+                Velopack.UpdateInfo? updateInfo = null;
+                try
+                {
+                    updateInfo = await _updateManager.CheckForUpdatesAsync();
+                    _logger.Information("[UPDATE] CheckForUpdatesAsync() hoàn thành - Result: {IsNull}", updateInfo == null ? "NULL" : "NOT NULL");
+                }
+                catch (System.Net.Http.HttpRequestException httpEx)
+                {
+                    _logger.Error(httpEx, "[UPDATE] HTTP Error - Không kết nối được GitHub");
+                    _logger.Error("[UPDATE] StatusCode: {StatusCode}", httpEx.StatusCode);
+                    _logger.Error("[UPDATE] Message: {Message}", httpEx.Message);
+                    if (httpEx.InnerException != null)
+                    {
+                        _logger.Error("[UPDATE] InnerException: {InnerMessage}", httpEx.InnerException.Message);
+                    }
+                    throw;
+                }
+                catch (TaskCanceledException timeoutEx)
+                {
+                    _logger.Error(timeoutEx, "[UPDATE] Timeout - Mất quá nhiều thời gian kết nối GitHub");
+                    throw;
+                }
+                catch (Exception veloEx)
+                {
+                    _logger.Error(veloEx, "[UPDATE] Velopack Exception: {Type}", veloEx.GetType().Name);
+                    _logger.Error("[UPDATE] Message: {Message}", veloEx.Message);
+                    _logger.Error("[UPDATE] StackTrace: {StackTrace}", veloEx.StackTrace);
+                    if (veloEx.InnerException != null)
+                    {
+                        _logger.Error("[UPDATE] InnerException: {InnerType} - {InnerMessage}",
+                            veloEx.InnerException.GetType().Name,
+                            veloEx.InnerException.Message);
+                    }
+                    throw;
+                }
 
                 if (updateInfo == null)
                 {
-                    _logger.Information("[UPDATE] Đã sử dụng phiên bản mới nhất");
+                    _logger.Information("[UPDATE] Không có update (updateInfo == null) - Có thể đã là phiên bản mới nhất hoặc không tìm thấy RELEASES file");
                     return null;
                 }
 
