@@ -23,7 +23,8 @@
       "Bash(./build-local-macos.sh:*)",
       "Bash(hdiutil attach:*)",
       "Bash(hdiutil detach:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

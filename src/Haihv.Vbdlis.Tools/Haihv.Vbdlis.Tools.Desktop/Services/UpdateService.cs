@@ -48,8 +48,26 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             // Initialize Velopack UpdateManager
             try
             {
+                // Log Velopack's detected version and assembly info
+                var velopackVersion = VelopackRuntimeInfo.VelopackNugetVersion;
+                var currentAssembly = Assembly.GetExecutingAssembly();
+                var assemblyName = currentAssembly.GetName().Name;
+                var productName = currentAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product;
+
+                _logger.Information("Velopack detected app version: {VelopackVersion}", velopackVersion);
+                _logger.Information("Assembly Name: {AssemblyName}", assemblyName);
+                _logger.Information("Product Name: {ProductName}", productName);
+                _logger.Information("Assembly InformationalVersion: {InfoVersion}", CurrentVersion);
+                _logger.Warning("CRITICAL: Tên package trong RELEASES file phải khớp với Assembly/Product name!");
+                _logger.Warning("RELEASES file hiện tại: VbdlisTools-1.0.25121017-full.nupkg");
+                _logger.Warning("App đang tìm package: {Expected}-{Version}-full.nupkg", assemblyName, velopackVersion);
+
                 // Use GitHub as update source
-                var source = new GithubSource($"https://github.com/{GitHubRepoOwner}/{GitHubRepoName}", null, false);
+                var repoUrl = $"https://github.com/{GitHubRepoOwner}/{GitHubRepoName}";
+                _logger.Information("Initializing GithubSource với URL: {RepoUrl}", repoUrl);
+                _logger.Information("Velopack sẽ tìm RELEASES file tại: {Url}/releases/latest/download/RELEASES", repoUrl);
+
+                var source = new GithubSource(repoUrl, null, false);
                 _updateManager = new UpdateManager(source);
                 _logger.Information("Velopack UpdateManager initialized with GitHub source");
             }
@@ -107,6 +125,20 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 {
                     updateInfo = await _updateManager.CheckForUpdatesAsync();
                     _logger.Information("[UPDATE] CheckForUpdatesAsync() hoàn thành - Result: {IsNull}", updateInfo == null ? "NULL" : "NOT NULL");
+
+                    if (updateInfo != null)
+                    {
+                        _logger.Information("[UPDATE] DEBUG - TargetFullRelease.Version: {Version}", updateInfo.TargetFullRelease.Version);
+                        _logger.Information("[UPDATE] DEBUG - Current app version: {CurrentVersion}", CurrentVersion);
+                    }
+                    else
+                    {
+                        _logger.Warning("[UPDATE] DEBUG - updateInfo là NULL. Velopack có thể:");
+                        _logger.Warning("[UPDATE] DEBUG - 1. Không tìm thấy RELEASES file trên GitHub");
+                        _logger.Warning("[UPDATE] DEBUG - 2. Version trên GitHub <= Version hiện tại");
+                        _logger.Warning("[UPDATE] DEBUG - 3. RELEASES file format không đúng");
+                        _logger.Warning("[UPDATE] DEBUG - Current version: {CurrentVersion}", CurrentVersion);
+                    }
                 }
                 catch (System.Net.Http.HttpRequestException httpEx)
                 {
