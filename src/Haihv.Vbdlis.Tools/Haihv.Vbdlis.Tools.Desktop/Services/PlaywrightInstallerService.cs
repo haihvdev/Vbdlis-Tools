@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -64,6 +66,49 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         }
 
         /// <summary>
+        /// Returns all locations we will search for Playwright browsers.
+        /// Order: explicit env var -> system cache -> app local directory.
+        /// </summary>
+        private string[] GetBrowserSearchPaths()
+        {
+
+            var paths = new List<string>
+            {
+                GetPlaywrightBrowsersPath(),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ms-playwright")
+            };
+            var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
+            if (!string.IsNullOrWhiteSpace(envPath))
+            {
+                paths.Add(envPath);
+            }
+            return [.. paths
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(Path.GetFullPath)
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
+        }
+
+        /// <summary>
+        /// Decide where to install browsers. Prefer explicit env var, then system cache, then app-local.
+        /// </summary>
+        private string GetInstallTargetPath()
+        {
+            var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
+            if (!string.IsNullOrWhiteSpace(envPath))
+            {
+                return Path.GetFullPath(envPath);
+            }
+
+            var systemCachePath = GetPlaywrightBrowsersPath();
+            if (!string.IsNullOrWhiteSpace(systemCachePath))
+            {
+                return Path.GetFullPath(systemCachePath);
+            }
+
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ms-playwright");
+        }
+
+        /// <summary>
         /// Checks if Playwright browsers are installed.
         /// Does not bundle or copy – expects browsers in system cache or PLAYWRIGHT_BROWSERS_PATH.
         /// </summary>
@@ -71,28 +116,21 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         {
             try
             {
-                // 1. Honor explicit environment override if provided
-                var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
-                if (!string.IsNullOrWhiteSpace(envPath))
+                var searchPaths = GetBrowserSearchPaths();
+
+                foreach (var path in searchPaths)
                 {
-                    if (HasChromiumInstalled(envPath))
+                    if (HasChromiumInstalled(path))
                     {
-                        _logger.Information("Playwright browsers found via PLAYWRIGHT_BROWSERS_PATH: {Path}", envPath);
+                        _logger.Information("Playwright browsers found at: {Path}", path);
                         return true;
                     }
-                    _logger.Warning("PLAYWRIGHT_BROWSERS_PATH is set but Chromium is missing at: {Path}", envPath);
                 }
 
-                var systemCachePath = GetPlaywrightBrowsersPath();
+                _logger.Warning(
+                    "Playwright browsers not found. Searched: {Paths}. Run: playwright install chromium",
+                    searchPaths.Length > 0 ? string.Join(", ", searchPaths) : "<none>");
 
-                // Check system cache
-                if (!string.IsNullOrEmpty(systemCachePath) && HasChromiumInstalled(systemCachePath))
-                {
-                    _logger.Information("Playwright browsers found in system cache: {Path}", systemCachePath);
-                    return true;
-                }
-
-                _logger.Warning("Playwright browsers not found. Checked PLAYWRIGHT_BROWSERS_PATH ({EnvPath}) and system cache ({CachePath}). Run: playwright install chromium", envPath ?? "<not set>", systemCachePath ?? "<unknown>");
                 return false;
             }
             catch (Exception ex)
@@ -114,15 +152,35 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
 
             try
             {
-                _logger.Information("Playwright browsers missing. Attempting installation (chromium)...");
+                var installTargetPath = GetInstallTargetPath();
+                Directory.CreateDirectory(installTargetPath);
+
+                // Ensure Playwright CLI installs to the same path we detect later
+                var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
+                if (string.IsNullOrWhiteSpace(envPath))
+                {
+                    Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", installTargetPath);
+                    _logger.Information("PLAYWRIGHT_BROWSERS_PATH not set. Using: {Path}", installTargetPath);
+                }
+                else
+                {
+                    _logger.Information("PLAYWRIGHT_BROWSERS_PATH is preset. Using: {Path}", envPath);
+                    installTargetPath = Path.GetFullPath(envPath);
+                }
+
+                _logger.Information("Playwright browsers missing. Attempting installation (chromium) to {Path}...", installTargetPath);
                 onStatusChange?.Invoke("Đang tải và cài đặt Playwright (Chromium)...");
                 // Try bundled scripts first (pwsh/bash), then fallback to Microsoft.Playwright.Program
-                var installed = await RunPlaywrightInstallScriptAsync(onStatusChange);
+                var installed = await RunPlaywrightInstallScriptAsync(installTargetPath, onStatusChange);
                 if (!installed)
                 {
                     _logger.Information("Falling back to Microsoft.Playwright.Program.Main install...");
                     onStatusChange?.Invoke("Đang cài đặt bằng Playwright CLI...");
-                    await Task.Run(() => global::Microsoft.Playwright.Program.Main(new[] { "install", "chromium" }));
+                    await Task.Run(() =>
+                    {
+                        Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", installTargetPath);
+                        global::Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+                    });
                 }
 
                 if (IsBrowsersInstalled())
@@ -144,11 +202,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             }
         }
 
-        private async Task<bool> RunPlaywrightInstallScriptAsync(Action<string>? onStatusChange = null)
+        private async Task<bool> RunPlaywrightInstallScriptAsync(string installTargetPath, Action<string>? onStatusChange = null)
         {
             var appDir = AppDomain.CurrentDomain.BaseDirectory;
             var psScript = Path.Combine(appDir, "playwright.ps1");
             var shScript = Path.Combine(appDir, "playwright.sh");
+
+            _logger.Information("Running bundled Playwright installer targeting {Path}...", installTargetPath);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -156,14 +216,14 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 {
                     // Try powershell.exe (Windows PowerShell 5.1 - built-in) first, then fallback to pwsh (PowerShell 7+)
                     onStatusChange?.Invoke("Đang cài đặt bằng Windows PowerShell...");
-                    if (await RunProcessAsync("powershell", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{psScript}\" install chromium", appDir, onStatusChange))
+                    if (await RunProcessAsync("powershell", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{psScript}\" install chromium", appDir, installTargetPath, onStatusChange))
                     {
                         return true;
                     }
 
                     _logger.Information("powershell.exe failed or not found, trying pwsh...");
                     onStatusChange?.Invoke("Đang cài đặt bằng PowerShell Core...");
-                    return await RunProcessAsync("pwsh", $"-NoProfile -NonInteractive -File \"{psScript}\" install chromium", appDir, onStatusChange);
+                    return await RunProcessAsync("pwsh", $"-NoProfile -NonInteractive -File \"{psScript}\" install chromium", appDir, installTargetPath, onStatusChange);
                 }
                 return false;
             }
@@ -172,7 +232,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             if (File.Exists(shScript))
             {
                 onStatusChange?.Invoke("Đang cài đặt bằng bash script...");
-                if (await RunProcessAsync("bash", $"\"{shScript}\" install chromium", appDir, onStatusChange))
+                if (await RunProcessAsync("bash", $"\"{shScript}\" install chromium", appDir, installTargetPath, onStatusChange))
                 {
                     return true;
                 }
@@ -181,13 +241,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             if (File.Exists(psScript))
             {
                 onStatusChange?.Invoke("Đang cài đặt bằng PowerShell...");
-                return await RunProcessAsync("pwsh", $"-NoProfile -NonInteractive -File \"{psScript}\" install chromium", appDir, onStatusChange);
+                return await RunProcessAsync("pwsh", $"-NoProfile -NonInteractive -File \"{psScript}\" install chromium", appDir, installTargetPath, onStatusChange);
             }
 
             return false;
         }
 
-        private async Task<bool> RunProcessAsync(string fileName, string arguments, string workingDir, Action<string>? onStatusChange = null)
+        private async Task<bool> RunProcessAsync(string fileName, string arguments, string workingDir, string? browserPath = null, Action<string>? onStatusChange = null)
         {
             try
             {
@@ -201,6 +261,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
+
+                if (!string.IsNullOrWhiteSpace(browserPath))
+                {
+                    psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] = browserPath;
+                }
 
                 using var process = new Process { StartInfo = psi };
                 process.Start();
