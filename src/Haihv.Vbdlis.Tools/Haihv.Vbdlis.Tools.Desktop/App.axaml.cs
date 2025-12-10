@@ -253,10 +253,33 @@ namespace Haihv.Vbdlis.Tools.Desktop
                         {
                             Log.Information("[AUTO-UPDATE] User chọn: CẬP NHẬT NGAY");
 
-                            var success = await updateService.DownloadAndInstallUpdateAsync(updateInfo, progress =>
-                            {
-                                Log.Debug("[AUTO-UPDATE] Progress: {Progress}%", progress);
-                            });
+                            var (progressWindow, progressBar, progressText) = CreateUpdateProgressWindow();
+                            progressWindow.Show();
+
+                            var success = await updateService.DownloadAndInstallUpdateAsync(updateInfo,
+                                progress =>
+                                {
+                                    Log.Debug("[AUTO-UPDATE] Progress: {Progress}%", progress);
+
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        progressBar.Value = progress;
+                                        progressText.Text = $"Đang tải bản cập nhật... {progress}%";
+                                    });
+                                },
+                                async () =>
+                                {
+                                    // Before restart, show final message and wait a moment
+                                    for (int i = 3; i >= 1; i--)
+                                    {
+                                        Dispatcher.UIThread.Post(() =>
+                                        {
+                                            progressBar.Value = 100;
+                                            progressText.Text = $"Tải xong. Ứng dụng sẽ khởi động lại sau {i} giây...";
+                                        });
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
+                                });
 
                             if (success)
                             {
@@ -264,6 +287,11 @@ namespace Haihv.Vbdlis.Tools.Desktop
                             }
                             else
                             {
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    progressText.Text = "Tải/cài đặt thất bại. Vui lòng thử lại.";
+                                    progressWindow.Close();
+                                });
                                 Log.Error("[AUTO-UPDATE] Thất bại - Vui lòng thử lại");
                             }
                         }
@@ -287,58 +315,109 @@ namespace Haihv.Vbdlis.Tools.Desktop
         /// </summary>
         private async Task<bool> ShowUpdateDialogAsync(UpdateInfo updateInfo)
         {
-            // Simple message box - works before or after MainWindow exists
             try
             {
                 var messageBox = new Window
                 {
                     Title = "Cập nhật mới",
-                    Width = 450,
-                    Height = 250,
+                    Width = 520,
+                    Height = 340,
                     CanResize = false,
-                    WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
 
-                var stackPanel = new StackPanel
+                var container = new Grid
                 {
-                    Margin = new Thickness(20),
-                    Spacing = 15
+                    RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+                    Margin = new Thickness(20)
                 };
 
-                stackPanel.Children.Add(new TextBlock
+                var headerPanel = new StackPanel
                 {
-                    Text = $"Phiên bản mới {updateInfo.Version} đã sẵn sàng!",
-                    FontSize = 16,
-                    FontWeight = Avalonia.Media.FontWeight.Bold
+                    Spacing = 6,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+                };
+
+                headerPanel.Children.Add(new TextBlock
+                {
+                    Text = "Có bản cập nhật mới",
+                    FontSize = 18,
+                    FontWeight = Avalonia.Media.FontWeight.Bold,
+                    TextAlignment = Avalonia.Media.TextAlignment.Center
                 });
 
-                stackPanel.Children.Add(new TextBlock
+                headerPanel.Children.Add(new TextBlock
                 {
                     Text = $"Phiên bản hiện tại: {updateService?.CurrentVersion ?? "N/A"}",
                     FontSize = 12,
-                    Foreground = Avalonia.Media.Brushes.Gray
+                    Foreground = Avalonia.Media.Brushes.Gray,
+                    TextAlignment = Avalonia.Media.TextAlignment.Center
                 });
 
-                if (!string.IsNullOrEmpty(updateInfo.ReleaseNotes))
+                headerPanel.Children.Add(new TextBlock
                 {
-                    var scrollViewer = new ScrollViewer
+                    Text = $"Phiên bản mới: {updateInfo.Version}",
+                    FontSize = 14,
+                    FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                    TextAlignment = Avalonia.Media.TextAlignment.Center
+                });
+
+                Grid.SetRow(headerPanel, 0);
+                container.Children.Add(headerPanel);
+
+                var releaseNotesText = string.IsNullOrWhiteSpace(updateInfo.ReleaseNotes)
+                    ? "Không có ghi chú phát hành."
+                    : updateInfo.ReleaseNotes;
+
+                var infoPanel = new Border
+                {
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = Avalonia.Media.Brushes.LightGray,
+                    Background = Avalonia.Media.Brushes.White,
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(14)
+                };
+
+                var infoStack = new StackPanel { Spacing = 10 };
+
+                infoStack.Children.Add(new TextBlock
+                {
+                    Text = "Nội dung cập nhật",
+                    FontSize = 13,
+                    FontWeight = Avalonia.Media.FontWeight.SemiBold
+                });
+
+                infoStack.Children.Add(new ScrollViewer
+                {
+                    Height = 150,
+                    Content = new TextBlock
                     {
-                        Height = 80,
-                        Content = new TextBlock
-                        {
-                            Text = updateInfo.ReleaseNotes,
-                            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                            FontSize = 11
-                        }
-                    };
-                    stackPanel.Children.Add(scrollViewer);
+                        Text = releaseNotesText,
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        FontSize = 12
+                    }
+                });
+
+                if (updateInfo.FileSize > 0)
+                {
+                    var sizeMb = updateInfo.FileSize / 1024.0 / 1024.0;
+                    infoStack.Children.Add(new TextBlock
+                    {
+                        Text = $"Dung lượng ước tính: {sizeMb:F1} MB",
+                        FontSize = 11,
+                        Foreground = Avalonia.Media.Brushes.Gray
+                    });
                 }
 
-                var buttonPanel = new StackPanel
+                infoPanel.Child = infoStack;
+                Grid.SetRow(infoPanel, 1);
+                container.Children.Add(infoPanel);
+
+                var buttonPanel = new Grid
                 {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    Spacing = 10
+                    ColumnDefinitions = new ColumnDefinitions("*,*"),
+                    ColumnSpacing = 12,
+                    Margin = new Thickness(0, 16, 0, 0)
                 };
 
                 bool result = false;
@@ -346,24 +425,35 @@ namespace Haihv.Vbdlis.Tools.Desktop
                 var updateButton = new Button
                 {
                     Content = "Cập nhật ngay",
-                    Padding = new Thickness(20, 8),
-                    Background = Avalonia.Media.Brushes.Green,
+                    Padding = new Thickness(16, 10),
+                    Background = Avalonia.Media.Brushes.ForestGreen,
                     Foreground = Avalonia.Media.Brushes.White
                 };
-                updateButton.Click += (s, e) => { result = true; messageBox.Close(); };
+                updateButton.Click += (s, e) =>
+                {
+                    result = true;
+                    messageBox.Close();
+                };
+                Grid.SetColumn(updateButton, 0);
 
                 var laterButton = new Button
                 {
                     Content = "Để sau",
-                    Padding = new Thickness(20, 8)
+                    Padding = new Thickness(16, 10)
                 };
-                laterButton.Click += (s, e) => { result = false; messageBox.Close(); };
+                laterButton.Click += (s, e) =>
+                {
+                    result = false;
+                    messageBox.Close();
+                };
+                Grid.SetColumn(laterButton, 1);
 
                 buttonPanel.Children.Add(updateButton);
                 buttonPanel.Children.Add(laterButton);
-                stackPanel.Children.Add(buttonPanel);
+                Grid.SetRow(buttonPanel, 2);
+                container.Children.Add(buttonPanel);
 
-                messageBox.Content = stackPanel;
+                messageBox.Content = container;
 
                 // Show as standalone window and wait for it to close
                 var tcs = new TaskCompletionSource<bool>();
@@ -376,6 +466,54 @@ namespace Haihv.Vbdlis.Tools.Desktop
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Creates a small progress window for update download/install steps
+        /// </summary>
+        private (Window window, ProgressBar progressBar, TextBlock statusText) CreateUpdateProgressWindow()
+        {
+            var progressBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Height = 14
+            };
+
+            var statusText = new TextBlock
+            {
+                Text = "Đang chuẩn bị...",
+                FontSize = 12,
+                Foreground = Avalonia.Media.Brushes.Gray
+            };
+
+            var stackPanel = new StackPanel
+            {
+                Spacing = 12,
+                Margin = new Thickness(20)
+            };
+
+            stackPanel.Children.Add(new TextBlock
+            {
+                Text = "Đang tải bản cập nhật",
+                FontSize = 16,
+                FontWeight = Avalonia.Media.FontWeight.SemiBold
+            });
+
+            stackPanel.Children.Add(progressBar);
+            stackPanel.Children.Add(statusText);
+
+            var window = new Window
+            {
+                Title = "Đang cập nhật",
+                Width = 420,
+                Height = 200,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Content = stackPanel
+            };
+
+            return (window, progressBar, statusText);
         }
 
         private IUpdateService? updateService => _serviceProvider?.GetService<IUpdateService>();

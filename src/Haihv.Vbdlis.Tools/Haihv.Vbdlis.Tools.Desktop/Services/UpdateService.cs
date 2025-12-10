@@ -206,7 +206,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         /// <summary>
         /// Downloads and installs the update using Velopack
         /// </summary>
-        public async Task<bool> DownloadAndInstallUpdateAsync(UpdateInfo updateInfo, Action<int>? progress = null)
+        public async Task<bool> DownloadAndInstallUpdateAsync(UpdateInfo updateInfo, Action<int>? progress = null, Func<Task>? beforeRestart = null)
         {
             _logger.Information("[UPDATE] Bắt đầu tải cập nhật: {Version}", updateInfo.Version);
 
@@ -251,6 +251,18 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 });
 
                 _logger.Information("[UPDATE] Tải hoàn tất - Đang cài đặt và khởi động lại...");
+
+                if (beforeRestart != null)
+                {
+                    try
+                    {
+                        await beforeRestart();
+                    }
+                    catch (Exception cbEx)
+                    {
+                        _logger.Warning(cbEx, "[UPDATE] Callback trước khi restart gặp lỗi, tiếp tục quá trình cập nhật");
+                    }
+                }
 
                 // Apply updates and restart (this will terminate the current process)
                 _updateManager.ApplyUpdatesAndRestart(velopackUpdateInfo);
