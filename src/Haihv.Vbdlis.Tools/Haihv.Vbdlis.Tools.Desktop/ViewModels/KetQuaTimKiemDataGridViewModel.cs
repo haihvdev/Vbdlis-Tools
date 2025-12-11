@@ -34,7 +34,7 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
     public KetQuaTimKiemDataGridViewModel()
     {
         // Set EPPlus license context
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        ExcelPackage.License.SetNonCommercialPersonal("Hoàng Việt Hải");
     }
 
     /// <summary>

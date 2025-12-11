@@ -25,6 +25,11 @@ namespace Haihv.Vbdlis.Tools.Desktop
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
+            // Test giao diện Update Dialog
+            //_ = ShowUpdateDialogAsync(new UpdateInfo { Version = "2.0.0", ReleaseNotes = " - New features\n - Bug fixes\n - Improvements", FileSize = 15 * 1024 * 1024 });
+            // Test giao diện trạng thái Update
+            // var (window, progressBar, statusText) = CreateUpdateProgressWindow();
+            // window.Show();
         }
 
         public override void OnFrameworkInitializationCompleted()
@@ -332,35 +337,32 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     Margin = new Thickness(20)
                 };
 
-                var headerPanel = new StackPanel
+                var headerPanel = new Grid
                 {
-                    Spacing = 6,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+                    RowDefinitions = new RowDefinitions("*,*"),
                 };
-
-                headerPanel.Children.Add(new TextBlock
-                {
-                    Text = "Có bản cập nhật mới",
-                    FontSize = 18,
-                    FontWeight = Avalonia.Media.FontWeight.Bold,
-                    TextAlignment = Avalonia.Media.TextAlignment.Center
-                });
-
-                headerPanel.Children.Add(new TextBlock
+                var phienBanHienTai = new TextBlock
                 {
                     Text = $"Phiên bản hiện tại: {updateService?.CurrentVersion ?? "N/A"}",
-                    FontSize = 12,
-                    Foreground = Avalonia.Media.Brushes.Gray,
-                    TextAlignment = Avalonia.Media.TextAlignment.Center
-                });
-
-                headerPanel.Children.Add(new TextBlock
-                {
-                    Text = $"Phiên bản mới: {updateInfo.Version}",
                     FontSize = 14,
-                    FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                    TextAlignment = Avalonia.Media.TextAlignment.Center
-                });
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    TextAlignment = Avalonia.Media.TextAlignment.Left
+                };
+                Grid.SetRow(phienBanHienTai, 0);
+                headerPanel.Children.Add(phienBanHienTai);
+                var textPhienBanMoi = updateInfo.FileSize > 0
+                    ? $"Phiên bản mới: {updateInfo.Version} (Dung lượng ước tính: {updateInfo.FileSize / 1024.0 / 1024.0:F1} MB)"
+                    : $"Phiên bản mới: {updateInfo.Version}";
+                var phienBanMoi = new TextBlock
+                {
+                    Text = textPhienBanMoi,
+                    FontSize = 14,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    TextAlignment = Avalonia.Media.TextAlignment.Left,
+                    FontWeight = Avalonia.Media.FontWeight.SemiBold
+                };
+                Grid.SetRow(phienBanMoi, 1);
+                headerPanel.Children.Add(phienBanMoi);
 
                 Grid.SetRow(headerPanel, 0);
                 container.Children.Add(headerPanel);
@@ -397,25 +399,15 @@ namespace Haihv.Vbdlis.Tools.Desktop
                         FontSize = 12
                     }
                 });
-
-                if (updateInfo.FileSize > 0)
-                {
-                    var sizeMb = updateInfo.FileSize / 1024.0 / 1024.0;
-                    infoStack.Children.Add(new TextBlock
-                    {
-                        Text = $"Dung lượng ước tính: {sizeMb:F1} MB",
-                        FontSize = 11,
-                        Foreground = Avalonia.Media.Brushes.Gray
-                    });
-                }
-
                 infoPanel.Child = infoStack;
                 Grid.SetRow(infoPanel, 1);
                 container.Children.Add(infoPanel);
 
                 var buttonPanel = new Grid
                 {
-                    ColumnDefinitions = new ColumnDefinitions("*,*"),
+                    ColumnDefinitions = new ColumnDefinitions("*,*,*"),
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom,
                     ColumnSpacing = 12,
                     Margin = new Thickness(0, 16, 0, 0)
                 };
@@ -427,26 +419,30 @@ namespace Haihv.Vbdlis.Tools.Desktop
                     Content = "Cập nhật ngay",
                     Padding = new Thickness(16, 10),
                     Background = Avalonia.Media.Brushes.ForestGreen,
-                    Foreground = Avalonia.Media.Brushes.White
+                    Foreground = Avalonia.Media.Brushes.White,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center
                 };
                 updateButton.Click += (s, e) =>
                 {
                     result = true;
                     messageBox.Close();
                 };
-                Grid.SetColumn(updateButton, 0);
+                Grid.SetColumn(updateButton, 1);
 
                 var laterButton = new Button
                 {
                     Content = "Để sau",
-                    Padding = new Thickness(16, 10)
+                    Padding = new Thickness(16, 10),
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center
                 };
                 laterButton.Click += (s, e) =>
                 {
                     result = false;
                     messageBox.Close();
                 };
-                Grid.SetColumn(laterButton, 1);
+                Grid.SetColumn(laterButton, 2);
 
                 buttonPanel.Children.Add(updateButton);
                 buttonPanel.Children.Add(laterButton);
@@ -490,7 +486,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
             var stackPanel = new StackPanel
             {
                 Spacing = 12,
-                Margin = new Thickness(20)
+                Margin = new Thickness(20),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
             };
 
             stackPanel.Children.Add(new TextBlock
@@ -507,7 +505,7 @@ namespace Haihv.Vbdlis.Tools.Desktop
             {
                 Title = "Đang cập nhật",
                 Width = 420,
-                Height = 200,
+                Height = 133,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 Content = stackPanel
