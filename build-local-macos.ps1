@@ -21,16 +21,13 @@ Write-Host ""
 
 # Check if Velopack is installed
 Write-Host "Checking for Velopack CLI..." -ForegroundColor Yellow
-$velopackInstalled = $false
 try {
     $null = vpk --version 2>&1
-    $velopackInstalled = $true
     Write-Host "Velopack CLI found!" -ForegroundColor Green
 }
 catch {
     Write-Host "Velopack CLI not found. Installing..." -ForegroundColor Yellow
     dotnet tool install --global vpk
-    $velopackInstalled = $true
 }
 
 # Paths
@@ -246,7 +243,6 @@ Write-Host "`nStep 3: Creating DMG installer..." -ForegroundColor Yellow
 $AppBundle = Get-ChildItem -Path $OutputPath -Filter "*.app" -Directory | Select-Object -First 1
 
 if ($AppBundle) {
-    $AppName = $AppBundle.BaseName
     $DmgName = "VbdlisTools-$packageVersion-osx-$Arch.dmg"
     $DmgPath = Join-Path $OutputPath $DmgName
     $TempDmg = Join-Path $OutputPath "temp.dmg"
@@ -368,7 +364,6 @@ Enjoy using VBDLIS Tools! 🎉
     
     # Create temporary DMG (requires hdiutil - macOS only)
     Write-Host "Creating temporary DMG..." -ForegroundColor Cyan
-    $createResult = & hdiutil create -volname "VBDLIS Tools" -srcfolder $TempDir -ov -format UDRW $TempDmg 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Failed to create DMG, falling back to ZIP..."
