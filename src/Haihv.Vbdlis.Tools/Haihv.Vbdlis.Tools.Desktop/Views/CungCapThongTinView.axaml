@@ -17,9 +17,9 @@
             Margin="0,0,0,15"
             Orientation="Horizontal"
             Spacing="10">
-            <Button Command="{Binding SearchBySoGiayToCommand}" Content="Tìm kiếm theo Số Giấy Tờ" />
-            <Button Command="{Binding SearchBySoPhatHanhCommand}" Content="Tìm kiếm theo Số Phát Hành" />
-            <Button Content="Tìm kiếm theo Thửa Đất" IsEnabled="False" />
+            <Button Command="{Binding SearchBySoGiayToCommand}" Content="🪪 Tìm kiếm theo Số Giấy Tờ" />
+            <Button Command="{Binding SearchBySoPhatHanhCommand}" Content="🔰 Tìm kiếm theo Số Phát Hành" />
+            <Button Content="🗺️ Tìm kiếm theo Thửa Đất" IsEnabled="False" />
         </StackPanel>
 
         <!--  Results DataGrid  -->

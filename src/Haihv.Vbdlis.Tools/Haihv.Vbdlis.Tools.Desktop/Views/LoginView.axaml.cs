@@ -3,9 +3,9 @@ using Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
 namespace Haihv.Vbdlis.Tools.Desktop;
 
-public partial class LoginControl : UserControl
+public partial class LoginView : UserControl
 {
-    public LoginControl()
+    public LoginView()
     {
         InitializeComponent();
 
@@ -14,7 +14,7 @@ public partial class LoginControl : UserControl
         InitializeLoginViewModel();
     }
 
-    public LoginControl(LoginViewModel viewModel)
+    public LoginView(LoginViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;

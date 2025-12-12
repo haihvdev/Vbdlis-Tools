@@ -9,10 +9,10 @@
     <ApplicationIcon>Assets\appicon.ico</ApplicationIcon>
 
     <!-- Assembly Information -->
-    <AssemblyVersion>1.0.2512.1203</AssemblyVersion>
-    <FileVersion>1.0.2512.1203</FileVersion>
-    <Version>1.0.2512.1203</Version>
-    <InformationalVersion>1.0.25121203</InformationalVersion>
+    <AssemblyVersion>1.0.2512.1204</AssemblyVersion>
+    <FileVersion>1.0.2512.1204</FileVersion>
+    <Version>1.0.2512.1204</Version>
+    <InformationalVersion>1.0.25121204</InformationalVersion>
     <Copyright>© 2025 vpdkbacninh.vn | haihv.vn</Copyright>
     <Company>vpdkbacninh.vn | haihv.vn</Company>
     <Product>Vbdlis Tools</Product>
@@ -62,6 +62,10 @@
     </Compile>
     <Compile Update="Views\Controls\KetQuaTimKiemDataGridControl.axaml.cs">
       <DependentUpon>KetQuaTimKiemDataGridControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\LoginView.axaml.cs">
+      <DependentUpon>LoginControl.axaml</DependentUpon>
+      <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
 

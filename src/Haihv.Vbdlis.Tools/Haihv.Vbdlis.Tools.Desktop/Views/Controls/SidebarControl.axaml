@@ -40,7 +40,7 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Command="{Binding ShowHomeCommand}"
-                    Content="Trang chủ"
+                    Content="🏠 Trang chủ"
                     ToolTip.Tip="Quay lại trang chủ" />
 
                 <Button
@@ -50,7 +50,7 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Command="{Binding ShowCungCapThongTinCommand}"
-                    Content="Cung cấp thông tin"
+                    Content="🔎 Cung cấp thông tin"
                     ToolTip.Tip="Cung cấp thông tin giấy chứng nhận" />
 
                 <!-- <Button
@@ -72,7 +72,7 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Command="{Binding LogoutCommand}"
-                    Content="Đăng xuất"
+                    Content="❌ Đăng xuất"
                     Foreground="Red" />
             </StackPanel>
         </ScrollViewer>

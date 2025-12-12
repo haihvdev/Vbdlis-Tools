@@ -1,5 +1,5 @@
 <UserControl
-  x:Class="Haihv.Vbdlis.Tools.Desktop.LoginControl"
+  x:Class="Haihv.Vbdlis.Tools.Desktop.LoginView"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -130,7 +130,7 @@
           HorizontalContentAlignment="Center"
           Classes="primary"
           Command="{Binding LoginCommand}"
-          Content="Đăng nhập" />
+          Content="🔐 Đăng nhập" />
 
         <!--  Cancel Button  -->
         <Button
@@ -139,7 +139,7 @@
           HorizontalContentAlignment="Center"
           Classes="warning"
           Command="{Binding CancelCommand}"
-          Content="Thoát chương trình"
+          Content="❌ Thoát chương trình"
           IsEnabled="{Binding !IsLoggingIn}" />
       </Grid>
 

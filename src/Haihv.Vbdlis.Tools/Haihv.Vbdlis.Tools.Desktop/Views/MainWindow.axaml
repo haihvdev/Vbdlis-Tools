@@ -26,7 +26,7 @@
 
         <!--  Login Screen (shown when not logged in)  -->
         <Grid Background="{DynamicResource SystemAltHighColor}" IsVisible="{Binding !IsLoggedIn}">
-            <controls:LoginControl
+            <controls:LoginView
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 DataContext="{Binding LoginViewModel}" />

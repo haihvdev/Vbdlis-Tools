@@ -21,21 +21,23 @@
             TextWrapping="Wrap" />
 
         <!--  Input TextBox  -->
-        <Border
-            Grid.Row="1"
-            Margin="0,0,0,15"
-            BorderBrush="#cccccc"
-            BorderThickness="1"
-            CornerRadius="3">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid RowDefinitions="*,Auto">
                 <TextBox
                     x:Name="InputTextBox"
+                    Grid.Row="0"
                     AcceptsReturn="True"
                     Text="{Binding Input}"
                     TextWrapping="Wrap"
-                    Watermark="Nhập thông tin, mỗi dòng hoặc phân cách bằng dấu ;" />
-            </ScrollViewer>
-        </Border>
+                    Watermark="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;" />
+                <!--  Hepler text  -->
+                <Label
+                    Grid.Row="1"
+                    Content="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;"
+                    FontSize="11"
+                    Foreground="Gray" />
+            </Grid>
+        </ScrollViewer>
 
         <!--  Buttons  -->
         <StackPanel
@@ -44,12 +46,16 @@
             Orientation="Horizontal"
             Spacing="10">
             <Button
+                Width="120"
                 Click="OnSearchClick"
-                Content="Tìm kiếm"
+                Content="🔍 Tìm kiếm"
+                HorizontalContentAlignment="Center"
                 IsDefault="True" />
             <Button
+                Width="120"
                 Click="OnCancelClick"
-                Content="Bỏ qua"
+                Content="❌ Bỏ qua"
+                HorizontalContentAlignment="Center"
                 IsCancel="True" />
         </StackPanel>
     </Grid>

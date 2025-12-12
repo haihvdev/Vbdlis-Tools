@@ -33,7 +33,7 @@
             Margin="0,20,0,0"
             HorizontalAlignment="Center"
             Command="{Binding LogoutCommand}"
-            Content="Đăng xuất" />
+            Content="❌ Đăng xuất" />
     </StackPanel>
 
 </UserControl>
