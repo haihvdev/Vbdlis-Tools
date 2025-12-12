@@ -1,13 +1,13 @@
 ﻿{
     "majorMinor":  "1.0",
-    "currentVersion":  "1.0.25121201",
-    "assemblyVersion":  "1.0.2512.1201",
+    "currentVersion":  "1.0.25121202",
+    "assemblyVersion":  "1.0.2512.1202",
     "lastBuildDate":  "2025-12-12",
-    "buildNumber":  1,
+    "buildNumber":  2,
     "platforms":  {
                       "windows":  {
-                                      "lastBuilt":  "2025-12-12T08:04:18",
-                                      "version":  "1.0.25121201"
+                                      "lastBuilt":  "2025-12-12T08:22:29",
+                                      "version":  "1.0.25121202"
                                   },
                       "macos":  {
                                     "lastBuilt":  "2025-12-10T21:40:20",

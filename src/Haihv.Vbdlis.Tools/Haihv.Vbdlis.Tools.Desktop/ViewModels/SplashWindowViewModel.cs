@@ -14,6 +14,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 
         [ObservableProperty]
         private string _version = string.Empty;
+        [ObservableProperty]
+        private string _copyright = "© 2025 vpdkbacninh.vn | haihv.vn";
 
         [ObservableProperty]
         private double _progressWidth = 0;
@@ -23,9 +25,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         public SplashWindowViewModel()
         {
             // Get application version
-            var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version;
-            Version = version != null ? $"Phiên bản {version.Major}.{version.Minor}.{version.Build}" : "Phiên bản 1.0.0";
+            var version = MainWindowViewModel.AppVersion;
+            Version = string.IsNullOrWhiteSpace(version) ? "Phiên bản 1.0.0" : $"Phiên bản {version}";
+            // Get copyright
+            var copyright = MainWindowViewModel.CopyrightText;
+            Copyright = string.IsNullOrWhiteSpace(copyright) ? "© 2025 vpdkbacninh.vn | haihv.vn" : copyright;
         }
 
         /// <summary>
@@ -36,7 +40,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         public void UpdateStatus(string message, int progress)
         {
             StatusMessage = message;
-            ProgressWidth = Math.Min(MaxProgressWidth, (progress / 100.0) * MaxProgressWidth);
+            ProgressWidth = Math.Min(MaxProgressWidth, progress / 100.0 * MaxProgressWidth);
         }
 
         /// <summary>

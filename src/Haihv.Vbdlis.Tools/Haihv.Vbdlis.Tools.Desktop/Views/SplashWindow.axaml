@@ -1,83 +1,107 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="350"
-        x:Class="Haihv.Vbdlis.Tools.Desktop.Views.SplashWindow"
-        x:DataType="vm:SplashWindowViewModel"
-        Title="VBDLIS Tools"
-        Width="600"
-        Height="350"
-        CanResize="False"
-        WindowStartupLocation="CenterScreen"
-        SystemDecorations="None"
-        Background="Transparent"
-        TransparencyLevelHint="Transparent">
+<Window
+    x:Class="Haihv.Vbdlis.Tools.Desktop.Views.SplashWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Haihv.Vbdlis.Tools.Desktop.ViewModels"
+    Title="VBDLIS Tools"
+    Width="600"
+    Height="350"
+    d:DesignHeight="350"
+    d:DesignWidth="600"
+    x:DataType="vm:SplashWindowViewModel"
+    Background="Transparent"
+    CanResize="False"
+    SystemDecorations="None"
+    TransparencyLevelHint="Transparent"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
 
-    <Border Background="White"
-            BorderBrush="#E0E0E0"
-            BorderThickness="1"
-            CornerRadius="12"
-            BoxShadow="0 8 32 #40000000">
+    <Border
+        Background="White"
+        BorderBrush="#E0E0E0"
+        BorderThickness="1"
+        BoxShadow="0 8 32 #40000000"
+        CornerRadius="12">
 
         <Grid RowDefinitions="*,Auto,Auto">
-            <!-- Logo và tiêu đề -->
-            <StackPanel Grid.Row="0"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Spacing="20">
+            <!--  Logo và tiêu đề  -->
+            <StackPanel
+                Grid.Row="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="20">
 
-                <!-- Logo hoặc Icon -->
-                <Border Width="100"
-                        Height="100"
-                        CornerRadius="50"
-                        Background="#2196F3"
-                        HorizontalAlignment="Center">
-                    <TextBlock Text="VT"
-                              FontSize="48"
-                              FontWeight="Bold"
-                              Foreground="White"
-                              VerticalAlignment="Center"
-                              HorizontalAlignment="Center"/>
+                <!--  Logo hoặc Icon  -->
+                <Border
+                    Width="100"
+                    Height="100"
+                    HorizontalAlignment="Center"
+                    Background="#2196F3"
+                    CornerRadius="50">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="48"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="VT" />
                 </Border>
 
-                <!-- Tên ứng dụng -->
-                <TextBlock Text="VBDLIS Tools"
-                          FontSize="28"
-                          FontWeight="SemiBold"
-                          HorizontalAlignment="Center"
-                          Foreground="#333333"/>
+                <!--  Tên ứng dụng  -->
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="28"
+                    FontWeight="SemiBold"
+                    Foreground="#333333"
+                    Text="Công cụ hỗ trợ VBDLIS" />
+                <!--  Phiên bản và Copyright  -->
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Vertical"
+                    Spacing="4">
+                    <!--  Phiên bản  -->
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="14"
+                        Foreground="#666666"
+                        Text="{Binding Version}" />
+                    <!--  Copyright © 2025 Haihv  -->
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="12"
+                        Foreground="#999999"
+                        Text="{Binding Copyright}" />
+                </StackPanel>
 
-                <!-- Phiên bản -->
-                <TextBlock Text="{Binding Version}"
-                          FontSize="14"
-                          HorizontalAlignment="Center"
-                          Foreground="#666666"/>
             </StackPanel>
 
-            <!-- Thanh tiến trình -->
-            <Border Grid.Row="1"
-                    Margin="60,0,60,30"
-                    Height="6"
-                    Background="#E0E0E0"
-                    CornerRadius="3">
-                <Border Background="#2196F3"
-                        CornerRadius="3"
-                        Width="{Binding ProgressWidth}"
-                        HorizontalAlignment="Left"/>
+            <!--  Thanh tiến trình  -->
+            <Border
+                Grid.Row="1"
+                Height="6"
+                Margin="60,0,60,30"
+                Background="#E0E0E0"
+                CornerRadius="3">
+                <Border
+                    Width="{Binding ProgressWidth}"
+                    HorizontalAlignment="Left"
+                    Background="#2196F3"
+                    CornerRadius="3" />
             </Border>
 
-            <!-- Trạng thái -->
-            <TextBlock Grid.Row="2"
-                      Text="{Binding StatusMessage}"
-                      FontSize="13"
-                      Foreground="#666666"
-                      HorizontalAlignment="Center"
-                      Margin="0,0,0,30"
-                      TextWrapping="Wrap"
-                      TextAlignment="Center"
-                      MaxWidth="500"/>
+            <!--  Trạng thái  -->
+            <TextBlock
+                Grid.Row="2"
+                MaxWidth="500"
+                Margin="0,0,0,30"
+                HorizontalAlignment="Center"
+                FontSize="13"
+                Foreground="#666666"
+                Text="{Binding StatusMessage}"
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
         </Grid>
     </Border>
 </Window>
