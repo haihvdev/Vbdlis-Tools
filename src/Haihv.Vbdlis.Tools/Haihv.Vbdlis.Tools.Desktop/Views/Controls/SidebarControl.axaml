@@ -18,9 +18,9 @@
             BorderBrush="#cccccc"
             BorderThickness="0,0,0,1">
             <StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <TextBlock Text="Xin chào," />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding LoggedInUsername}" />
+                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Bottom">
+                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="🧑🏻‍💻" />
+                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding LoggedInUsername}" />
                 </StackPanel>
                 <TextBlock
                     Margin="0,2,0,0"
