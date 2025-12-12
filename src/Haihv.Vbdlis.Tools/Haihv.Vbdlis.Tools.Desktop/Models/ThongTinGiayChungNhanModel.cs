@@ -26,8 +26,9 @@ public class GiayChungNhanModel(string id, string soPhatHanh, string soVaoSo, Da
 }
 
 
-public class ThuaDatModel(string soToBanDo, string soThuaDat, double? dienTich, string mucDichSuDung, string diaChi, List<MucDichSuDungInfo>? listMucDichSuDung)
+public class ThuaDatModel(int xaId, string soToBanDo, string soThuaDat, double? dienTich, string mucDichSuDung, string diaChi, List<MucDichSuDungInfo>? listMucDichSuDung)
 {
+    public int XaId { get; set; } = xaId;
     public string SoToBanDo { get; } = soToBanDo;
     public string SoThuaDat { get; } = soThuaDat;
     public double? DienTich { get; } = dienTich;

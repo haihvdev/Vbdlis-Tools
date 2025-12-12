@@ -96,6 +96,7 @@ public static class KetQuaTimKiemExxtensions
                     .ToList();
 
                 var thuaDatModel = new ThuaDatModel(
+                    xaId: thuaDat.XaId,
                     soToBanDo: soToBanDo,
                     soThuaDat: soThuaDat,
                     dienTich: dienTich,
@@ -188,6 +189,7 @@ public static class KetQuaTimKiemExxtensions
                     // Xử lý Thửa đất (typeItem = 6)
                     if (dangky.ThuaDat != null)
                     {
+                        var xaId = dangky.ThuaDat.XaId ?? 0;
                         var soToBanDo = dangky.ThuaDat.SoHieuToBanDo?.ToString() ?? "";
                         var soThuaDat = dangky.ThuaDat.SoThuTuThua?.ToString() ?? "";
                         var diaChi = dangky.ThuaDat.DiaChi ?? "";
@@ -235,6 +237,7 @@ public static class KetQuaTimKiemExxtensions
                                 .ToList();
 
                             var thuaDatModel = new ThuaDatModel(
+                                xaId: xaId,
                                 soToBanDo: soToBanDo,
                                 soThuaDat: soThuaDat,
                                 dienTich: dienTich,

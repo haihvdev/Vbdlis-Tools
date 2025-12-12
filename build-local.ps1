@@ -19,16 +19,13 @@ Write-Host ""
 
 # Check if Velopack is installed
 Write-Host "Checking for Velopack CLI..." -ForegroundColor Yellow
-$velopackInstalled = $false
 try {
     $null = vpk --version 2>&1
-    $velopackInstalled = $true
     Write-Host "Velopack CLI found!" -ForegroundColor Green
 }
 catch {
     Write-Host "Velopack CLI not found. Installing..." -ForegroundColor Yellow
     dotnet tool install --global vpk
-    $velopackInstalled = $true
 }
 
 # Paths

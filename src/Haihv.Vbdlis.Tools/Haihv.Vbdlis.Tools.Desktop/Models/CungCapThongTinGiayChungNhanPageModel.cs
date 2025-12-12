@@ -524,6 +524,9 @@ public class LienKetTaiSanThuaDatDto
 // DTO đầy đủ cho Thửa đất (từ liên kết)
 public class ThuaDatFullDto
 {
+    [JsonPropertyName("xaId")] public int XaId { get; set; }
+    [JsonPropertyName("huyenId")] public int HuyenId { get; set; }
+    [JsonPropertyName("tinhId")] public int TinhId { get; set; }
     [JsonPropertyName("thuaDatId")] public long ThuaDatId { get; set; }
     [JsonPropertyName("soHieuToBanDo")] public int? SoHieuToBanDo { get; set; }
     [JsonPropertyName("soThuTuThua")] public int? SoThuTuThua { get; set; }
