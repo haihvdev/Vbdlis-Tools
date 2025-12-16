@@ -319,8 +319,12 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     }
 
                     _logger.Information("pwsh failed or not found, trying Windows PowerShell...");
-                    foreach (var powershellPath in GetWindowsPowerShellCandidates())
+                    var candidates = GetWindowsPowerShellCandidates().ToList();
+                    _logger.Information("Found {Count} PowerShell candidates: {Candidates}", candidates.Count, string.Join(", ", candidates));
+
+                    foreach (var powershellPath in candidates)
                     {
+                        _logger.Information("Trying PowerShell at: {Path}", powershellPath);
                         if (await TryRunAsync(powershellPath, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{psScript}\" install chromium", powershellPath, "Đang cài đặt bằng Windows PowerShell..."))
                         {
                             return true;
@@ -353,17 +357,35 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         {
             // Ensure we try 64-bit PowerShell even when the app is 32-bit (use SysNative).
             var systemRoot = Environment.GetEnvironmentVariable("SystemRoot") ?? "C:\\Windows";
-            var sysNative = Path.Combine(systemRoot, "SysNative", "WindowsPowerShell", "v1.0", "powershell.exe");
+            var candidates = new List<string>();
+
+            // For 64-bit process or native 64-bit system, use System32
             var system32 = Path.Combine(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
-
-            var candidates = new[]
+            if (File.Exists(system32))
             {
-                sysNative, // 64-bit when running from 32-bit process
-                system32,  // default
-                "powershell" // PATH fallback
-            };
+                candidates.Add(system32);
+            }
 
-            return candidates.Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase);
+            // For 32-bit process on 64-bit system, use SysNative to access 64-bit PowerShell
+            var sysNative = Path.Combine(systemRoot, "SysNative", "WindowsPowerShell", "v1.0", "powershell.exe");
+            if (File.Exists(sysNative))
+            {
+                candidates.Add(sysNative);
+            }
+
+            // Syswow64 is the 32-bit version on 64-bit systems - ONLY use as last resort
+            var sysWow64 = Path.Combine(systemRoot, "SysWOW64", "WindowsPowerShell", "v1.0", "powershell.exe");
+
+            // PATH fallback
+            candidates.Add("powershell");
+
+            // Add 32-bit version only as final fallback (will likely fail)
+            if (File.Exists(sysWow64))
+            {
+                candidates.Add(sysWow64);
+            }
+
+            return candidates.Distinct(StringComparer.OrdinalIgnoreCase);
         }
 
         private async Task<bool> RunProcessAsync(string fileName, string arguments, string workingDir, string? browserPath = null, Action<string>? onStatusChange = null, TimeSpan? timeout = null)
