@@ -82,56 +82,57 @@ jobs:
             dist/velopack/assets.win.json
           retention-days: 5
 
-  build-macos:
-    name: Build macOS (Apple Silicon)
-    needs: prepare-version
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Install Velopack CLI
-        run: dotnet tool install --global vpk
-
-      - name: Display locked version info
-        run: |
-          echo "🔒 Building macOS with LOCKED version from version.json"
-          echo "📦 Package Version: ${{ needs.prepare-version.outputs.version }}"
-          echo "🔢 Assembly Version: ${{ needs.prepare-version.outputs.assembly-version }}"
-          echo "⚠️  No auto-increment on GitHub Actions build"
-
-      - name: Build macOS with Velopack (uses locked version from version.json)
-        run: ./build/macos-velopack.sh Release arm64
-        env:
-          GITHUB_ACTIONS: "true"
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-          MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
-          MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
-          MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
-          MACOS_NOTARIZATION_PWD: ${{ secrets.MACOS_NOTARIZATION_PWD }}
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-release
-          path: |
-            dist/velopack/*.dmg
-            dist/velopack/*-Portable.zip
-            dist/velopack/*.nupkg
-            dist/velopack/RELEASES
-            dist/velopack/releases.osx-arm64.json
-            dist/velopack/assets.osx-arm64.json
-          retention-days: 5
+  # Temporarily disabled - MacOS build
+  # build-macos:
+  #   name: Build macOS (Apple Silicon)
+  #   needs: prepare-version
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #
+  #     - name: Install Velopack CLI
+  #       run: dotnet tool install --global vpk
+  #
+  #     - name: Display locked version info
+  #       run: |
+  #         echo "🔒 Building macOS with LOCKED version from version.json"
+  #         echo "📦 Package Version: ${{ needs.prepare-version.outputs.version }}"
+  #         echo "🔢 Assembly Version: ${{ needs.prepare-version.outputs.assembly-version }}"
+  #         echo "⚠️  No auto-increment on GitHub Actions build"
+  #
+  #     - name: Build macOS with Velopack (uses locked version from version.json)
+  #       run: ./build/macos-velopack.sh Release arm64
+  #       env:
+  #         GITHUB_ACTIONS: "true"
+  #         MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+  #         MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+  #         MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+  #         MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+  #         MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+  #         MACOS_NOTARIZATION_PWD: ${{ secrets.MACOS_NOTARIZATION_PWD }}
+  #
+  #     - name: Upload macOS artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: macos-release
+  #         path: |
+  #           dist/velopack/*.dmg
+  #           dist/velopack/*-Portable.zip
+  #           dist/velopack/*.nupkg
+  #           dist/velopack/RELEASES
+  #           dist/velopack/releases.osx-arm64.json
+  #           dist/velopack/assets.osx-arm64.json
+  #         retention-days: 5
 
   create-release:
     name: Create GitHub Release
-    needs: [prepare-version, build-windows, build-macos]
+    needs: [prepare-version, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -161,15 +162,6 @@ jobs:
           - Hỗ trợ auto-update qua Velopack
           - **Lưu ý:** Tải file ZIP để tránh cảnh báo của trình duyệt
 
-          #### macOS (Apple Silicon)
-          - **VbdlisTools-$VERSION-osx-arm64.dmg** - Installer cho macOS (M1/M2/M3/M4)
-          - Hỗ trợ auto-update qua Velopack
-          - **Lưu ý:** Ứng dụng chưa ký số, cần chạy lệnh sau khi cài đặt:
-            ```bash
-            xattr -cr "/Applications/VBDLIS Tools.app"
-            ```
-          - Xem file README.txt trong DMG để biết chi tiết
-
           ### 🚀 Installation
 
           **Windows:**
@@ -177,14 +169,6 @@ jobs:
           2. Giải nén ZIP file
           3. Chạy `VbdlisTools-$VERSION-Setup.exe`
           4. Ứng dụng tự động update khi có phiên bản mới
-
-          **macOS:**
-          1. Tải file `VbdlisTools-$VERSION-osx-arm64.dmg`
-          2. Mở DMG file
-          3. Kéo "VBDLIS Tools.app" vào thư mục Applications
-          4. Mở Terminal và chạy: `xattr -cr "/Applications/VBDLIS Tools.app"`
-          5. Mở ứng dụng bình thường
-          6. Ứng dụng tự động update khi có phiên bản mới
 
           ### ⚠️ Important Notes
 
@@ -194,7 +178,6 @@ jobs:
           - **Auto-Update**: Ứng dụng tự động kiểm tra và cập nhật phiên bản mới
           - **Minimum Requirements**:
             - Windows: Windows 10 64-bit or later
-            - macOS: macOS 10.15 (Catalina) or later, Apple Silicon (M1/M2/M3/M4)
             - ~200MB disk space (bao gồm Playwright browsers)
 
           ### 🐛 Bug Fixes & Improvements
@@ -220,7 +203,6 @@ jobs:
           prerelease: false
           files: |
             artifacts/windows-release/*
-            artifacts/macos-release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
