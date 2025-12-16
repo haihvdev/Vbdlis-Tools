@@ -154,36 +154,10 @@
           Header="Thông tin thửa đất">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate>
-              <StackPanel
+              <SelectableTextBlock
                 Margin="4"
-                DataContext="{Binding ThuaDatModel}"
-                IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}"
-                Spacing="2">
-                <SelectableTextBlock IsVisible="{Binding SoToBanDo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Số tờ bản đồ: " />
-                  <Run FontWeight="Bold" Text="{Binding SoToBanDo}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding SoThuaDat, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Số thửa đất: " />
-                  <Run FontWeight="Bold" Text="{Binding SoThuaDat}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding HasDienTich}" TextWrapping="Wrap">
-                  <Run Text="Diện tích: " />
-                  <Run FontWeight="Bold" Text="{Binding DienTichFormatted}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding MucDichSuDungFormatted, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Mục đích sử dụng: " />
-                  <Run FontWeight="Bold" Text="{Binding MucDichSuDungFormatted}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding NguonGocSuDungDatFormatted, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Nguồn gốc sử dụng: " />
-                  <Run FontWeight="Bold" Text="{Binding NguonGocSuDungDatFormatted}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Địa chỉ: " />
-                  <Run FontWeight="Bold" Text="{Binding DiaChi}" />
-                </SelectableTextBlock>
-              </StackPanel>
+                Text="{Binding ThuaDatCompact}"
+                TextWrapping="Wrap" />
             </DataTemplate>
           </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>
@@ -195,32 +169,10 @@
           Header="Thông tin tài sản">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate>
-              <StackPanel
+              <SelectableTextBlock
                 Margin="4"
-                DataContext="{Binding TaiSan}"
-                IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}"
-                Spacing="2">
-                <SelectableTextBlock IsVisible="{Binding TenTaiSan, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Tên tài sản: " />
-                  <Run FontWeight="Bold" Text="{Binding TenTaiSan}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding HasDienTichXayDung}" TextWrapping="Wrap">
-                  <Run Text="Diện tích xây dựng: " />
-                  <Run FontWeight="Bold" Text="{Binding DienTichXayDungFormatted}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding HasDienTichSuDung}" TextWrapping="Wrap">
-                  <Run Text="Diện tích sử dụng: " />
-                  <Run FontWeight="Bold" Text="{Binding DienTichSuDungFormatted}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding SoTang, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Số tầng: " />
-                  <Run FontWeight="Bold" Text="{Binding SoTang}" />
-                </SelectableTextBlock>
-                <SelectableTextBlock IsVisible="{Binding DiaChi, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap">
-                  <Run Text="Địa chỉ: " />
-                  <Run FontWeight="Bold" Text="{Binding DiaChi}" />
-                </SelectableTextBlock>
-              </StackPanel>
+                Text="{Binding TaiSanCompact}"
+                TextWrapping="Wrap" />
             </DataTemplate>
           </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>

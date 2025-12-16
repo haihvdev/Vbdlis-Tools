@@ -8,7 +8,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.Models;
 /// <summary>
 /// Thông tin Giấy chứng nhận tổng hợp
 /// </summary>
-public record KetQuaTimKiemModel(List<ChuSuDungModel> ListChuSuDung, GiayChungNhanModel GiayChungNhanModel, ThuaDatModel? ThuaDatModel, TaiSanModel? TaiSan)
+public record KetQuaTimKiemModel(
+    List<ChuSuDungModel> ListChuSuDung,
+    GiayChungNhanModel GiayChungNhanModel,
+    List<ThuaDatModel> ListThuaDat,
+    List<TaiSanModel> ListTaiSan)
 {
     /// <summary>
     /// Format tất cả chủ sử dụng với dấu phân cách ---
@@ -22,6 +26,42 @@ public record KetQuaTimKiemModel(List<ChuSuDungModel> ListChuSuDung, GiayChungNh
 
             var allParts = ListChuSuDung
                 .Select(chu => chu.ChuSuDungCompact)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+
+            return string.Join($"{Environment.NewLine}---{Environment.NewLine}", allParts);
+        }
+    }
+
+    /// <summary>
+    /// Format tất cả thửa đất với dấu phân cách ---
+    /// </summary>
+    public string ThuaDatCompact
+    {
+        get
+        {
+            if (ListThuaDat == null || ListThuaDat.Count == 0)
+                return string.Empty;
+
+            var allParts = ListThuaDat
+                .Select(td => td.ThuaDatCompact)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+
+            return string.Join($"{Environment.NewLine}---{Environment.NewLine}", allParts);
+        }
+    }
+
+    /// <summary>
+    /// Format tất cả tài sản với dấu phân cách ---
+    /// </summary>
+    public string TaiSanCompact
+    {
+        get
+        {
+            if (ListTaiSan == null || ListTaiSan.Count == 0)
+                return string.Empty;
+
+            var allParts = ListTaiSan
+                .Select(ts => ts.TaiSanCompact)
                 .Where(s => !string.IsNullOrWhiteSpace(s));
 
             return string.Join($"{Environment.NewLine}---{Environment.NewLine}", allParts);
@@ -100,7 +140,7 @@ public class ChuSuDungModel
         }
 
         if (parts.Count == 0)
-            return showDashIfEmpty ? "Số giấy tờ: (-)" : null;
+            return showDashIfEmpty ? "(-)" : null;
 
         return string.Join("; ", parts);
     }
@@ -190,66 +230,71 @@ public class ChuSuDungModel
             : first + string.Concat(distinctNumbers.Skip(1).Select(n => $"; ({n})"));
     }
 
-    public string TenChu
+    public string TenChu(bool includeTitle = true)
     {
-        get
+        static string OngBa(bool? gioiTinh, bool capitalize)
         {
-            var parts = new List<string>();
+            if (gioiTinh == true)
+                return capitalize ? "Ông" : "ông";
 
-            if (CaNhan != null && !string.IsNullOrWhiteSpace(CaNhan.HoTen))
-                parts.Add($"Họ tên: {(CaNhan.GioiTinh == true ? "ông" : "bà")} {CaNhan.HoTen}");
-
-            if (VoChong != null)
-            {
-                var tenChong = VoChong.Chong?.HoTen ?? "";
-                var tenVo = VoChong.Vo?.HoTen ?? "";
-
-                if (!string.IsNullOrWhiteSpace(tenChong) && !string.IsNullOrWhiteSpace(tenVo))
-                {
-                    var tenVoChong = VoChong.InVoTruoc == true
-                        ? $"Họ tên: vợ {tenVo} và chồng {tenChong}"
-                        : $"Họ tên: chồng {tenChong} và vợ {tenVo}";
-                    parts.Add(tenVoChong);
-                }
-                else if (!string.IsNullOrWhiteSpace(tenChong))
-                    parts.Add($"Họ tên: ông {tenChong}");
-                else if (!string.IsNullOrWhiteSpace(tenVo))
-                    parts.Add($"Họ tên: bà {tenVo}");
-            }
-
-            if (HoGiaDinh != null)
-            {
-                var tenThanhVien = new List<string>();
-
-                var tenChuHo = HoGiaDinh.ChuHo?.HoTen ?? "";
-                if (!string.IsNullOrWhiteSpace(tenChuHo))
-                    tenThanhVien.Add($"Chủ hộ {(HoGiaDinh.ChuHo?.GioiTinh == true ? "Ông" : "Bà")} {tenChuHo}");
-
-                if (HoGiaDinh.ListThanhVienHoGiaDinh != null && HoGiaDinh.ListThanhVienHoGiaDinh.Count > 0)
-                {
-                    var tenCacThanhVien = HoGiaDinh.ListThanhVienHoGiaDinh
-                        .Where(tv => !string.IsNullOrWhiteSpace(tv.HoTen))
-                        .Select(tv => $"{(tv.GioiTinh == true ? "ông" : "bà")} {tv.HoTen!}");
-                    tenThanhVien.AddRange(tenCacThanhVien);
-                }
-
-                var tenHoGiaDinh = tenThanhVien.Count > 0
-                    ? $"Hộ gia đình: ({string.Join(", ", tenThanhVien)})"
-                    : "Hộ gia đình: (không tìm thấy thành viên)";
-                parts.Add(tenHoGiaDinh);
-            }
-
-            if (ToChuc != null && !string.IsNullOrWhiteSpace(ToChuc.TenToChuc))
-                parts.Add($"Tên tổ chức: {ToChuc.TenToChuc}");
-
-            if (CongDong != null && !string.IsNullOrWhiteSpace(CongDong))
-                parts.Add($"Cộng đồng: {CongDong}");
-
-            if (NhomNguoi != null && !string.IsNullOrWhiteSpace(NhomNguoi))
-                parts.Add($"Nhóm người: {NhomNguoi}");
-
-            return string.Join("; ", parts);
+            return capitalize ? "Bà" : "bà";
         }
+
+        var parts = new List<string>();
+
+        if (CaNhan != null && !string.IsNullOrWhiteSpace(CaNhan.HoTen))
+            parts.Add($"{(includeTitle ? "Họ tên: " : "")}{OngBa(CaNhan.GioiTinh, capitalize: !includeTitle)} {CaNhan.HoTen}");
+
+        if (VoChong != null)
+        {
+            var tenChong = VoChong.Chong?.HoTen ?? "";
+            var tenVo = VoChong.Vo?.HoTen ?? "";
+
+            if (!string.IsNullOrWhiteSpace(tenChong) && !string.IsNullOrWhiteSpace(tenVo))
+            {
+                var tenVoChong = VoChong.InVoTruoc == true
+                    ? $"{(includeTitle ? "Họ tên: " : "")}vợ {tenVo} và chồng {tenChong}"
+                    : $"{(includeTitle ? "Họ tên: " : "")}chồng {tenChong} và vợ {tenVo}";
+                parts.Add(tenVoChong);
+            }
+            else if (!string.IsNullOrWhiteSpace(tenChong))
+                parts.Add($"{(includeTitle ? "Họ tên: " : "")}{OngBa(true, capitalize: !includeTitle)} {tenChong}");
+            else if (!string.IsNullOrWhiteSpace(tenVo))
+                parts.Add($"{(includeTitle ? "Họ tên: " : "")}{OngBa(false, capitalize: !includeTitle)} {tenVo}");
+        }
+
+        if (HoGiaDinh != null)
+        {
+            var tenThanhVien = new List<string>();
+
+            var tenChuHo = HoGiaDinh.ChuHo?.HoTen ?? "";
+            if (!string.IsNullOrWhiteSpace(tenChuHo))
+                tenThanhVien.Add($"Chủ hộ {(HoGiaDinh.ChuHo?.GioiTinh == true ? "Ông" : "Bà")} {tenChuHo}");
+
+            if (HoGiaDinh.ListThanhVienHoGiaDinh != null && HoGiaDinh.ListThanhVienHoGiaDinh.Count > 0)
+            {
+                var tenCacThanhVien = HoGiaDinh.ListThanhVienHoGiaDinh
+                    .Where(tv => !string.IsNullOrWhiteSpace(tv.HoTen))
+                    .Select(tv => $"{OngBa(tv.GioiTinh, capitalize: !includeTitle)} {tv.HoTen!}");
+                tenThanhVien.AddRange(tenCacThanhVien);
+            }
+
+            var tenHoGiaDinh = tenThanhVien.Count > 0
+                ? $"{(includeTitle ? "Hộ gia đình: " : "")}({string.Join(", ", tenThanhVien)})"
+                : "Hộ gia đình: (không tìm thấy thành viên)";
+            parts.Add(tenHoGiaDinh);
+        }
+
+        if (ToChuc != null && !string.IsNullOrWhiteSpace(ToChuc.TenToChuc))
+            parts.Add($"{(includeTitle ? "Tên tổ chức: " : "")}{ToChuc.TenToChuc}");
+
+        if (CongDong != null && !string.IsNullOrWhiteSpace(CongDong))
+            parts.Add($"{(includeTitle ? "Cộng đồng: " : "")}{CongDong}");
+
+        if (NhomNguoi != null && !string.IsNullOrWhiteSpace(NhomNguoi))
+            parts.Add($"{(includeTitle ? "Nhóm người: " : "")}{NhomNguoi}");
+
+        return string.Join("; ", parts);
     }
 
     public string? NamSinh
@@ -373,21 +418,30 @@ public class ChuSuDungModel
 
             if (CaNhan != null)
             {
-                var diaChiCaNhan = CaNhan.ListDiaChi?
-                    .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                    ?? CaNhan.DiaChi;
-                if (!string.IsNullOrWhiteSpace(diaChiCaNhan))
-                    parts.Add(diaChiCaNhan);
+                if (!string.IsNullOrWhiteSpace(CaNhan.DiaChi))
+                    parts.Add(CaNhan.DiaChi);
+                else
+                {
+                    var diaChiCaNhan = CaNhan.ListDiaChi?
+                        .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
+                        ?? CaNhan.DiaChi;
+                    if (!string.IsNullOrWhiteSpace(diaChiCaNhan))
+                        parts.Add(diaChiCaNhan);
+                }
             }
 
             if (VoChong != null)
             {
-                var diaChiChong = VoChong.Chong?.ListDiaChi?
+                var diaChiChong = string.IsNullOrWhiteSpace(VoChong.Chong?.DiaChi) ?
+                    VoChong.Chong?.ListDiaChi?
+                        .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
+                        ?? VoChong.Chong?.DiaChi ?? ""
+                    : VoChong.Chong?.DiaChi ?? "";
+                var diaChiVo = string.IsNullOrWhiteSpace(VoChong.Vo?.DiaChi) ?
+                    VoChong.Vo?.ListDiaChi?
                     .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                    ?? VoChong.Chong?.DiaChi ?? "";
-                var diaChiVo = VoChong.Vo?.ListDiaChi?
-                    .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                    ?? VoChong.Vo?.DiaChi ?? "";
+                    ?? VoChong.Vo?.DiaChi ?? ""
+                    : VoChong.Vo?.DiaChi ?? "";
 
                 // Nếu cả hai có địa chỉ giống nhau, chỉ thêm một
                 if (!string.IsNullOrWhiteSpace(diaChiChong) && diaChiChong == diaChiVo)
@@ -409,19 +463,24 @@ public class ChuSuDungModel
 
             if (HoGiaDinh != null)
             {
+
                 // Địa chỉ hộ gia đình thường chung, nên chỉ lấy địa chỉ chung của hộ
-                var diaChiHoGiaDinh = HoGiaDinh.ListDiaChi?
-                    .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                    ?? HoGiaDinh.DiaChi;
+                var diaChiHoGiaDinh = string.IsNullOrWhiteSpace(HoGiaDinh.DiaChi) ?
+                    HoGiaDinh.ListDiaChi?
+                        .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
+                        ?? HoGiaDinh.DiaChi
+                    : HoGiaDinh.DiaChi;
                 if (!string.IsNullOrWhiteSpace(diaChiHoGiaDinh))
                     parts.Add(diaChiHoGiaDinh);
             }
 
             if (ToChuc != null)
             {
-                var diaChiToChuc = ToChuc.ListDiaChi?
-                    .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                    ?? ToChuc.DiaChi;
+                var diaChiToChuc = string.IsNullOrWhiteSpace(ToChuc.DiaChi) ?
+                    ToChuc.ListDiaChi?
+                        .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
+                        ?? ToChuc.DiaChi
+                    : ToChuc.DiaChi;
                 if (!string.IsNullOrWhiteSpace(diaChiToChuc))
                     parts.Add(diaChiToChuc);
             }
@@ -434,9 +493,9 @@ public class ChuSuDungModel
         get
         {
             var parts = new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(TenChu))
-                parts.Add(TenChu);
+            var tenChu = TenChu();
+            if (!string.IsNullOrWhiteSpace(tenChu))
+                parts.Add(tenChu);
 
             if (!string.IsNullOrWhiteSpace(NamSinh))
                 parts.Add($"Năm sinh: {NamSinh}");
@@ -527,6 +586,36 @@ public class ThuaDatModel(int xaId, string soToBanDo, string soThuaDat, double? 
     public bool HasNguonGocSuDungDat =>
         ListMucDichSuDung != null &&
         ListMucDichSuDung.Any(m => m.ListNguonGocSuDungDat != null && m.ListNguonGocSuDungDat.Count > 0);
+
+    public string ThuaDatCompact
+    {
+        get
+        {
+            var parts = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(SoToBanDo))
+                parts.Add($"Tờ bản đồ số: {SoToBanDo}");
+
+            if (!string.IsNullOrWhiteSpace(SoThuaDat))
+                parts.Add($"Thửa đất số: {SoThuaDat}");
+
+            if (HasDienTich)
+                parts.Add($"Diện tích: {DienTichFormatted}");
+
+            if (HasMucDichSuDung)
+                parts.Add($"Mục đích sử dụng: {MucDichSuDungFormatted}");
+            else if (!string.IsNullOrWhiteSpace(MucDichSuDung))
+                parts.Add($"Mục đích sử dụng: {MucDichSuDung}");
+
+            if (HasNguonGocSuDungDat)
+                parts.Add($"Nguồn gốc sử dụng đất: {NguonGocSuDungDatFormatted}");
+
+            if (!string.IsNullOrWhiteSpace(DiaChi))
+                parts.Add($"Địa chỉ: {DiaChi}");
+
+            return string.Join(Environment.NewLine, parts);
+        }
+    }
 }
 
 public class MucDichSuDungInfo(string loaiMucDichSuDungId, double dienTich, List<NguonGocSuDungDatInfo>? listNguonGocSuDungDat = null)
@@ -562,4 +651,29 @@ public class TaiSanModel(string tenTaiSan, double? dienTichXayDung, double? dien
         : "";
 
     public bool HasDienTichSuDung => DienTichSuDung.HasValue && DienTichSuDung.Value > 0;
+
+    public string TaiSanCompact
+    {
+        get
+        {
+            var parts = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(TenTaiSan))
+                parts.Add($"Tên tài sản: {TenTaiSan}");
+
+            if (HasDienTichXayDung)
+                parts.Add($"Diện tích xây dựng: {DienTichXayDungFormatted}");
+
+            if (HasDienTichSuDung)
+                parts.Add($"Diện tích sử dụng: {DienTichSuDungFormatted}");
+
+            if (!string.IsNullOrWhiteSpace(SoTang))
+                parts.Add($"Số tầng: {SoTang}");
+
+            if (!string.IsNullOrWhiteSpace(DiaChi))
+                parts.Add($"Địa chỉ: {DiaChi}");
+
+            return string.Join(Environment.NewLine, parts);
+        }
+    }
 }

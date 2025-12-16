@@ -40,7 +40,7 @@ public static class KetQuaTimKiemExxtensions
     private static void ProcessThuaDatFromLienKet(
         List<LienKetTaiSanThuaDatDto>? listLienKet,
         HashSet<string> uniqueThuaDat,
-        ref ThuaDatModel? firstThuaDat)
+        List<ThuaDatModel> allThuaDat)
     {
         if (listLienKet == null || listLienKet.Count == 0) return;
 
@@ -105,8 +105,8 @@ public static class KetQuaTimKiemExxtensions
                     listMucDichSuDung: listMucDichSuDung
                 );
 
-                // Lưu thửa đất đầu tiên
-                firstThuaDat ??= thuaDatModel;
+                // Thêm vào danh sách tất cả thửa đất
+                allThuaDat.Add(thuaDatModel);
             }
         }
     }
@@ -227,8 +227,9 @@ public static class KetQuaTimKiemExxtensions
                 var uniqueThuaDat = new HashSet<string>();
                 var uniqueTaiSan = new HashSet<string>();
 
-                ThuaDatModel? firstThuaDat = null;
-                TaiSanModel? firstTaiSan = null;
+                // Tạo danh sách để lưu tất cả thửa đất và tài sản
+                var allThuaDat = new List<ThuaDatModel>();
+                var allTaiSan = new List<TaiSanModel>();
 
                 foreach (var dangky in listDangKyQuyen)
                 {
@@ -294,8 +295,8 @@ public static class KetQuaTimKiemExxtensions
                                 listMucDichSuDung: listMucDichSuDung
                             );
 
-                            // Lưu thửa đất đầu tiên
-                            firstThuaDat ??= thuaDatModel;
+                            // Thêm vào danh sách tất cả thửa đất
+                            allThuaDat.Add(thuaDatModel);
                         }
                     }
                     // Xử lý Nhà riêng lẻ (typeItem = 7)
@@ -325,12 +326,12 @@ public static class KetQuaTimKiemExxtensions
                                 diaChi: diaChi
                             );
 
-                            // Lưu tài sản đầu tiên
-                            firstTaiSan ??= taiSanModel;
+                            // Thêm vào danh sách tất cả tài sản
+                            allTaiSan.Add(taiSanModel);
                         }
 
-                        // Lấy thông tin thửa đất từ liên kết (nếu chưa có thửa đất)
-                        ProcessThuaDatFromLienKet(dangky.NhaRiengLe.ListLienKetTaiSanThuaDat, uniqueThuaDat, ref firstThuaDat);
+                        // Lấy thông tin thửa đất từ liên kết
+                        ProcessThuaDatFromLienKet(dangky.NhaRiengLe.ListLienKetTaiSanThuaDat, uniqueThuaDat, allThuaDat);
                     }
                     // Xử lý Căn hộ (typeItem = 8)
                     else if (dangky.CanHo != null)
@@ -368,30 +369,30 @@ public static class KetQuaTimKiemExxtensions
                                 diaChi: diaChi
                             );
 
-                            // Lưu tài sản đầu tiên
-                            firstTaiSan ??= taiSanModel;
+                            // Thêm vào danh sách tất cả tài sản
+                            allTaiSan.Add(taiSanModel);
                         }
 
                         // Lấy thông tin thửa đất từ liên kết
                         // Ưu tiên 1: CanHo.ListLienKetTaiSanThuaDat
                         if (dangky.CanHo.ListLienKetTaiSanThuaDat != null && dangky.CanHo.ListLienKetTaiSanThuaDat.Count > 0)
                         {
-                            ProcessThuaDatFromLienKet(dangky.CanHo.ListLienKetTaiSanThuaDat, uniqueThuaDat, ref firstThuaDat);
+                            ProcessThuaDatFromLienKet(dangky.CanHo.ListLienKetTaiSanThuaDat, uniqueThuaDat, allThuaDat);
                         }
                         // Ưu tiên 2: NhaChungCu.ListThuaLienKet (nếu không có trong CanHo)
                         else if (dangky.CanHo.NhaChungCu?.ListThuaLienKet != null)
                         {
-                            ProcessThuaDatFromLienKet(dangky.CanHo.NhaChungCu.ListThuaLienKet, uniqueThuaDat, ref firstThuaDat);
+                            ProcessThuaDatFromLienKet(dangky.CanHo.NhaChungCu.ListThuaLienKet, uniqueThuaDat, allThuaDat);
                         }
                     }
                 }
 
-                // Tạo một KetQuaTimKiemModel duy nhất với tất cả chủ sử dụng
+                // Tạo một KetQuaTimKiemModel duy nhất với tất cả chủ sử dụng, thửa đất và tài sản
                 results.Add(new KetQuaTimKiemModel(
                     ListChuSuDung: allChuSuDung,
                     GiayChungNhanModel: giayChungNhanModel,
-                    ThuaDatModel: firstThuaDat,
-                    TaiSan: firstTaiSan
+                    ListThuaDat: allThuaDat,
+                    ListTaiSan: allTaiSan
                 ));
             }
 

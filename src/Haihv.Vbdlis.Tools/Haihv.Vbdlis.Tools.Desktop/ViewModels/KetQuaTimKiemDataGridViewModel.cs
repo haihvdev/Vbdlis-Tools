@@ -164,72 +164,11 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     }
                     worksheet.Cells[row, 3].Value = gcnInfo;
 
-                    // Thông tin thửa đất
-                    if (item.ThuaDatModel != null)
-                    {
-                        var thuaDatInfo = "";
-                        if (!string.IsNullOrEmpty(item.ThuaDatModel.SoToBanDo))
-                        {
-                            thuaDatInfo += $"Số tờ bản đồ: {item.ThuaDatModel.SoToBanDo}";
-                        }
-                        if (!string.IsNullOrEmpty(item.ThuaDatModel.SoThuaDat))
-                        {
-                            if (thuaDatInfo.Length > 0) thuaDatInfo += "\n";
-                            thuaDatInfo += $"Số thửa đất: {item.ThuaDatModel.SoThuaDat}";
-                        }
-                        if (item.ThuaDatModel.DienTich > 0)
-                        {
-                            if (thuaDatInfo.Length > 0) thuaDatInfo += "\n";
-                            thuaDatInfo += $"Diện tích: {item.ThuaDatModel.DienTich:N2} m²";
-                        }
-                        if (!string.IsNullOrEmpty(item.ThuaDatModel.MucDichSuDungFormatted))
-                        {
-                            if (thuaDatInfo.Length > 0) thuaDatInfo += "\n";
-                            thuaDatInfo += $"Mục đích sử dụng: {item.ThuaDatModel.MucDichSuDungFormatted}";
-                        }
-                        if (!string.IsNullOrEmpty(item.ThuaDatModel.NguonGocSuDungDatFormatted))
-                        {
-                            if (thuaDatInfo.Length > 0) thuaDatInfo += "\n";
-                            thuaDatInfo += $"Nguồn gốc sử dụng: {item.ThuaDatModel.NguonGocSuDungDatFormatted}";
-                        }
-                        if (!string.IsNullOrEmpty(item.ThuaDatModel.DiaChi))
-                        {
-                            if (thuaDatInfo.Length > 0) thuaDatInfo += "\n";
-                            thuaDatInfo += $"Địa chỉ: {item.ThuaDatModel.DiaChi}";
-                        }
-                        worksheet.Cells[row, 4].Value = thuaDatInfo;
-                    }
+                    // Thông tin thửa đất - sử dụng ThuaDatCompact
+                    worksheet.Cells[row, 4].Value = item.ThuaDatCompact;
 
-                    // Thông tin tài sản
-                    if (item.TaiSan != null)
-                    {
-                        var taiSanInfo = "";
-                        if (!string.IsNullOrEmpty(item.TaiSan.TenTaiSan))
-                        {
-                            taiSanInfo += $"Tên tài sản: {item.TaiSan.TenTaiSan}";
-                        }
-                        if (item.TaiSan.DienTichXayDung > 0)
-                        {
-                            if (taiSanInfo.Length > 0) taiSanInfo += "\n";
-                            taiSanInfo += $"Diện tích xây dựng: {item.TaiSan.DienTichXayDung:N2} m²";
-                        }
-                        if (item.TaiSan.DienTichSuDung > 0)
-                        {
-                            if (taiSanInfo.Length > 0) taiSanInfo += "\n";
-                            taiSanInfo += $"Diện tích sử dụng: {item.TaiSan.DienTichSuDung:N2} m²";
-                        }
-                        if (!string.IsNullOrEmpty(item.TaiSan.SoTang))
-                        {
-                            if (taiSanInfo.Length > 0) taiSanInfo += "\n";
-                            taiSanInfo += $"Số tầng: {item.TaiSan.SoTang}";
-                        }
-                        if (!string.IsNullOrEmpty(item.TaiSan.DiaChi))
-                        {
-                            if (taiSanInfo.Length > 0) taiSanInfo += "\n";
-                            taiSanInfo += $"Địa chỉ: {item.TaiSan.DiaChi}";
-                        }
-                        worksheet.Cells[row, 5].Value = taiSanInfo;
-                    }
+                    // Thông tin tài sản - sử dụng TaiSanCompact
+                    worksheet.Cells[row, 5].Value = item.TaiSanCompact;
 
                     // Enable text wrapping for multi-line content
                     worksheet.Cells[row, 2, row, 5].Style.WrapText = true;
@@ -274,6 +213,18 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
 
         try
         {
+            static string JoinLines(IEnumerable<string?>? values)
+            {
+                if (values == null)
+                    return "";
+
+                var parts = values
+                    .Where(v => !string.IsNullOrWhiteSpace(v))
+                    .Select(v => v!.Trim());
+
+                return string.Join(Environment.NewLine, parts);
+            }
+
             IsExporting = true;
             StatusMessage = "Đang xuất Excel đầy đủ...";
 
@@ -287,28 +238,31 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
 
                 // Header - Chủ sử dụng
                 worksheet.Cells[1, 1].Value = "STT";
-                worksheet.Cells[1, 2].Value = "Chủ sử dụng";
+                worksheet.Cells[1, 2].Value = "Tên chủ sử dụng";
+                worksheet.Cells[1, 3].Value = "Số giấy tờ";
+                worksheet.Cells[1, 4].Value = "Địa chỉ chủ sử dụng";
 
                 // Header - Giấy chứng nhận
-                worksheet.Cells[1, 3].Value = "Số phát hành";
-                worksheet.Cells[1, 4].Value = "Số vào sổ";
-                worksheet.Cells[1, 5].Value = "Ngày vào sổ";
+                worksheet.Cells[1, 5].Value = "Số phát hành";
+                worksheet.Cells[1, 6].Value = "Số vào sổ";
+                worksheet.Cells[1, 7].Value = "Ngày vào sổ";
 
                 // Header - Thửa đất
-                worksheet.Cells[1, 6].Value = "Số tờ bản đồ";
-                worksheet.Cells[1, 7].Value = "Số thửa đất";
-                worksheet.Cells[1, 8].Value = "Diện tích";
-                worksheet.Cells[1, 9].Value = "Mục đích sử dụng";
-                worksheet.Cells[1, 10].Value = "Địa chỉ thửa đất";
+                worksheet.Cells[1, 8].Value = "Số tờ bản đồ";
+                worksheet.Cells[1, 9].Value = "Số thửa đất";
+                worksheet.Cells[1, 10].Value = "Diện tích";
+                worksheet.Cells[1, 11].Value = "Mục đích sử dụng";
+                worksheet.Cells[1, 12].Value = "Địa chỉ thửa đất";
+
                 // Header - Tài sản
-                worksheet.Cells[1, 11].Value = "Loại tài sản";
-                worksheet.Cells[1, 12].Value = "Diện tích xây dựng";
-                worksheet.Cells[1, 13].Value = "Diện tích sử dụng";
-                worksheet.Cells[1, 14].Value = "Số tầng";
-                worksheet.Cells[1, 15].Value = "Địa chỉ tài sản";
+                worksheet.Cells[1, 13].Value = "Loại tài sản";
+                worksheet.Cells[1, 14].Value = "Diện tích xây dựng";
+                worksheet.Cells[1, 15].Value = "Diện tích sử dụng";
+                worksheet.Cells[1, 16].Value = "Số tầng";
+                worksheet.Cells[1, 17].Value = "Địa chỉ tài sản";
 
                 // Format header
-                using (var range = worksheet.Cells[1, 1, 1, 15])
+                using (var range = worksheet.Cells[1, 1, 1, 17])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
@@ -324,32 +278,33 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     var row = i + 2;
 
                     worksheet.Cells[row, 1].Value = i + 1;
-                    worksheet.Cells[row, 2].Value = item.ListChuSuDung?.FirstOrDefault()?.TenChu ?? "";
+                    worksheet.Cells[row, 2].Value = JoinLines(item.ListChuSuDung?.Select(c => c.TenChu(false).Trim()));
+                    worksheet.Cells[row, 3].Value = JoinLines(item.ListChuSuDung?.Select(c => c.SoGiayTo));
+                    worksheet.Cells[row, 4].Value = JoinLines(item.ListChuSuDung?.Select(c => c.DiaChi));
                     // Giấy chứng nhận
-                    worksheet.Cells[row, 3].Value = item.GiayChungNhanModel.SoPhatHanh;
-                    worksheet.Cells[row, 4].Value = item.GiayChungNhanModel.SoVaoSo;
-                    worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
+                    worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.SoPhatHanh;
+                    worksheet.Cells[row, 6].Value = item.GiayChungNhanModel.SoVaoSo;
+                    worksheet.Cells[row, 7].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
                         ? item.GiayChungNhanModel.NgayVaoSo.Value.ToString("dd/MM/yyyy")
                         : "";
 
-                    if (item.ThuaDatModel != null)
-                    {
-                        // Thửa đất
-                        worksheet.Cells[row, 6].Value = item.ThuaDatModel.SoToBanDo ?? "";
-                        worksheet.Cells[row, 7].Value = item.ThuaDatModel.SoThuaDat ?? "";
-                        worksheet.Cells[row, 8].Value = item.ThuaDatModel.DienTich > 0 ? item.ThuaDatModel.DienTich : "";
-                        worksheet.Cells[row, 9].Value = item.ThuaDatModel.MucDichSuDung ?? "";
-                        worksheet.Cells[row, 10].Value = item.ThuaDatModel.DiaChi ?? "";
-                    }
-                    if (item.TaiSan != null)
-                    {
-                        // Tài sản
-                        worksheet.Cells[row, 11].Value = item.TaiSan.TenTaiSan ?? "";
-                        worksheet.Cells[row, 12].Value = item.TaiSan.DienTichXayDung > 0 ? item.TaiSan.DienTichXayDung : "";
-                        worksheet.Cells[row, 13].Value = item.TaiSan.DienTichSuDung > 0 ? item.TaiSan.DienTichSuDung : "";
-                        worksheet.Cells[row, 14].Value = item.TaiSan.SoTang ?? "";
-                        worksheet.Cells[row, 15].Value = item.TaiSan.DiaChi ?? "";
-                    }
+                    // Thửa đất - lấy tất cả và nối bằng xuống dòng
+                    worksheet.Cells[row, 8].Value = JoinLines(item.ListThuaDat?.Select(td => td.SoToBanDo));
+                    worksheet.Cells[row, 9].Value = JoinLines(item.ListThuaDat?.Select(td => td.SoThuaDat));
+                    worksheet.Cells[row, 10].Value = JoinLines(item.ListThuaDat?.Select(td => td.HasDienTich ? td.DienTich!.Value.ToString() : ""));
+                    worksheet.Cells[row, 11].Value = JoinLines(item.ListThuaDat?.Select(td => td.HasMucDichSuDung ? td.MucDichSuDungFormatted : td.MucDichSuDung));
+                    worksheet.Cells[row, 12].Value = JoinLines(item.ListThuaDat?.Select(td => td.DiaChi));
+
+                    // Tài sản - lấy tất cả và nối bằng xuống dòng
+                    worksheet.Cells[row, 13].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.TenTaiSan));
+                    worksheet.Cells[row, 14].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DienTichXayDung > 0 ? ts.DienTichXayDung!.Value.ToString() : ""));
+                    worksheet.Cells[row, 15].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DienTichSuDung > 0 ? ts.DienTichSuDung!.Value.ToString() : ""));
+                    worksheet.Cells[row, 16].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.SoTang));
+                    worksheet.Cells[row, 17].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DiaChi));
+
+                    // Enable text wrapping for multi-line content
+                    worksheet.Cells[row, 2, row, 17].Style.WrapText = true;
+                    worksheet.Cells[row, 2, row, 17].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
                 }
 
                 // Auto fit columns
