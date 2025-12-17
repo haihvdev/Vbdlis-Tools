@@ -168,6 +168,10 @@ jobs:
 
           <!-- APP_UPDATE_NOTES_START -->
           ### ✨ Có gì mới trong phiên bản này?
+          **v1.0.25121703 (17 Tháng 12, 2025)**
+          - Sửa lỗi không hiển thị thông tin ghi chú phát hành khi kiểm tra bản cập nhật.
+          
+          **v1.0.25121702 (17 Tháng 12, 2025)**
           - Cập nhật thông tin ghi chú phát hành trong quá trình kiểm tra bản cập nhật.
           - Sửa lỗi không lấy được thông tin chủ sử dụng là tổ chức khi có mã loại tổ chức.
           - Thêm tính năng xuất dữ liệu ra file Excel với hộp thoại lưu file và bổ sung thông báo trạng thái sau khi xuất file thành công
