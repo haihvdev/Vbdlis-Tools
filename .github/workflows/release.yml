@@ -168,10 +168,9 @@ jobs:
 
           <!-- APP_UPDATE_NOTES_START -->
           ### ✨ Có gì mới trong phiên bản này?
-          - Cải thiện hiệu suất tìm kiếm
-          - Sửa lỗi giao diện trên Windows 11
-          - Thêm tính năng lưu lịch sử tìm kiếm
-          - Tối ưu hóa tốc độ khởi động ứng dụng
+          - Cập nhật thông tin ghi chú phát hành trong quá trình kiểm tra bản cập nhật.
+          - Sửa lỗi không lấy được thông tin chủ sử dụng là tổ chức khi có mã loại tổ chức.
+          - Thêm tính năng xuất dữ liệu ra file Excel với hộp thoại lưu file và bổ sung thông báo trạng thái sau khi xuất file thành công
           <!-- APP_UPDATE_NOTES_END -->
 
           ### 📦 Tải về
