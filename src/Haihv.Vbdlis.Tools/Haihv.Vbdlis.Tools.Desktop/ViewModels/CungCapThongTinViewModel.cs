@@ -17,8 +17,9 @@ using System.Threading.Tasks;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
-public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanService searchService) : ViewModelBase
+public partial class CungCapThongTinViewModel : ViewModelBase
 {
+    private readonly CungCapThongTinGiayChungNhanService _searchService;
     private Action<AdvancedSearchGiayChungNhanResponse>? _updateDataGridAction;
 
     [ObservableProperty] private bool _isSearching;
@@ -50,9 +51,7 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
     [ObservableProperty] private string _currentSearchType = string.Empty;
 
     public bool IsStatusVisible => IsSearching || IsInitializing;
-
-    public bool AreSearchDetailsVisible => IsSearching && !IsInitializing;
-
+    
     public string StatusSummary
     {
         get
@@ -71,12 +70,13 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
         }
     }
 
-    public string CurrentSearchDisplay =>
-        string.IsNullOrWhiteSpace(CurrentSearchItem)
-            ? string.Empty
-            : $"{CurrentSearchType}: {CurrentSearchItem}";
-
     private ObservableCollection<SearchResultModel> SearchResults { get; } = [];
+
+    public CungCapThongTinViewModel(CungCapThongTinGiayChungNhanService searchService)
+    {
+        _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
+        _searchService.StatusChanged += OnSearchServiceStatusChanged;
+    }
 
     /// <summary>
     /// Đăng ký action để cập nhật DataGrid từ View
@@ -103,14 +103,12 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
     partial void OnIsSearchingChanged(bool value)
     {
         OnPropertyChanged(nameof(IsStatusVisible));
-        OnPropertyChanged(nameof(AreSearchDetailsVisible));
         OnPropertyChanged(nameof(StatusSummary));
     }
 
     partial void OnIsInitializingChanged(bool value)
     {
         OnPropertyChanged(nameof(IsStatusVisible));
-        OnPropertyChanged(nameof(AreSearchDetailsVisible));
         OnPropertyChanged(nameof(StatusSummary));
     }
 
@@ -119,14 +117,14 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
         OnPropertyChanged(nameof(StatusSummary));
     }
 
-    partial void OnCurrentSearchItemChanged(string value)
+    private void OnSearchServiceStatusChanged(string message)
     {
-        OnPropertyChanged(nameof(CurrentSearchDisplay));
-    }
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
 
-    partial void OnCurrentSearchTypeChanged(string value)
-    {
-        OnPropertyChanged(nameof(CurrentSearchDisplay));
+        SearchProgress = message;
     }
 
     [RelayCommand]
@@ -165,7 +163,7 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
 
                     var normalizedItem = item.Trim();
                     Log.Information("Searching for item: {Item}", normalizedItem);
-                    var response = await searchService.SearchAsync(soGiayTo: normalizedItem);
+                    var response = await _searchService.SearchAsync(soGiayTo: normalizedItem);
                     if (response is { Data.Count: > 0 })
                     {
                         Log.Information("SearchAsync returned {Count} results for item: {Item}", response.Data.Count,
@@ -182,41 +180,39 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
                         }
 
                         Log.Information("Searching for item: {Item}", normalizedItem);
-                        response = await searchService.SearchAsync(soGiayTo: normalizedItem);
-                        if (response != null && response.Data != null && response.Data.Count > 0)
+                        response = await _searchService.SearchAsync(soGiayTo: normalizedItem);
+                        if (response is { Data.Count: > 0 })
                         {
                             Log.Information("SearchAsync returned {Count} results for item: {Item}",
-                                response.Data?.Count ?? 0, normalizedItem);
+                                response.Data.Count, normalizedItem);
                             return response;
                         }
                         else
                         {
                             Log.Information("Thử lại sau khi bỏ số 0 ở đầu cho item: {Item}", normalizedItem);
                             var modifiedItem = normalizedItem.TrimStart('0');
-                            if (normalizedItem?.Length == modifiedItem.Length)
+                            if (normalizedItem.Length == modifiedItem.Length)
                             {
                                 Log.Information("No leading zeros to remove for item: {Item}", normalizedItem);
                                 return null;
                             }
 
-                            response = await searchService.SearchAsync(soGiayTo: modifiedItem);
-                            if (response != null && response.Data != null && response.Data.Count > 0)
+                            response = await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                            if (response is { Data.Count: > 0 })
                             {
                                 Log.Information("SearchAsync returned {Count} results for modified item: {Item}",
-                                    response.Data?.Count ?? 0, modifiedItem);
+                                    response.Data.Count, modifiedItem);
                                 return response;
                             }
                             else
                             {
                                 Log.Information("Thử lại sau khi bỏ 0 ở đầu cho item lần 2: {Item}", normalizedItem);
                                 modifiedItem = modifiedItem.TrimStart('0');
-                                if (normalizedItem?.Length == modifiedItem.Length)
-                                {
-                                    Log.Information("No leading zeros to remove for item: {Item}", modifiedItem);
-                                    return null;
-                                }
+                                if (normalizedItem.Length != modifiedItem.Length)
+                                    return await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                                Log.Information("No leading zeros to remove for item: {Item}", modifiedItem);
+                                return null;
 
-                                return await searchService.SearchAsync(soGiayTo: modifiedItem);
                             }
                         }
                     }
@@ -251,7 +247,7 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
             await PerformSearchAsync(items, async (item) =>
             {
                 var modifiedItem = item.NormalizedSoPhatHanh();
-                return await searchService.SearchAsync(soPhatHanh: modifiedItem);
+                return await _searchService.SearchAsync(soPhatHanh: modifiedItem);
             }, "số phát hành");
         }
     }
@@ -307,7 +303,7 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
         Log.Information("Ensuring CungCapThongTin page...");
         try
         {
-            await searchService.EnsureCungCapThongTinPageAsync();
+            await _searchService.EnsureCungCapThongTinPageAsync();
             IsInitializing = false;
             SearchProgress = $"Bắt đầu tìm {searchType}...";
 
@@ -341,7 +337,7 @@ public partial class CungCapThongTinViewModel(CungCapThongTinGiayChungNhanServic
                         SearchResults.Add(searchResult);
 
                         // Tổng hợp tất cả data[] vào danh sách chung
-                        if (response.Data?.Count > 0)
+                        if (response.Data.Count > 0)
                         {
                             allData.AddRange(response.Data);
                             FoundItems = allData.Count;

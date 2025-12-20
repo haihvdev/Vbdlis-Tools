@@ -26,33 +26,32 @@
         <local:KetQuaTimKiemDataGridControl x:Name="ResultsDataGrid" Grid.Row="1" />
 
         <!--  Status Bar  -->
-        <StackPanel
-            Grid.Row="2"
+        <Grid
+            Grid.Row="2" 
             Margin="0,15,0,0"
-            Spacing="6">
-            <StackPanel IsVisible="{Binding AreSearchDetailsVisible}" Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="Đang tìm:" />
-                <TextBlock FontWeight="SemiBold" Text="{Binding CurrentSearchDisplay}" />
-            </StackPanel>
-
-            <Grid
-                HorizontalAlignment="Stretch"
-                ColumnDefinitions="*,Auto"
-                ColumnSpacing="10"
-                IsVisible="{Binding IsStatusVisible}">
-                <ProgressBar
-                    Grid.Column="0"
-                    Height="10"
-                    Maximum="{Binding ProgressMaximum}"
-                    Value="{Binding ProgressValue}" />
-                <TextBlock Grid.Column="1" FontSize="12">
-                    <Run Text="{Binding ProgressValue, StringFormat='{}{0:0}'}" />
-                    <Run Text="/" />
-                    <Run Text="{Binding ProgressMaximum, StringFormat='{}{0:0}'}" />
-                    <Run Text=" - " />
-                    <Run Text="{Binding ProgressPercentage, StringFormat='{}{0:0}%'}" />
-                </TextBlock>
-            </Grid>
-        </StackPanel>
+            ColumnDefinitions="Auto,*,Auto,Auto"
+            IsVisible="{Binding IsStatusVisible}"
+            ColumnSpacing="10">
+            <TextBlock
+                Grid.Column="0"
+                FontSize="12"
+                Text="{Binding StatusSummary}" />
+            <TextBlock
+                Grid.Column="2"
+                FontSize="12">
+                <Run Text="{Binding ProgressValue, StringFormat='{}{0:0}'}" />
+                <Run Text="/" />
+                <Run Text="{Binding ProgressMaximum, StringFormat='{}{0:0}'}" />
+                <Run Text="(" />
+                <Run Text="{Binding ProgressPercentage, StringFormat='{}{0:0}%'}" />
+                <Run Text=")" />
+            </TextBlock>
+            <ProgressBar
+                Grid.Column="3"
+                MaxWidth="200"
+                Height="10"
+                Maximum="{Binding ProgressMaximum}"
+                Value="{Binding ProgressValue}" />
+        </Grid>
     </Grid>
 </UserControl>

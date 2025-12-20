@@ -14,14 +14,23 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 /// <summary>
 /// Service cho tìm kiếm nâng cao Giấy chứng nhận trên VBDLIS sử dụng Playwright
 /// </summary>
-public class CungCapThongTinGiayChungNhanService(
-    IPlaywrightService playwrightService,
-    LoginSessionInfo loginSessionInfo)
+public class CungCapThongTinGiayChungNhanService
 {
+    private readonly IPlaywrightService _playwrightService;
+    private readonly LoginSessionInfo _loginSessionInfo;
     private readonly ILogger _logger = Log.ForContext<CungCapThongTinGiayChungNhanService>();
-    private readonly IPlaywrightService _playwrightService = playwrightService;
-    private readonly LoginSessionInfo _loginSessionInfo = loginSessionInfo;
     private IPage? _page;
+
+    public event Action<string>? StatusChanged;
+
+    public CungCapThongTinGiayChungNhanService(
+        IPlaywrightService playwrightService,
+        LoginSessionInfo loginSessionInfo)
+    {
+        _playwrightService = playwrightService ?? throw new ArgumentNullException(nameof(playwrightService));
+        _loginSessionInfo = loginSessionInfo ?? throw new ArgumentNullException(nameof(loginSessionInfo));
+        _playwrightService.StatusChanged += message => StatusChanged?.Invoke(message);
+    }
 
     /// <summary>
     /// Gọi API tìm kiếm nâng cao Giấy chứng nhận theo số phát hành hoặc số giấy tờ
@@ -38,14 +47,14 @@ public class CungCapThongTinGiayChungNhanService(
                 "Số phát hành hoặc Số giấy tờ phải được cung cấp để tìm kiếm.");
         }
 
-        _logger.Information("Page ensured, creating payload...");
+        _logger.Debug("Page ensured, creating payload...");
 
         var formData = CungCapThongTinGiayChungNhanPayload.GetAdvancedSearchGiayChungNhanPayload(
             soPhatHanh, soGiayTo);
-        _logger.Information("Payload created, posting search...");
+        _logger.Debug("Payload created, posting search...");
 
         var json = await PostAdvancedSearchAsync(formData);
-        _logger.Information("Search completed, response length: {Length}", json?.Length ?? 0);
+        _logger.Debug("Search completed, response length: {Length}", json.Length);
 
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -161,8 +170,8 @@ public class CungCapThongTinGiayChungNhanService(
                 script,
                 new object[] { _loginSessionInfo.AdvancedSearchGiayChungNhanUrl, sanitizedFormData });
 
-            Debug.WriteLine($"AdvancedSearchGCN: Response length {response?.Length ?? 0}");
-            return response ?? string.Empty;
+            Debug.WriteLine($"AdvancedSearchGCN: Response length {response.Length}");
+            return response;
         }
         catch (Exception ex)
         {
@@ -255,8 +264,8 @@ public class CungCapThongTinGiayChungNhanService(
                 script,
                 new object[] { _loginSessionInfo.GetGiayChungNhanBienDongUrl, giayChungNhanId });
 
-            Debug.WriteLine($"GetGiayChungNhanBienDong: Response length {response?.Length ?? 0}");
-            return response ?? string.Empty;
+            Debug.WriteLine($"GetGiayChungNhanBienDong: Response length {response.Length}");
+            return response;
         }
         catch (Exception ex)
         {
@@ -385,42 +394,28 @@ public class CungCapThongTinGiayChungNhanService(
     /// </summary>
     public async Task EnsureCungCapThongTinPageAsync()
     {
-        _logger.Information("EnsureCungCapThongTinPageAsync - IsInitialized: {IsInit}, Page null: {PageNull}",
+        _logger.Debug("EnsureCungCapThongTinPageAsync - IsInitialized: {IsInit}, Page null: {PageNull}",
             _playwrightService.IsInitialized, _page == null);
 
         if (!_playwrightService.IsInitialized)
         {
-            _logger.Information("Initializing playwright service...");
+            _logger.Debug("Initializing playwright service...");
             await _playwrightService.InitializeAsync();
         }
 
         // Tạo page mới nếu chưa có
         if (_page == null)
         {
-            _logger.Information("Creating new page...");
+            _logger.Debug("Creating new page...");
             _page = await _playwrightService.NewPageAsync();
-            _logger.Information("New page created");
+            _logger.Debug("New page created");
         }
 
         try
         {
             var targetUrl = _loginSessionInfo.CungCapThongTinGiayChungNhanPageUrl;
-
-            // LUÔN reload trang để tránh cache và tự động re-login nếu timeout
-            _logger.Information("Reloading page to avoid cache and ensure fresh session: {Url}", targetUrl);
-
-            await _page.GotoAsync(targetUrl, new PageGotoOptions
-            {
-                WaitUntil = WaitUntilState.DOMContentLoaded,
-                Timeout = 30000
-            });
-
-            _logger.Information("Page loaded, waiting for page to be ready...");
-
-            // Wait a bit for scripts to load
-            await Task.Delay(1000);
-
-            _logger.Information("Page ready at: {Url}", targetUrl);
+            _page = await _playwrightService.EnsurePageAsync(_page, targetUrl)
+                    ?? throw new InvalidOperationException("Không thể tạo/truy cập trang Playwright.");
         }
         catch (Exception ex)
         {

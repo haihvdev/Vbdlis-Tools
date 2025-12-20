@@ -21,7 +21,7 @@ public class DatabaseService : IDatabaseService, IDisposable
     public DatabaseService()
     {
         _databasePath = GetDefaultDatabasePath();
-        _logger.Information("DatabaseService initialized with path: {DatabasePath}", _databasePath);
+        _logger.Debug("DatabaseService initialized with path: {DatabasePath}", _databasePath);
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ public class DatabaseService : IDatabaseService, IDisposable
     public DatabaseService(string databasePath)
     {
         _databasePath = databasePath;
-        _logger.Information("DatabaseService initialized with custom path: {DatabasePath}", _databasePath);
+        _logger.Debug("DatabaseService initialized with custom path: {DatabasePath}", _databasePath);
     }
 
     /// <summary>

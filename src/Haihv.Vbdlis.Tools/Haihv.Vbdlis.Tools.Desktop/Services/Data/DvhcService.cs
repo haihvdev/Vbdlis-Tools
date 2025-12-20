@@ -41,7 +41,7 @@ public class DvhcService(IDatabaseService databaseService)
             await dbContext.DvhcCapHuyen.AddRangeAsync(capHuyenList);
             await dbContext.SaveChangesAsync();
 
-            _logger.Information("Đã lưu {Count} quận/huyện cho tỉnh {TinhId}", capHuyenList.Count, tinhId);
+            _logger.Debug("Đã lưu {Count} quận/huyện cho tỉnh {TinhId}", capHuyenList.Count, tinhId);
         }
         catch (Exception ex)
         {
@@ -101,7 +101,7 @@ public class DvhcService(IDatabaseService databaseService)
             await dbContext.DvhcCapXa.AddRangeAsync(capXaList);
             await dbContext.SaveChangesAsync();
 
-            _logger.Information("Đã lưu {Count} xã/phường cho tỉnh {TinhId}", capXaList.Count, tinhId);
+            _logger.Debug("Đã lưu {Count} xã/phường cho tỉnh {TinhId}", capXaList.Count, tinhId);
         }
         catch (Exception ex)
         {

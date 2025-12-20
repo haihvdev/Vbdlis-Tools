@@ -85,7 +85,7 @@ public partial class DvhcSelectorViewModel(DonViHanhChinhViewModel dvhcViewModel
                 HuyenList.Add(huyen);
             }
 
-            _logger.Information("Đã tải {Count} huyện", HuyenList.Count);
+            _logger.Debug("Đã tải {Count} huyện", HuyenList.Count);
         }
         catch (Exception ex)
         {
@@ -131,7 +131,7 @@ public partial class DvhcSelectorViewModel(DonViHanhChinhViewModel dvhcViewModel
                 XaList.Add(xa);
             }
 
-            _logger.Information("Đã tải {Count} xã cho huyện {HuyenId}", XaList.Count, huyenId);
+            _logger.Debug("Đã tải {Count} xã cho huyện {HuyenId}", XaList.Count, huyenId);
             StatusMessage = $"Đã tải {XaList.Count} xã/phường";
         }
         catch (Exception ex)

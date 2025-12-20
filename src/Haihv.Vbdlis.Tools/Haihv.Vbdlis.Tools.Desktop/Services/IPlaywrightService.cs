@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Haihv.Vbdlis.Tools.Desktop.Models;
 using Microsoft.Playwright;
@@ -9,6 +10,16 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
     /// </summary>
     public interface IPlaywrightService
     {
+        /// <summary>
+        /// Notifies UI about long-running Playwright status (e.g., auto re-login).
+        /// </summary>
+        event Action<string>? StatusChanged;
+
+        /// <summary>
+        /// Raised when the session is expired and cannot be restored automatically.
+        /// </summary>
+        event Action<string>? SessionExpired;
+
         /// <summary>
         /// Initializes the Playwright browser with persistent context
         /// </summary>
@@ -55,5 +66,17 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         /// Checks if the browser is initialized
         /// </summary>
         bool IsInitialized { get; }
+
+        /// <summary>
+        /// Ensures a page is created and navigated to the specified URL
+        /// </summary>
+        /// <param name="page">
+        /// An existing page instance, or null to create a new one
+        /// </param>
+        /// <param name="url">
+        /// The URL to navigate the page to
+        /// </param>
+        /// <returns></returns>
+        Task<IPage?> EnsurePageAsync(IPage? page, string url);
     }
 }

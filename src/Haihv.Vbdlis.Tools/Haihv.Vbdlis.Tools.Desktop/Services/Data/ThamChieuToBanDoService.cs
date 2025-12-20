@@ -30,7 +30,7 @@ public class ThamChieuToBanDoService(IDatabaseService databaseService)
             var dbContext = _databaseService.GetDbContext();
             var count = await dbContext.ThamChieuToBanDo.CountAsync();
 
-            _logger.Information("ThamChieuToBanDo service initialized with {Count} records", count);
+            _logger.Debug("ThamChieuToBanDo service initialized with {Count} records", count);
             _initialized = true;
         }
         catch (Exception ex)
@@ -140,7 +140,7 @@ public class ThamChieuToBanDoService(IDatabaseService databaseService)
                 await UpsertAsync(thamChieu);
             }
 
-            _logger.Information("Imported {Count} map references", thamChieuList.Count);
+            _logger.Debug("Imported {Count} map references", thamChieuList.Count);
         }
         catch (Exception ex)
         {

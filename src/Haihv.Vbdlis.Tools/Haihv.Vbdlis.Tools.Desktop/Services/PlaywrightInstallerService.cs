@@ -120,7 +120,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 {
                     if (HasChromiumInstalled(path))
                     {
-                        _logger.Information("Playwright browsers found at: {Path}", path);
+                        _logger.Debug("Playwright browsers found at: {Path}", path);
                         return true;
                     }
                 }
@@ -159,11 +159,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 if (string.IsNullOrWhiteSpace(envPath))
                 {
                     Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", installTargetPath);
-                    _logger.Information("PLAYWRIGHT_BROWSERS_PATH not set. Using: {Path}", installTargetPath);
+                    _logger.Debug("PLAYWRIGHT_BROWSERS_PATH not set. Using: {Path}", installTargetPath);
                 }
                 else
                 {
-                    _logger.Information("PLAYWRIGHT_BROWSERS_PATH is preset. Using: {Path}", envPath);
+                    _logger.Debug("PLAYWRIGHT_BROWSERS_PATH is preset. Using: {Path}", envPath);
                     installTargetPath = Path.GetFullPath(envPath);
                 }
 
@@ -184,7 +184,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     }
                     else
                     {
-                        _logger.Information("Bundled installer failed or unavailable, trying dotnet CLI fallback...");
+                        _logger.Debug("Bundled installer failed or unavailable, trying dotnet CLI fallback...");
                     }
 
                     var dotnetInstalled =
@@ -193,7 +193,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
 
                     if (!dotnetInstalled || !hasBrowsersAfterDotnet)
                     {
-                        _logger.Information(
+                        _logger.Debug(
                             "dotnet CLI fallback failed or browsers still missing. Falling back to Microsoft.Playwright.Program.Main install...");
                         onStatusChange?.Invoke("Đang cài đặt bằng Playwright CLI (in-process)...");
                         await RunPlaywrightProgramMainAsync(installTargetPath, onStatusChange);
@@ -232,7 +232,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 return false;
             }
 
-            _logger.Information("Running dotnet CLI Playwright installer targeting {Path} using {Dll}...",
+            _logger.Debug("Running dotnet CLI Playwright installer targeting {Path} using {Dll}...",
                 installTargetPath, playwrightDll);
             onStatusChange?.Invoke("Đang cài đặt bằng dotnet Playwright CLI...");
 
@@ -243,7 +243,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
 
             if (success)
             {
-                _logger.Information("dotnet CLI Playwright install completed.");
+                _logger.Debug("dotnet CLI Playwright install completed.");
             }
             else
             {
@@ -258,7 +258,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         {
             try
             {
-                _logger.Information("Running Microsoft.Playwright.Program.Main install targeting {Path}...",
+                _logger.Debug("Running Microsoft.Playwright.Program.Main install targeting {Path}...",
                     installTargetPath);
                 onStatusChange?.Invoke("Đang cài đặt bằng Playwright CLI (in-process)...");
                 var sw = Stopwatch.StartNew();
@@ -272,7 +272,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 sw.Stop();
                 if (exitCode == 0)
                 {
-                    _logger.Information("Microsoft.Playwright.Program.Main completed in {Elapsed}.", sw.Elapsed);
+                    _logger.Debug("Microsoft.Playwright.Program.Main completed in {Elapsed}.", sw.Elapsed);
                     return;
                 }
 
@@ -293,14 +293,14 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             var psScript = Path.Combine(appDir, "playwright.ps1");
             var shScript = Path.Combine(appDir, "playwright.sh");
 
-            _logger.Information("Running bundled Playwright installer targeting {Path}...", installTargetPath);
+            _logger.Debug("Running bundled Playwright installer targeting {Path}...", installTargetPath);
 
             bool VerifyInstall(string sourceLabel)
             {
                 var ok = HasChromiumInstalled(installTargetPath);
                 if (ok)
                 {
-                    _logger.Information("{Source} installer finished and Chromium is present at {Path}", sourceLabel,
+                    _logger.Debug("{Source} installer finished and Chromium is present at {Path}", sourceLabel,
                         installTargetPath);
                     return true;
                 }
@@ -333,14 +333,14 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     return true;
                 }
 
-                _logger.Information("pwsh failed or not found, trying Windows PowerShell...");
+                _logger.Debug("pwsh failed or not found, trying Windows PowerShell...");
                 var candidates = GetWindowsPowerShellCandidates().ToList();
-                _logger.Information("Found {Count} PowerShell candidates: {Candidates}", candidates.Count,
+                _logger.Debug("Found {Count} PowerShell candidates: {Candidates}", candidates.Count,
                     string.Join(", ", candidates));
 
                 foreach (var powershellPath in candidates)
                 {
-                    _logger.Information("Trying PowerShell at: {Path}", powershellPath);
+                    _logger.Debug("Trying PowerShell at: {Path}", powershellPath);
                     if (await TryRunAsync(powershellPath,
                             $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{psScript}\" install chromium",
                             powershellPath, "Đang cài đặt bằng Windows PowerShell..."))
@@ -470,7 +470,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                         var stderrTimeout = SafeRead(stderrTask);
                         if (!string.IsNullOrWhiteSpace(stdoutTimeout))
                         {
-                            _logger.Information("playwright install stdout (timeout): {Stdout}", stdoutTimeout);
+                            _logger.Debug("playwright install stdout (timeout): {Stdout}", stdoutTimeout);
                         }
 
                         if (!string.IsNullOrWhiteSpace(stderrTimeout))
@@ -493,19 +493,19 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     if (!string.IsNullOrWhiteSpace(stdout))
                     {
                         onStatusChange?.Invoke(stdout);
-                        _logger.Information("playwright install stdout: {Stdout}", stdout);
+                        _logger.Debug("playwright install stdout: {Stdout}", stdout);
                     }
 
                     if (!string.IsNullOrWhiteSpace(stderr))
                     {
                         onStatusChange?.Invoke(stderr);
-                        _logger.Information("playwright install stderr: {Stderr}", stderr);
+                        _logger.Debug("playwright install stderr: {Stderr}", stderr);
                     }
                 }
 
                 if (exitCode == 0)
                 {
-                    _logger.Information("playwright install completed successfully via {Exe}", fileName);
+                    _logger.Debug("playwright install completed successfully via {Exe}", fileName);
                     return true;
                 }
 

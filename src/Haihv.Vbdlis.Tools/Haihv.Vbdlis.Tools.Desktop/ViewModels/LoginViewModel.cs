@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Haihv.Vbdlis.Tools.Desktop.Services;
 using Microsoft.Playwright;
 using System.Diagnostics;
+using Serilog;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
 {
@@ -25,6 +26,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         [ObservableProperty] private bool _headlessBrowser; // Default to false (show browser)
 
         [ObservableProperty] private string _loginStatusMessage = string.Empty;
+        private readonly ILogger _logger = Log.ForContext<LoginViewModel>();
 
         partial void OnIsLoggingInChanged(bool value)
         {
@@ -46,23 +48,27 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             {
                 IsLoggingIn = true;
                 ErrorMessage = string.Empty;
+                _logger.Information("Attempting login to server {Server} with username {Username}", Server, Username);
                 UpdateLoginStatus("Đang kiểm tra thông tin đã nhập...");
 
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(Server))
                 {
+                    _logger.Warning("Server address is empty.");
                     ErrorMessage = "Vui lòng nhập địa chỉ máy chủ";
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(Username))
                 {
+                    _logger.Warning("Username is empty.");
                     ErrorMessage = "Vui lòng nhập tài khoản";
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(Password))
                 {
+                    _logger.Warning("Password is empty.");
                     ErrorMessage = "Vui lòng nhập mật khẩu";
                     return;
                 }
@@ -70,17 +76,20 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 // Use Playwright to login
                 if (playwrightService != null)
                 {
+                    _logger.Debug("Using Playwright service for login automation.");
                     await PerformPlaywrightLoginAsync();
                 }
                 else
                 {
                     // Fallback: Just raise success event without browser automation
+                    _logger.Debug("Playwright service not available. Skipping browser automation.");
                     UpdateLoginStatus("Đăng nhập thành công.");
                     NotifyLoginSuccess();
                 }
             }
             catch (Exception ex)
             {
+                _logger.Error(ex, "Login failed with exception.");
                 ErrorMessage = $"Đăng nhập thất bại: {ex.Message}";
             }
             finally
@@ -94,6 +103,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             if (playwrightService == null) return;
 
             // Initialize Playwright browser (reuse existing context if available)
+            _logger.Debug("Initializing Playwright browser. Headless mode: {Headless}", HeadlessBrowser);
             UpdateLoginStatus("Đang khởi tạo phiên trình duyệt...");
             await playwrightService.InitializeAsync(headless: HeadlessBrowser);
 
@@ -116,6 +126,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             // Check if redirected to authentication page
             if (currentUrl.Contains("authen.mplis.gov.vn/account/login"))
             {
+                // On login page - perform login
+                _logger.Information("Redirected to login page. Performing login for user {Username}.", Username);
                 await PerformLoginAsync(page);
             }
             else

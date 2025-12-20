@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Haihv.Vbdlis.Tools.Desktop.Services;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Haihv.Vbdlis.Tools.Desktop.Models;
 using Haihv.Vbdlis.Tools.Desktop.Services.Vbdlis;
 
@@ -69,6 +70,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             // Subscribe to login events
             _loginViewModel.LoginSuccessful += OnLoginSuccessful;
             _loginViewModel.LoginCancelled += OnLoginCancelled;
+            _playwrightService.SessionExpired += OnSessionExpired;
 
             // Start with not logged in
             IsLoggedIn = false;
@@ -128,6 +130,25 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             {
                 Environment.Exit(0);
             }
+        }
+
+        private void OnSessionExpired(string message)
+        {
+            Dispatcher.UIThread.Post(async () =>
+            {
+                await HandleSessionExpiredAsync(message);
+            });
+        }
+
+        private async Task HandleSessionExpiredAsync(string message)
+        {
+            if (!IsLoggedIn)
+            {
+                return;
+            }
+
+            await LogoutAsync();
+            LoginViewModel.ErrorMessage = message;
         }
 
         [RelayCommand]

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Haihv.Vbdlis.Tools.Desktop.Models.Vbdlis.Converters;
 
 namespace Haihv.Vbdlis.Tools.Desktop.Models.Vbdlis;
 
@@ -55,7 +56,9 @@ public class ThuaDatFullInfoDto
     [JsonPropertyName("localId")] public long? LocalId { get; set; }
     [JsonPropertyName("isNew")] public bool? IsNew { get; set; }
     [JsonPropertyName("isChange")] public bool? IsChange { get; set; }
-    [JsonPropertyName("taiLieuDoDacId")] public string? TaiLieuDoDacId { get; set; }
+    [JsonPropertyName("taiLieuDoDacId")]
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string? TaiLieuDoDacId { get; set; }
     [JsonPropertyName("TaiLieuDoDac")] public object? TaiLieuDoDac { get; set; }
     [JsonPropertyName("ListDiaChi")] public List<DiaChiFullDto>? ListDiaChi { get; set; }
     [JsonPropertyName("ListMucDichSuDung")] public List<MucDichSuDungFullDto>? ListMucDichSuDung { get; set; }
