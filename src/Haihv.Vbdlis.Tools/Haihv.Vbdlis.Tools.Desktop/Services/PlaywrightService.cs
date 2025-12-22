@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Haihv.Vbdlis.Tools.Desktop.Extensions;
 using Haihv.Vbdlis.Tools.Desktop.Models;
 using Microsoft.Playwright;
 using Serilog;
@@ -18,14 +17,14 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
     public sealed class PlaywrightService : IPlaywrightService, IDisposable
     {
         private const int DefaultNavigationTimeoutMs = 60000;
-        private const int ReLoginMaxAttempts = 1;
-        private const string LoginUsernameSelector = "input[name='username']";
-        private const string LoginPasswordSelector = "input[name='password']";
-        private const string LoginSubmitSelector = "button[type='submit'].login100-form-btn";
+        private const int NavigationRetryMaxAttempts = 1;
+        private const int SessionIdleTimeoutMinutes = 1;
+        private static readonly TimeSpan SessionIdleTimeout = TimeSpan.FromMinutes(SessionIdleTimeoutMinutes);
 
         private IPlaywright? _playwright;
         private string? _userDataDirectory;
         private bool _disposed;
+        private DateTime? _lastAccessUtc;
         private readonly ILogger _logger = Log.ForContext<PlaywrightService>();
         private readonly SemaphoreSlim _navigationSemaphore = new(1, 1);
 
@@ -59,11 +58,20 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             await _navigationSemaphore.WaitAsync();
             try
             {
-                for (var attempt = 0; attempt <= ReLoginMaxAttempts; attempt++)
+                if (IsSessionExpired())
+                {
+                    var message = $"Phiên đăng nhập đã hết hạn do quá {SessionIdleTimeoutMinutes} phút không hoạt động.\nVui lòng đăng nhập lại!";
+                    NotifyStatus(message);
+                    NotifySessionExpired(message);
+                    _logger.Warning("Session expired due to inactivity.");
+                    throw new InvalidOperationException(message);
+                }
+
+                for (var attempt = 0; attempt <= NavigationRetryMaxAttempts; attempt++)
                 {
                     // LUÔN reload trang để tránh cache và tự động re-login nếu timeout
                     _logger.Debug("Navigating to: {Url} (attempt {Attempt}/{MaxAttempt})",
-                        url, attempt + 1, ReLoginMaxAttempts + 1);
+                        url, attempt + 1, NavigationRetryMaxAttempts + 1);
 
                     NotifyStatus("Đang tải trang, vui lòng chờ...");
                     try
@@ -77,9 +85,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     catch (TimeoutException ex)
                     {
                         _logger.Warning(ex, "Navigation timeout for {Url} (attempt {Attempt}/{MaxAttempt})",
-                            url, attempt + 1, ReLoginMaxAttempts + 1);
+                            url, attempt + 1, NavigationRetryMaxAttempts + 1);
                         NotifyStatus("Tải trang đang chậm, đang thử lại...");
-                        if (attempt == ReLoginMaxAttempts)
+                        if (attempt == NavigationRetryMaxAttempts)
                         {
                             throw;
                         }
@@ -92,31 +100,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                     // Wait a bit for scripts to load
                     await Task.Delay(1000);
 
-                    // Kiểm tra xem có cần login lại không
-                    if (!IsAuthenticationUrl(page.Url))
-                    {
-                        _logger.Debug("Page ready at: {Url}", page.Url);
-                        break;
-                    }
-
-                    NotifyStatus("Phiên đăng nhập đã hết hạn, đang tự động đăng nhập lại...");
-                    _logger.Warning("Session expired (redirected to auth). Attempting re-login...");
-
-                    var reLogin = await TryReLoginAsync(page);
-                    if (!reLogin)
-                    {
-                        var message = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-                        NotifyStatus(message);
-                        NotifySessionExpired(message);
-                        throw new InvalidOperationException(
-                            "Phiên đăng nhập đã hết hạn và không thể tự động đăng nhập lại. Vui lòng đăng nhập lại.");
-                    }
-
-                    if (attempt == ReLoginMaxAttempts)
-                    {
-                        throw new InvalidOperationException(
-                            "Không thể điều hướng tới trang đích sau khi đã tự động đăng nhập lại. Vui lòng thử lại.");
-                    }
+                    _lastAccessUtc = DateTime.UtcNow;
+                    _logger.Debug("Page ready at: {Url}", page.Url);
+                    break;
                 }
             }
             catch (Exception ex)
@@ -134,87 +120,6 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
 
         public LoginSessionInfo? CachedLoginInfo { get; private set; }
 
-        private static bool IsAuthenticationUrl(string? url)
-        {
-            if (string.IsNullOrWhiteSpace(url)) return false;
-            return url.Contains(UrlExtensions.AuthenBaseUrl, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private async Task<bool> TryReLoginAsync(IPage page)
-        {
-            var loginInfo = CachedLoginInfo;
-            if (loginInfo == null ||
-                string.IsNullOrWhiteSpace(loginInfo.Username) ||
-                string.IsNullOrWhiteSpace(loginInfo.Password))
-            {
-                NotifyStatus("Không có thông tin đăng nhập lưu, cần đăng nhập lại.");
-                _logger.Warning("No cached credentials available; cannot auto re-login.");
-                return false;
-            }
-
-            try
-            {
-                if (!IsAuthenticationUrl(page.Url))
-                {
-                    return true;
-                }
-
-                NotifyStatus("Đang mở form đăng nhập...");
-                // Ensure we're on the login form
-                await page.WaitForSelectorAsync(LoginUsernameSelector, new PageWaitForSelectorOptions
-                {
-                    Timeout = 15000
-                });
-
-                await page.FillAsync(LoginUsernameSelector, loginInfo.Username);
-                await page.FillAsync(LoginPasswordSelector, loginInfo.Password);
-
-                try
-                {
-                    await page.ClickAsync(LoginSubmitSelector);
-                }
-                catch
-                {
-                    await page.ClickAsync("button[type='submit']");
-                }
-
-                NotifyStatus("Đang đăng nhập lại...");
-                try
-                {
-                    await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
-                        new PageWaitForLoadStateOptions { Timeout = 15000 });
-                }
-                catch
-                {
-                    // Best effort
-                }
-
-                // Wait until we leave the auth domain (poll to avoid relying on overload availability)
-                var timeoutAt = DateTime.UtcNow.AddSeconds(30);
-                while (DateTime.UtcNow < timeoutAt)
-                {
-                    if (!IsAuthenticationUrl(page.Url))
-                    {
-                        NotifyStatus("Đăng nhập lại thành công, đang tiếp tục...");
-                        _logger.Debug("Re-login succeeded. Current url: {Url}", page.Url);
-                        return true;
-                    }
-
-                    await Task.Delay(250);
-                }
-
-                _logger.Warning("Re-login did not leave auth domain. Current url: {Url}", page.Url);
-                NotifyStatus("Đăng nhập lại không thành công. Vui lòng đăng nhập lại.");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Auto re-login failed");
-                NotifyStatus("Đăng nhập lại gặp lỗi. Vui lòng thử lại.");
-                return false;
-            }
-        }
-
         private void NotifyStatus(string message)
         {
             StatusChanged?.Invoke(message);
@@ -223,6 +128,16 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         private void NotifySessionExpired(string message)
         {
             SessionExpired?.Invoke(message);
+        }
+
+        private bool IsSessionExpired()
+        {
+            if (!_lastAccessUtc.HasValue)
+            {
+                return false;
+            }
+
+            return DateTime.UtcNow - _lastAccessUtc.Value > SessionIdleTimeout;
         }
 
         /// <summary>
@@ -355,12 +270,9 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
             }
 
             Browser = null;
-
-            if (_playwright != null)
-            {
-                _playwright.Dispose();
-                _playwright = null;
-            }
+            _lastAccessUtc = null;
+            _playwright?.Dispose();
+            _playwright = null;
         }
 
         /// <summary>

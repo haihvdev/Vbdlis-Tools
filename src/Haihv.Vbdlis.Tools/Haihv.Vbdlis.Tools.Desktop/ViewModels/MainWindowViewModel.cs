@@ -80,10 +80,10 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             _currentViewModel = _homeViewModel;
 
             // Try to load saved credentials
-            _ = LoadSavedCredentialsAsync();
+            _ = LoadSavedCredentialsAsync(autoLogin: true);
         }
 
-        private async Task LoadSavedCredentialsAsync()
+        private async Task LoadSavedCredentialsAsync(bool autoLogin)
         {
             var credentials = await _credentialService.LoadCredentialsAsync();
             if (credentials != null)
@@ -93,8 +93,11 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 LoginViewModel.Password = credentials.Password;
                 LoginViewModel.HeadlessBrowser = credentials.HeadlessBrowser;
                 LoginViewModel.RememberMe = true; // User had saved credentials, so check RememberMe
-                // Nếu có thông tin đăng nhập đã lưu, tự động đăng nhập
-                await LoginViewModel.LoginAsync();
+                if (autoLogin)
+                {
+                    // Nếu có thông tin đăng nhập đã lưu, tự động đăng nhập
+                    await LoginViewModel.LoginAsync();
+                }
             }
         }
 
@@ -118,6 +121,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 // Clear saved credentials if RememberMe is unchecked
                 await _credentialService.ClearCredentialsAsync();
             }
+
+            UpdateHomeViewModel();
         }
 
         private void OnLoginCancelled(object? sender, EventArgs e)
@@ -147,8 +152,10 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 return;
             }
 
-            await LogoutAsync();
+            await LogoutAsync(clearSavedCredentials: false);
             LoginViewModel.ErrorMessage = message;
+            CurrentViewModel = HomeViewModel;
+            await LoadSavedCredentialsAsync(autoLogin: false);
         }
 
         [RelayCommand]
@@ -168,11 +175,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         private void ShowHome()
         {
             // Update HomeViewModel data before switching
-            if (HomeViewModel != null)
-            {
-                HomeViewModel.LoggedInUsername = LoggedInUsername;
-                HomeViewModel.LoggedInServer = LoggedInServer;
-            }
+            UpdateHomeViewModel();
 
             CurrentViewModel = HomeViewModel;
         }
@@ -190,15 +193,25 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         // }
 
         [RelayCommand]
-        private async Task LogoutAsync()
+        private async Task Logout()
+        {
+            await LogoutAsync(clearSavedCredentials: true);
+        }
+
+        private async Task LogoutAsync(bool clearSavedCredentials)
         {
             // Clear login state
             IsLoggedIn = false;
             LoggedInUsername = string.Empty;
             LoggedInServer = string.Empty;
+            _currentLoginSession = null;
+            CungCapThongTinViewModel = null;
 
-            // Clear saved credentials
-            await _credentialService.ClearCredentialsAsync();
+            if (clearSavedCredentials)
+            {
+                // Clear saved credentials
+                await _credentialService.ClearCredentialsAsync();
+            }
 
             // Close browser and clear session
             await _playwrightService.CloseAsync();
@@ -208,6 +221,17 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             LoginViewModel.Username = string.Empty;
             LoginViewModel.Password = string.Empty;
             LoginViewModel.ErrorMessage = string.Empty;
+            UpdateHomeViewModel();
+            CurrentViewModel = HomeViewModel;
+        }
+
+        private void UpdateHomeViewModel()
+        {
+            if (HomeViewModel != null)
+            {
+                HomeViewModel.LoggedInUsername = LoggedInUsername;
+                HomeViewModel.LoggedInServer = LoggedInServer;
+            }
         }
     }
 }

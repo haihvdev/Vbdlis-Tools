@@ -51,7 +51,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
     [ObservableProperty] private string _currentSearchType = string.Empty;
 
     public bool IsStatusVisible => IsSearching || IsInitializing;
-    
+
     public string StatusSummary
     {
         get
@@ -382,7 +382,6 @@ public partial class CungCapThongTinViewModel : ViewModelBase
         {
             Log.Error(ex, "Error trong PerformSearchAsync");
             SearchProgress = $"Lỗi: {ex.Message}";
-            throw;
         }
         finally
         {
