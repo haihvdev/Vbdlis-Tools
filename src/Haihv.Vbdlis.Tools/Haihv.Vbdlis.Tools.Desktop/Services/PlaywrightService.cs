@@ -18,7 +18,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
     {
         private const int DefaultNavigationTimeoutMs = 60000;
         private const int NavigationRetryMaxAttempts = 1;
-        private const int SessionIdleTimeoutMinutes = 1;
+        private const int SessionIdleTimeoutMinutes = 10;
         private static readonly TimeSpan SessionIdleTimeout = TimeSpan.FromMinutes(SessionIdleTimeoutMinutes);
 
         private IPlaywright? _playwright;
