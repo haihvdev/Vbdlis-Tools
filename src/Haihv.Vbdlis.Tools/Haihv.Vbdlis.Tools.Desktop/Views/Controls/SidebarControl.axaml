@@ -63,7 +63,9 @@
                     Content="Demo View"
                     ToolTip.Tip="Xem demo view với TransitioningContentControl" />-->
 
-                <Separator Margin="0,0" />
+                <Separator Margin="10,0"
+                           BorderThickness="0,1,0,0"
+                           BorderBrush="#cccccc"/>
 
                 <Button
                     Padding="15,10"
@@ -78,9 +80,12 @@
         </ScrollViewer>
 
         <!--  Phần dưới cùng: Giới thiệu  -->
-        <Border Grid.Row="2" Padding="10">
+        <Border 
+            Grid.Row="2" 
+            Padding="10"
+            BorderBrush="#cccccc"
+            BorderThickness="0,1,0,0">
             <StackPanel>
-                <Separator Margin="0,0,0,10" />
                 <TextBlock
                     FontSize="12"
                     FontWeight="Bold"

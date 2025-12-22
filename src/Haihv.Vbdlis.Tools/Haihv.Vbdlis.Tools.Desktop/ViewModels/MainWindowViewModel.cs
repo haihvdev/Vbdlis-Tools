@@ -121,8 +121,6 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
                 // Clear saved credentials if RememberMe is unchecked
                 await _credentialService.ClearCredentialsAsync();
             }
-
-            UpdateHomeViewModel();
         }
 
         private void OnLoginCancelled(object? sender, EventArgs e)
@@ -174,9 +172,6 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
         [RelayCommand]
         private void ShowHome()
         {
-            // Update HomeViewModel data before switching
-            UpdateHomeViewModel();
-
             CurrentViewModel = HomeViewModel;
         }
 
@@ -221,17 +216,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels
             LoginViewModel.Username = string.Empty;
             LoginViewModel.Password = string.Empty;
             LoginViewModel.ErrorMessage = string.Empty;
-            UpdateHomeViewModel();
             CurrentViewModel = HomeViewModel;
-        }
-
-        private void UpdateHomeViewModel()
-        {
-            if (HomeViewModel != null)
-            {
-                HomeViewModel.LoggedInUsername = LoggedInUsername;
-                HomeViewModel.LoggedInServer = LoggedInServer;
-            }
         }
     }
 }

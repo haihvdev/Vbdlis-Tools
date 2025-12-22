@@ -3,13 +3,18 @@ using System.Windows.Input;
 
 namespace Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
-public partial class HomeViewModel(MainWindowViewModel mainWindowViewModel) : ViewModelBase
+public partial class HomeViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    private string _loggedInUsername = mainWindowViewModel.LoggedInUsername;
+    private readonly MainWindowViewModel _mainWindowViewModel;
 
-    [ObservableProperty]
-    private string _loggedInServer = mainWindowViewModel.LoggedInServer;
+    public HomeViewModel(MainWindowViewModel mainWindowViewModel)
+    {
+        _mainWindowViewModel = mainWindowViewModel;
+    }
 
-    public ICommand LogoutCommand { get; } = mainWindowViewModel.LogoutCommand;
+    public string LoggedInUsername => _mainWindowViewModel.LoggedInUsername;
+
+    public string LoggedInServer => _mainWindowViewModel.LoggedInServer;
+
+    public ICommand LogoutCommand => _mainWindowViewModel.LogoutCommand;
 }
