@@ -170,7 +170,7 @@ jobs:
           ### ✨ Có gì mới trong phiên bản này?
           **v1.0.25121705 (17 Tháng 12, 2025)**
           - Tối ưu hiển thị Số giấy tờ của Chủ sử dụng (Bổ sung loại giấy tờ)
-          
+
           **v1.0.25121704 (17 Tháng 12, 2025)**
           - Tối ưu hóa logic xử lý hiển thị ghi chú phát hành
 
@@ -186,16 +186,16 @@ jobs:
           ### 📦 Tải về
 
           #### Windows
-          - **VbdlisTools-$VERSION-Setup.zip** - Bộ cài đặt cho Windows (giải nén và chạy Setup.exe)
+          - **Haihv.Vbdlis.Tools.Desktop-win-Setup.zip** - Bộ cài đặt cho Windows (giải nén và chạy Setup.exe)
           - Hỗ trợ tự động cập nhật qua Velopack
           - **Lưu ý:** Tải file ZIP để tránh cảnh báo của trình duyệt
 
           ### 🚀 Cài đặt
 
           **Windows:**
-          1. Tải file `VbdlisTools-$VERSION-Setup.zip`
+          1. Tải file `Haihv.Vbdlis.Tools.Desktop-win-Setup.zip`
           2. Giải nén file ZIP
-          3. Chạy `VbdlisTools-$VERSION-Setup.exe`
+          3. Chạy `Haihv.Vbdlis.Tools.Desktop-win-Setup.exe`
           4. Ứng dụng sẽ tự động cập nhật khi có phiên bản mới
 
           ### ⚠️ Lưu ý quan trọng
