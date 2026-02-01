@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Haihv.Vbdlis.Tools.Desktop.Models;
 using Haihv.Vbdlis.Tools.Desktop.Models.Vbdlis;
-using Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
 namespace Haihv.Vbdlis.Tools.Desktop.Extensions;
 
-public static class KetQuaTimKiemExxtensions
+public static class KetQuaTimKiemExtensions
 {
     /// <summary>
     /// Parse Microsoft JSON Date format like "/Date(1762060782826)/" to DateTime?
@@ -69,13 +68,14 @@ public static class KetQuaTimKiemExxtensions
 
                 // Lấy mục đích sử dụng từ ListMucDichSuDung
                 var mucDichSuDung = thuaDat.ListMucDichSuDung?
-                    .FirstOrDefault()?.LoaiMucDichSuDung?.TenLoaiMucDichSuDung
-                    ?? thuaDat.MaThua
-                    ?? "";
+                                        .FirstOrDefault()?.LoaiMucDichSuDung?.TenLoaiMucDichSuDung
+                                    ?? thuaDat.MaThua
+                                    ?? "";
 
                 // Chuyển đổi ListMucDichSuDung từ DTO sang Model
                 var listMucDichSuDung = thuaDat.ListMucDichSuDung?
-                    .Where(m => !string.IsNullOrWhiteSpace(m.LoaiMucDichSuDungId) && m.DienTich.HasValue && m.DienTich.Value > 0)
+                    .Where(m => !string.IsNullOrWhiteSpace(m.LoaiMucDichSuDungId) && m.DienTich.HasValue &&
+                                m.DienTich.Value > 0)
                     .Select(m =>
                     {
                         // Chuyển đổi ListNguonGocSuDungDat
@@ -125,7 +125,8 @@ public static class KetQuaTimKiemExxtensions
 
             foreach (var item in giayChungNhanResponse.Data)
             {
-                if (item == null || results.Where(r => r.GiayChungNhanModel.Id == item.GiayChungNhan?.Id).Any() || item.GiayChungNhan == null)
+                if (item == null || results.Where(r => r.GiayChungNhanModel.Id == item.GiayChungNhan?.Id).Any() ||
+                    item.GiayChungNhan == null)
                 {
                     continue;
                 }
@@ -259,20 +260,22 @@ public static class KetQuaTimKiemExxtensions
 
                             // Lấy mục đích sử dụng từ ListMucDichSuDung
                             var mucDichSuDung = dangky.ThuaDat.ListMucDichSuDung?
-                                .FirstOrDefault()?.LoaiMucDichSuDung?.TenLoaiMucDichSuDung
-                                ?? dangky.ThuaDat.MaThua
-                                ?? "";
+                                                    .FirstOrDefault()?.LoaiMucDichSuDung?.TenLoaiMucDichSuDung
+                                                ?? dangky.ThuaDat.MaThua
+                                                ?? "";
 
                             // Chuyển đổi ListMucDichSuDung từ DTO sang Model
                             var listMucDichSuDung = dangky.ThuaDat.ListMucDichSuDung?
-                                .Where(m => !string.IsNullOrWhiteSpace(m.LoaiMucDichSuDungId) && m.DienTich.HasValue && m.DienTich.Value > 0)
+                                .Where(m => !string.IsNullOrWhiteSpace(m.LoaiMucDichSuDungId) && m.DienTich.HasValue &&
+                                            m.DienTich.Value > 0)
                                 .Select(m =>
                                 {
                                     // Chuyển đổi ListNguonGocSuDungDat
                                     var listNguonGoc = m.ListNguonGocSuDungDat?
                                         .Where(n => n.DienTich.HasValue && n.DienTich.Value > 0)
                                         .Select(n => new NguonGocSuDungDatInfo(
-                                            tenNguonGocChuyenQuyen: n.LoaiNguonGocChuyenQuyen?.TenNguonGocChuyenQuyen ?? "",
+                                            tenNguonGocChuyenQuyen: n.LoaiNguonGocChuyenQuyen?.TenNguonGocChuyenQuyen ??
+                                                                    "",
                                             tenLoaiNguonGocInGiay: n.LoaiNguonGocSuDungDat?.TenLoaiNguonGocInGiay ?? "",
                                             dienTich: n.DienTich!.Value
                                         ))
@@ -308,9 +311,9 @@ public static class KetQuaTimKiemExxtensions
                         var dienTichSuDung = dangky.NhaRiengLe.DienTichSuDung;
                         var soTang = dangky.NhaRiengLe.SoTang ?? "";
                         var diaChi = dangky.NhaRiengLe.ListDiaChi?
-                            .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
-                            ?? dangky.NhaRiengLe.DiaChi
-                            ?? "";
+                                         .FirstOrDefault(d => d.LaDiaChiChinh)?.DiaChiChiTiet
+                                     ?? dangky.NhaRiengLe.DiaChi
+                                     ?? "";
 
                         // Tạo key để kiểm tra trùng lặp
                         var taiSanKey = $"{tenTaiSan}|{dienTichXayDung}|{soTang}|{diaChi}";
@@ -332,7 +335,8 @@ public static class KetQuaTimKiemExxtensions
                         }
 
                         // Lấy thông tin thửa đất từ liên kết
-                        ProcessThuaDatFromLienKet(dangky.NhaRiengLe.ListLienKetTaiSanThuaDat, uniqueThuaDat, allThuaDat);
+                        ProcessThuaDatFromLienKet(dangky.NhaRiengLe.ListLienKetTaiSanThuaDat, uniqueThuaDat,
+                            allThuaDat);
                     }
                     // Xử lý Căn hộ (typeItem = 8)
                     else if (dangky.CanHo != null)
@@ -350,6 +354,7 @@ public static class KetQuaTimKiemExxtensions
                         {
                             tenTaiSan = $"Căn hộ {soHieuOrTen}".Trim();
                         }
+
                         var dienTichXayDung = dangky.CanHo.DienTichSan;
                         var dienTichSuDung = dangky.CanHo.DienTichSuDung;
                         var soTang = dangky.CanHo.TangSo ?? "";
@@ -376,14 +381,16 @@ public static class KetQuaTimKiemExxtensions
 
                         // Lấy thông tin thửa đất từ liên kết
                         // Ưu tiên 1: CanHo.ListLienKetTaiSanThuaDat
-                        if (dangky.CanHo.ListLienKetTaiSanThuaDat != null && dangky.CanHo.ListLienKetTaiSanThuaDat.Count > 0)
+                        if (dangky.CanHo.ListLienKetTaiSanThuaDat != null &&
+                            dangky.CanHo.ListLienKetTaiSanThuaDat.Count > 0)
                         {
                             ProcessThuaDatFromLienKet(dangky.CanHo.ListLienKetTaiSanThuaDat, uniqueThuaDat, allThuaDat);
                         }
                         // Ưu tiên 2: NhaChungCu.ListThuaLienKet (nếu không có trong CanHo)
                         else if (dangky.CanHo.NhaChungCu?.ListThuaLienKet != null)
                         {
-                            ProcessThuaDatFromLienKet(dangky.CanHo.NhaChungCu.ListThuaLienKet, uniqueThuaDat, allThuaDat);
+                            ProcessThuaDatFromLienKet(dangky.CanHo.NhaChungCu.ListThuaLienKet, uniqueThuaDat,
+                                allThuaDat);
                         }
                     }
                 }

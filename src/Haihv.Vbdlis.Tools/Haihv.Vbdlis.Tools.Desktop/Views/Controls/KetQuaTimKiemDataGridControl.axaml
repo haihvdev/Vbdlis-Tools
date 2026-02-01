@@ -76,12 +76,17 @@
                 </Button>
 
                 <!--  Status Message  -->
-                <TextBlock
-                    Grid.Column="2"
-                    VerticalAlignment="Center"
-                    FontStyle="Italic"
-                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Text="{Binding StatusMessage}" />
+                <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock
+                        FontStyle="Italic"
+                        IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        Text="{Binding StatusMessage}" />
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="Gray"
+                        IsVisible="{Binding OldestCacheTimeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        Text="{Binding OldestCacheTimeText}" />
+                </StackPanel>
 
                 <!--  Loading Indicator  -->
                 <StackPanel

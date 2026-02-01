@@ -37,6 +37,11 @@ public class VbdlisDbContext(DbContextOptions<VbdlisDbContext> options) : DbCont
     /// </summary>
     public DbSet<SearchHistoryEntry> SearchHistoryEntries { get; set; } = null!;
 
+    /// <summary>
+    /// Bảng cache kết quả tìm kiếm
+    /// </summary>
+    public DbSet<SearchCacheEntry> SearchCacheEntries { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -94,6 +99,18 @@ public class VbdlisDbContext(DbContextOptions<VbdlisDbContext> options) : DbCont
             entity.Property(e => e.SearchedAt).IsRequired();
             entity.HasIndex(e => new { e.SearchType, e.SearchQuery }).IsUnique();
             entity.HasIndex(e => new { e.SearchType, e.SearchedAt });
+        });
+
+        // Cấu hình cho SearchCacheEntry
+        modelBuilder.Entity<SearchCacheEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SearchType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.SearchKey).IsRequired();
+            entity.Property(e => e.ResponseJson).IsRequired();
+            entity.Property(e => e.CachedAt).IsRequired();
+            entity.HasIndex(e => new { e.SearchType, e.SearchKey }).IsUnique();
+            entity.HasIndex(e => e.CachedAt);
         });
     }
 

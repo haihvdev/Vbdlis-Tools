@@ -23,7 +23,9 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     private readonly CungCapThongTinGiayChungNhanService _searchService;
     private readonly SearchHistoryService _searchHistoryService;
+    private readonly SearchCacheService _searchCacheService;
     private Action<AdvancedSearchGiayChungNhanResponse>? _updateDataGridAction;
+    private Action<AdvancedSearchGiayChungNhanResponse, DateTime?>? _updateDataGridActionWithCacheTime;
 
     [ObservableProperty] private bool _isSearching;
 
@@ -61,6 +63,10 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     [ObservableProperty] private int _selectedSearchTabIndex;
 
+    [ObservableProperty] private ObservableCollection<CacheRefreshOption> _refreshOptions = [];
+
+    [ObservableProperty] private CacheRefreshOption? _selectedRefreshOption;
+
     public bool IsSoGiayToMode => SelectedSearchTabIndex == 0;
 
     public bool IsSoPhatHanhMode => SelectedSearchTabIndex == 1;
@@ -95,6 +101,8 @@ public partial class CungCapThongTinViewModel : ViewModelBase
         _searchService.StatusChanged += OnSearchServiceStatusChanged;
         var databaseService = new DatabaseService();
         _searchHistoryService = new SearchHistoryService(databaseService);
+        _searchCacheService = new SearchCacheService(databaseService);
+        InitializeRefreshOptions();
         _ = InitializeSearchHistoryAsync();
     }
 
@@ -104,6 +112,14 @@ public partial class CungCapThongTinViewModel : ViewModelBase
     public void RegisterDataGridUpdater(Action<AdvancedSearchGiayChungNhanResponse> updateAction)
     {
         _updateDataGridAction = updateAction;
+    }
+
+    /// <summary>
+    /// Đăng ký action để cập nhật DataGrid kèm thời gian cache
+    /// </summary>
+    public void RegisterDataGridUpdater(Action<AdvancedSearchGiayChungNhanResponse, DateTime?> updateAction)
+    {
+        _updateDataGridActionWithCacheTime = updateAction;
     }
 
     partial void OnSelectedResultChanged(SearchResultModel? value)
@@ -181,6 +197,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
             try
             {
+                var (alwaysRefresh, maxAge) = GetRefreshSettings();
                 Log.Information("Starting PerformSearchAsync...");
                 var foundCount = await PerformSearchAsync(items, async (item) =>
                 {
@@ -192,12 +209,20 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
                     var normalizedItem = item.Trim();
                     Log.Information("Searching for item: {Item}", normalizedItem);
-                    var response = await _searchService.SearchAsync(soGiayTo: normalizedItem);
+                    var response = await _searchCacheService.GetOrSetAsync(
+                        SearchTypeSoGiayToKey,
+                        normalizedItem,
+                        maxAge,
+                        () => _searchService.SearchAsync(soGiayTo: normalizedItem),
+                        alwaysRefresh);
+                    var cachedAt = response is { Data.Count: > 0 }
+                        ? await _searchCacheService.GetCachedAtAsync(SearchTypeSoGiayToKey, normalizedItem)
+                        : null;
                     if (response is { Data.Count: > 0 })
                     {
                         Log.Information("SearchAsync returned {Count} results for item: {Item}", response.Data.Count,
                             item);
-                        return response;
+                        return new SearchExecutionResult(response, cachedAt);
                     }
                     else
                     {
@@ -209,12 +234,20 @@ public partial class CungCapThongTinViewModel : ViewModelBase
                         }
 
                         Log.Information("Searching for item: {Item}", normalizedItem);
-                        response = await _searchService.SearchAsync(soGiayTo: normalizedItem);
+                        response = await _searchCacheService.GetOrSetAsync(
+                            SearchTypeSoGiayToKey,
+                            normalizedItem,
+                            maxAge,
+                            () => _searchService.SearchAsync(soGiayTo: normalizedItem),
+                            alwaysRefresh);
+                        cachedAt = response is { Data.Count: > 0 }
+                            ? await _searchCacheService.GetCachedAtAsync(SearchTypeSoGiayToKey, normalizedItem)
+                            : null;
                         if (response is { Data.Count: > 0 })
                         {
                             Log.Information("SearchAsync returned {Count} results for item: {Item}",
                                 response.Data.Count, normalizedItem);
-                            return response;
+                            return new SearchExecutionResult(response, cachedAt);
                         }
                         else
                         {
@@ -226,19 +259,42 @@ public partial class CungCapThongTinViewModel : ViewModelBase
                                 return null;
                             }
 
-                            response = await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                            response = await _searchCacheService.GetOrSetAsync(
+                                SearchTypeSoGiayToKey,
+                                modifiedItem,
+                                maxAge,
+                                () => _searchService.SearchAsync(soGiayTo: modifiedItem),
+                                alwaysRefresh);
+                            cachedAt = response is { Data.Count: > 0 }
+                                ? await _searchCacheService.GetCachedAtAsync(SearchTypeSoGiayToKey, modifiedItem)
+                                : null;
                             if (response is { Data.Count: > 0 })
                             {
                                 Log.Information("SearchAsync returned {Count} results for modified item: {Item}",
                                     response.Data.Count, modifiedItem);
-                                return response;
+                                return new SearchExecutionResult(response, cachedAt);
                             }
                             else
                             {
                                 Log.Information("Thử lại sau khi bỏ 0 ở đầu cho item lần 2: {Item}", normalizedItem);
                                 modifiedItem = modifiedItem.TrimStart('0');
                                 if (normalizedItem.Length != modifiedItem.Length)
-                                    return await _searchService.SearchAsync(soGiayTo: modifiedItem);
+                                {
+                                    response = await _searchCacheService.GetOrSetAsync(
+                                        SearchTypeSoGiayToKey,
+                                        modifiedItem,
+                                        maxAge,
+                                        () => _searchService.SearchAsync(soGiayTo: modifiedItem),
+                                        alwaysRefresh);
+                                    cachedAt = response is { Data.Count: > 0 }
+                                        ? await _searchCacheService.GetCachedAtAsync(SearchTypeSoGiayToKey,
+                                            modifiedItem)
+                                        : null;
+                                    return response is { Data.Count: > 0 }
+                                        ? new SearchExecutionResult(response, cachedAt)
+                                        : null;
+                                }
+
                                 Log.Information("No leading zeros to remove for item: {Item}", modifiedItem);
                                 return null;
                             }
@@ -266,12 +322,24 @@ public partial class CungCapThongTinViewModel : ViewModelBase
     {
         if (!string.IsNullOrWhiteSpace(SearchInput))
         {
+            var (alwaysRefresh, maxAge) = GetRefreshSettings();
             var input = SearchInput.Trim();
             var items = ParseInput(input, splitBySpace: false);
             var foundCount = await PerformSearchAsync(items, async (item) =>
             {
                 var modifiedItem = item.NormalizedSoPhatHanh();
-                return await _searchService.SearchAsync(soPhatHanh: modifiedItem);
+                var response = await _searchCacheService.GetOrSetAsync(
+                    SearchTypeSoPhatHanhKey,
+                    modifiedItem,
+                    maxAge,
+                    () => _searchService.SearchAsync(soPhatHanh: modifiedItem),
+                    alwaysRefresh);
+                var cachedAt = response is { Data.Count: > 0 }
+                    ? await _searchCacheService.GetCachedAtAsync(SearchTypeSoPhatHanhKey, modifiedItem)
+                    : null;
+                return response is { Data.Count: > 0 }
+                    ? new SearchExecutionResult(response, cachedAt)
+                    : null;
             }, "số phát hành");
             await SaveSearchHistoryAsync(SearchTypeSoPhatHanhKey, input, items.Length, foundCount);
         }
@@ -346,7 +414,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     private async Task<int> PerformSearchAsync(
         string[] items,
-        Func<string, Task<AdvancedSearchGiayChungNhanResponse?>> searchFunc,
+        Func<string, Task<SearchExecutionResult?>> searchFunc,
         string searchType)
     {
         Log.Information("PerformSearchAsync called with {Count} items", items.Length);
@@ -380,6 +448,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
             // Tổng hợp tất cả kết quả vào một response duy nhất
             var allData = new List<GiayChungNhanItem>();
+            DateTime? oldestCacheTime = null;
 
             for (int i = 0; i < items.Length; i++)
             {
@@ -390,16 +459,16 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
                 try
                 {
-                    var response = await searchFunc(item);
-                    Log.Information("Search service returned for item: {Item}, Response is null: {IsNull}", item,
-                        response == null);
+                    var result = await searchFunc(item);
+                    Log.Information("Search service returned for item: {Item}, Result is null: {IsNull}", item,
+                        result == null);
 
-                    if (response != null)
+                    if (result?.Response != null)
                     {
                         var searchResult = new SearchResultModel
                         {
                             SearchQuery = item,
-                            Response = response,
+                            Response = result.Response,
                             SearchType = searchType,
                             SearchTime = DateTime.Now
                         };
@@ -408,14 +477,22 @@ public partial class CungCapThongTinViewModel : ViewModelBase
                         SearchResults.Add(searchResult);
 
                         // Tổng hợp tất cả data[] vào danh sách chung
-                        if (response.Data.Count > 0)
+                        if (result.Response.Data.Count > 0)
                         {
-                            allData.AddRange(response.Data);
+                            allData.AddRange(result.Response.Data);
                             FoundItems = allData.Count;
-                            SearchProgress = $"Tìm thấy: {item} - {response.Data.Count} kết quả";
+                            SearchProgress = $"Tìm thấy: {item} - {result.Response.Data.Count} kết quả";
+                            if (result.CachedAt.HasValue)
+                            {
+                                oldestCacheTime = oldestCacheTime.HasValue
+                                    ? (result.CachedAt.Value < oldestCacheTime.Value
+                                        ? result.CachedAt
+                                        : oldestCacheTime)
+                                    : result.CachedAt;
+                            }
 
                             // Update DataGrid ngay lập tức với kết quả hiện tại
-                            UpdateDataGridResults(allData);
+                            UpdateDataGridResults(allData, oldestCacheTime);
                         }
                         else
                         {
@@ -446,7 +523,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
             // Cập nhật DataGrid lần cuối với tất cả kết quả (nếu chưa có kết quả nào)
             if (FoundItems > 0)
             {
-                UpdateDataGridResults(allData);
+                UpdateDataGridResults(allData, oldestCacheTime);
             }
 
             return FoundItems;
@@ -479,12 +556,13 @@ public partial class CungCapThongTinViewModel : ViewModelBase
             RecordsFiltered = 0
         };
         _updateDataGridAction?.Invoke(emptyResponse);
+        _updateDataGridActionWithCacheTime?.Invoke(emptyResponse, null);
     }
 
     /// <summary>
     /// Cập nhật kết quả vào DataGrid control
     /// </summary>
-    private void UpdateDataGridResults(List<GiayChungNhanItem> allData)
+    private void UpdateDataGridResults(List<GiayChungNhanItem> allData, DateTime? oldestCacheTime)
     {
         if (allData.Count == 0)
         {
@@ -504,6 +582,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
         // Gọi action để cập nhật DataGrid từ View
         _updateDataGridAction?.Invoke(combinedResponse);
+        _updateDataGridActionWithCacheTime?.Invoke(combinedResponse, oldestCacheTime);
     }
 
     private async Task InitializeSearchHistoryAsync()
@@ -522,6 +601,36 @@ public partial class CungCapThongTinViewModel : ViewModelBase
             Log.Error(ex, "Failed to initialize search history");
         }
     }
+
+    private void InitializeRefreshOptions()
+    {
+        RefreshOptions = new ObservableCollection<CacheRefreshOption>
+        {
+            new("Luôn luôn", null),
+            new("1 ngày", 1),
+            new("2 ngày", 2),
+            new("3 ngày", 3),
+            new("5 ngày", 5),
+            new("7 ngày", 7)
+        };
+
+        SelectedRefreshOption = RefreshOptions.FirstOrDefault(option => option.Days == 7) ?? RefreshOptions.Last();
+    }
+
+    private (bool alwaysRefresh, TimeSpan maxAge) GetRefreshSettings()
+    {
+        var option = SelectedRefreshOption ?? RefreshOptions.LastOrDefault();
+        if (option == null || option.IsAlways)
+        {
+            return (true, TimeSpan.Zero);
+        }
+
+        return (false, option.GetMaxAge());
+    }
+
+    private sealed record SearchExecutionResult(
+        AdvancedSearchGiayChungNhanResponse Response,
+        DateTime? CachedAt);
 
     private async Task LoadSearchHistoryAsync(string searchTypeKey)
     {

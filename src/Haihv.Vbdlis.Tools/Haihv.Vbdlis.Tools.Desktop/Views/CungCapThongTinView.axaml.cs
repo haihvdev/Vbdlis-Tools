@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Haihv.Vbdlis.Tools.Desktop.Models.Vbdlis;
 using Haihv.Vbdlis.Tools.Desktop.ViewModels;
@@ -34,7 +35,7 @@ public partial class CungCapThongTinView : UserControl
     /// <summary>
     /// Cập nhật DataGrid với kết quả tìm kiếm
     /// </summary>
-    private void UpdateDataGrid(AdvancedSearchGiayChungNhanResponse response)
+    private void UpdateDataGrid(AdvancedSearchGiayChungNhanResponse response, DateTime? oldestCacheTime)
     {
         // Tìm control ResultsDataGrid trong XAML
         var dataGridControl = this.FindControl<Controls.KetQuaTimKiemDataGridControl>("ResultsDataGrid");
@@ -42,7 +43,7 @@ public partial class CungCapThongTinView : UserControl
         if (dataGridControl != null)
         {
             // Cập nhật dữ liệu vào DataGrid
-            dataGridControl.UpdateData(response);
+            dataGridControl.UpdateData(response, oldestCacheTime);
         }
     }
 }

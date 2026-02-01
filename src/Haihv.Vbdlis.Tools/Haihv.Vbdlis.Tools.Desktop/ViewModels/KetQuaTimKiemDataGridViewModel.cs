@@ -18,21 +18,20 @@ namespace Haihv.Vbdlis.Tools.Desktop.ViewModels;
 
 public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private ObservableCollection<KetQuaTimKiem> _ketQuaTimKiemList = [];
+    [ObservableProperty] private ObservableCollection<KetQuaTimKiem> _ketQuaTimKiemList = [];
 
-    [ObservableProperty]
-    private KetQuaTimKiem? _selectedItem;
+    [ObservableProperty] private KetQuaTimKiem? _selectedItem;
 
-    [ObservableProperty]
-    private string? _statusMessage;
+    [ObservableProperty] private string? _statusMessage;
 
-    [ObservableProperty]
-    private bool _isExporting;
+    [ObservableProperty] private string? _oldestCacheTimeText;
+
+    [ObservableProperty] private bool _isExporting;
 
     private bool _isUpdatingCollection;
     private List<KetQuaTimKiem>? _pendingModels;
     private string? _pendingStatusMessage;
+    private string? _pendingOldestCacheTimeText;
 
     public KetQuaTimKiemDataGridViewModel()
     {
@@ -43,19 +42,25 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
     /// <summary>
     /// Cập nhật danh sách kết quả tìm kiếm
     /// </summary>
-    public void UpdateData(AdvancedSearchGiayChungNhanResponse? response)
+    public void UpdateData(AdvancedSearchGiayChungNhanResponse? response, DateTime? oldestCacheTime)
     {
         if (response?.Data == null || response.Data.Count == 0)
         {
-            UpdateCollectionOnUiThread([], "Không có dữ liệu");
+            UpdateCollectionOnUiThread([], "Không có dữ liệu", null);
             return;
         }
 
         var models = response.ToKetQuaTimKiemModels();
-        UpdateCollectionOnUiThread(models, $"Tìm thấy {models.Count} kết quả");
+        var oldestText = oldestCacheTime.HasValue
+            ? $"Dữ liệu lấy từ VBDLIS (cũ nhất): {oldestCacheTime.Value.ToLocalTime():dd/MM/yyyy HH:mm}"
+            : null;
+        UpdateCollectionOnUiThread(models, $"Tìm thấy {models.Count} kết quả", oldestText);
     }
 
-    private void UpdateCollectionOnUiThread(IReadOnlyList<KetQuaTimKiem> models, string statusMessage)
+    private void UpdateCollectionOnUiThread(
+        IReadOnlyList<KetQuaTimKiem> models,
+        string statusMessage,
+        string? oldestCacheTimeText)
     {
         void ApplyUpdates()
         {
@@ -63,6 +68,7 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
             {
                 _pendingModels = models.ToList();
                 _pendingStatusMessage = statusMessage;
+                _pendingOldestCacheTimeText = oldestCacheTimeText;
                 return;
             }
 
@@ -75,6 +81,7 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                 KetQuaTimKiemList = newList;
                 SelectedItem = null;
                 StatusMessage = statusMessage;
+                OldestCacheTimeText = oldestCacheTimeText;
             }
             finally
             {
@@ -86,7 +93,9 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     var pendingStatus = _pendingStatusMessage ?? statusMessage;
                     _pendingModels = null;
                     _pendingStatusMessage = null;
-                    UpdateCollectionOnUiThread(pendingModels, pendingStatus);
+                    var pendingOldest = _pendingOldestCacheTimeText ?? oldestCacheTimeText;
+                    _pendingOldestCacheTimeText = null;
+                    UpdateCollectionOnUiThread(pendingModels, pendingStatus, pendingOldest);
                 }
             }
         }
@@ -100,6 +109,7 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
             Dispatcher.UIThread.Post(ApplyUpdates);
         }
     }
+
 
     /// <summary>
     /// Xuất Excel dạng Compact (KetQuaTimKiemModel)
@@ -189,10 +199,13 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     {
                         gcnInfo += $"\nSố vào sổ: {item.GiayChungNhanModel.SoVaoSo}";
                     }
-                    if (item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1))
+
+                    if (item.GiayChungNhanModel.NgayVaoSo.HasValue &&
+                        item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1))
                     {
                         gcnInfo += $"\nNgày vào sổ: {item.GiayChungNhanModel.NgayVaoSo.Value:dd/MM/yyyy}";
                     }
+
                     worksheet.Cells[row, 3].Value = gcnInfo;
 
                     // Thông tin thửa đất - sử dụng ThuaDatCompact
@@ -203,11 +216,12 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
 
                     // Enable text wrapping for multi-line content
                     worksheet.Cells[row, 2, row, 5].Style.WrapText = true;
-                    worksheet.Cells[row, 2, row, 5].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
+                    worksheet.Cells[row, 2, row, 5].Style.VerticalAlignment =
+                        OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
                 }
 
                 // Set column widths
-                worksheet.Column(1).Width = 8;  // STT
+                worksheet.Column(1).Width = 8; // STT
                 worksheet.Column(2).Width = 35; // Chủ sử dụng
                 worksheet.Column(3).Width = 30; // Giấy chứng nhận
                 worksheet.Column(4).Width = 40; // Thửa đất
@@ -343,27 +357,33 @@ public partial class KetQuaTimKiemDataGridViewModel : ObservableObject
                     // Giấy chứng nhận
                     worksheet.Cells[row, 5].Value = item.GiayChungNhanModel.SoPhatHanh;
                     worksheet.Cells[row, 6].Value = item.GiayChungNhanModel.SoVaoSo;
-                    worksheet.Cells[row, 7].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue && item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
+                    worksheet.Cells[row, 7].Value = item.GiayChungNhanModel.NgayVaoSo.HasValue &&
+                                                    item.GiayChungNhanModel.NgayVaoSo.Value >= new DateTime(1900, 1, 1)
                         ? item.GiayChungNhanModel.NgayVaoSo.Value.ToString("dd/MM/yyyy")
                         : "";
 
                     // Thửa đất - lấy tất cả và nối bằng xuống dòng
                     worksheet.Cells[row, 8].Value = JoinLines(item.ListThuaDat?.Select(td => td.SoToBanDo));
                     worksheet.Cells[row, 9].Value = JoinLines(item.ListThuaDat?.Select(td => td.SoThuaDat));
-                    worksheet.Cells[row, 10].Value = JoinLines(item.ListThuaDat?.Select(td => td.HasDienTich ? td.DienTich!.Value.ToString() : ""));
-                    worksheet.Cells[row, 11].Value = JoinLines(item.ListThuaDat?.Select(td => td.HasMucDichSuDung ? td.MucDichSuDungFormatted : td.MucDichSuDung));
+                    worksheet.Cells[row, 10].Value =
+                        JoinLines(item.ListThuaDat?.Select(td => td.HasDienTich ? td.DienTich!.Value.ToString() : ""));
+                    worksheet.Cells[row, 11].Value = JoinLines(item.ListThuaDat?.Select(td =>
+                        td.HasMucDichSuDung ? td.MucDichSuDungFormatted : td.MucDichSuDung));
                     worksheet.Cells[row, 12].Value = JoinLines(item.ListThuaDat?.Select(td => td.DiaChi));
 
                     // Tài sản - lấy tất cả và nối bằng xuống dòng
                     worksheet.Cells[row, 13].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.TenTaiSan));
-                    worksheet.Cells[row, 14].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DienTichXayDung > 0 ? ts.DienTichXayDung!.Value.ToString() : ""));
-                    worksheet.Cells[row, 15].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DienTichSuDung > 0 ? ts.DienTichSuDung!.Value.ToString() : ""));
+                    worksheet.Cells[row, 14].Value = JoinLines(item.ListTaiSan?.Select(ts =>
+                        ts.DienTichXayDung > 0 ? ts.DienTichXayDung!.Value.ToString() : ""));
+                    worksheet.Cells[row, 15].Value = JoinLines(item.ListTaiSan?.Select(ts =>
+                        ts.DienTichSuDung > 0 ? ts.DienTichSuDung!.Value.ToString() : ""));
                     worksheet.Cells[row, 16].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.SoTang));
                     worksheet.Cells[row, 17].Value = JoinLines(item.ListTaiSan?.Select(ts => ts.DiaChi));
 
                     // Enable text wrapping for multi-line content
                     worksheet.Cells[row, 2, row, 17].Style.WrapText = true;
-                    worksheet.Cells[row, 2, row, 17].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
+                    worksheet.Cells[row, 2, row, 17].Style.VerticalAlignment =
+                        OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
                 }
 
                 // Auto fit columns

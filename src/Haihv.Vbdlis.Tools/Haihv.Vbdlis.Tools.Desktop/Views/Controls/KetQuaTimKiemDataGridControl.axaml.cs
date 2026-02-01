@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Haihv.Vbdlis.Tools.Desktop.Models.Vbdlis;
 using Haihv.Vbdlis.Tools.Desktop.ViewModels;
@@ -26,9 +27,9 @@ public partial class KetQuaTimKiemDataGridControl : UserControl
     /// <summary>
     /// Cập nhật dữ liệu từ response
     /// </summary>
-    public void UpdateData(AdvancedSearchGiayChungNhanResponse? response)
+    public void UpdateData(AdvancedSearchGiayChungNhanResponse? response, DateTime? oldestCacheTime)
     {
-        ViewModel?.UpdateData(response);
+        ViewModel?.UpdateData(response, oldestCacheTime);
     }
 
     /// <summary>
