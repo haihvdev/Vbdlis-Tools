@@ -9,6 +9,6 @@ public class SearchResultModel
     public string SearchType { get; set; } = string.Empty;
     public AdvancedSearchGiayChungNhanResponse? Response { get; set; }
     public DateTime SearchTime { get; set; }
-    public int ResultCount => Response?.Data?.Count ?? 0;
+    private int ResultCount => Response?.Data.Count ?? 0;
     public string Status => ResultCount > 0 ? "Thành công" : "Không tìm thấy";
 }

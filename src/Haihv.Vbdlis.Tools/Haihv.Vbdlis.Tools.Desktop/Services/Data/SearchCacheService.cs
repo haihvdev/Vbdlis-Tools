@@ -13,8 +13,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services.Data;
 public class SearchCacheService(IDatabaseService databaseService)
 {
     private readonly ILogger _logger = Log.ForContext<SearchCacheService>();
-    private readonly IDatabaseService _databaseService = databaseService;
     private readonly IFusionCache _cache = new FusionCache(new FusionCacheOptions());
+    private static readonly TimeSpan DefaultMemoryDuration = TimeSpan.FromMinutes(30);
     private bool _initialized;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -38,14 +38,17 @@ public class SearchCacheService(IDatabaseService databaseService)
         }
 
         var trimmedKey = searchKey.Trim();
+        var memoryDuration = maxAge > TimeSpan.Zero ? maxAge : DefaultMemoryDuration;
+        var persistentEnabled = maxAge > TimeSpan.Zero;
         if (alwaysRefresh || maxAge <= TimeSpan.Zero)
         {
             var fresh = await factory();
-            await SaveToPersistentAsync(searchType, trimmedKey, fresh, maxAge);
-            if (maxAge > TimeSpan.Zero)
+            if (persistentEnabled)
             {
-                await SetInMemoryAsync(searchType, trimmedKey, fresh, maxAge);
+                await SaveToPersistentAsync(searchType, trimmedKey, fresh, maxAge);
             }
+
+            await SetInMemoryAsync(searchType, trimmedKey, fresh, memoryDuration);
 
             return fresh;
         }
@@ -53,21 +56,27 @@ public class SearchCacheService(IDatabaseService databaseService)
         var cacheKey = BuildCacheKey(searchType, trimmedKey);
         var options = new FusionCacheEntryOptions
         {
-            Duration = maxAge
+            Duration = memoryDuration
         };
 
         try
         {
             return await _cache.GetOrSetAsync(cacheKey, async _ =>
             {
-                var cached = await TryGetFromPersistentAsync(searchType, trimmedKey, maxAge);
-                if (cached != null)
+                if (persistentEnabled)
                 {
-                    return cached;
+                    var cached = await TryGetFromPersistentAsync(searchType, trimmedKey, maxAge);
+                    if (cached != null)
+                    {
+                        return cached;
+                    }
                 }
 
                 var fresh = await factory();
-                await SaveToPersistentAsync(searchType, trimmedKey, fresh, maxAge);
+                if (persistentEnabled)
+                {
+                    await SaveToPersistentAsync(searchType, trimmedKey, fresh, maxAge);
+                }
                 return fresh;
             }, options);
         }
@@ -87,7 +96,7 @@ public class SearchCacheService(IDatabaseService databaseService)
             return null;
         }
 
-        var dbContext = _databaseService.GetDbContext();
+        var dbContext = databaseService.GetDbContext();
         var entry = await dbContext.SearchCacheEntries
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.SearchType == searchType && x.SearchKey == trimmedKey);
@@ -102,8 +111,8 @@ public class SearchCacheService(IDatabaseService databaseService)
             return;
         }
 
-        await _databaseService.InitializeDatabaseAsync();
-        var dbContext = _databaseService.GetDbContext();
+        await databaseService.InitializeDatabaseAsync();
+        var dbContext = databaseService.GetDbContext();
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
@@ -136,7 +145,7 @@ public class SearchCacheService(IDatabaseService databaseService)
         string searchKey,
         TimeSpan maxAge)
     {
-        var dbContext = _databaseService.GetDbContext();
+        var dbContext = databaseService.GetDbContext();
         var entry = await dbContext.SearchCacheEntries
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.SearchType == searchType && x.SearchKey == searchKey);
@@ -176,7 +185,7 @@ public class SearchCacheService(IDatabaseService databaseService)
 
         try
         {
-            var dbContext = _databaseService.GetDbContext();
+            var dbContext = databaseService.GetDbContext();
             var json = JsonSerializer.Serialize(response, JsonOptions);
             var existing = await dbContext.SearchCacheEntries
                 .FirstOrDefaultAsync(x => x.SearchType == searchType && x.SearchKey == searchKey);

@@ -46,7 +46,7 @@ public static class KetQuaTimKiemExtensions
 
         foreach (var lienKet in listLienKet)
         {
-            if (lienKet?.ThuaDat == null) continue;
+            if (lienKet.ThuaDat == null) continue;
 
             var thuaDat = lienKet.ThuaDat;
             var soToBanDo = thuaDat.SoHieuToBanDo?.ToString() ?? "";
@@ -118,14 +118,14 @@ public static class KetQuaTimKiemExtensions
         {
             var results = new List<KetQuaTimKiem>();
 
-            if (giayChungNhanResponse?.Data == null || giayChungNhanResponse.Data.Count == 0)
+            if (giayChungNhanResponse.Data.Count == 0)
             {
                 return results;
             }
 
             foreach (var item in giayChungNhanResponse.Data)
             {
-                if (item == null || results.Where(r => r.GiayChungNhanModel.Id == item.GiayChungNhan?.Id).Any() ||
+                if (results.Any(r => r.GiayChungNhanModel.Id == item.GiayChungNhan?.Id) ||
                     item.GiayChungNhan == null)
                 {
                     continue;
@@ -233,10 +233,8 @@ public static class KetQuaTimKiemExtensions
                 var allThuaDat = new List<ThuaDat>();
                 var allTaiSan = new List<TaiSan>();
 
-                foreach (var dangky in listDangKyQuyen)
+                foreach (var dangky in listDangKyQuyen.OfType<DangKyQuyenDto>())
                 {
-                    if (dangky == null) continue;
-
                     // Xử lý Thửa đất (typeItem = 6)
                     if (dangky.ThuaDat != null)
                     {

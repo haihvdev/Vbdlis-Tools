@@ -604,15 +604,15 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     private void InitializeRefreshOptions()
     {
-        RefreshOptions = new ObservableCollection<CacheRefreshOption>
-        {
-            new("Luôn luôn", null),
-            new("1 ngày", 1),
-            new("2 ngày", 2),
-            new("3 ngày", 3),
-            new("5 ngày", 5),
-            new("7 ngày", 7)
-        };
+        RefreshOptions =
+        [
+            new CacheRefreshOption("Luôn luôn", null),
+            new CacheRefreshOption("1 ngày", 1),
+            new CacheRefreshOption("2 ngày", 2),
+            new CacheRefreshOption("3 ngày", 3),
+            new CacheRefreshOption("5 ngày", 5),
+            new CacheRefreshOption("7 ngày", 7)
+        ];
 
         SelectedRefreshOption = RefreshOptions.FirstOrDefault(option => option.Days == 7) ?? RefreshOptions.Last();
     }
@@ -636,6 +636,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
     {
         var history = await _searchHistoryService.GetHistoryAsync(searchTypeKey);
         SearchHistory.Clear();
+        SearchInput = string.Empty;
         foreach (var entry in history)
         {
             SearchHistory.Add(entry);
