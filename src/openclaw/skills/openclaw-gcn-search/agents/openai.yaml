@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenClaw GCN Search"
+  short_description: "Headless GCN lookup with multi-input"
+  default_prompt: "Use $openclaw-gcn-search to run headless Playwright GCN lookups by So giay to/So phat hanh with batch inputs."
