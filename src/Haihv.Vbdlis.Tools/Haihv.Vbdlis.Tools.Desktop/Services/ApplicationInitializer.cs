@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -174,6 +173,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 return;
             }
 
+            var installUiService = serviceProvider.GetService<IPlaywrightInstallUiService>();
+            if (installUiService == null)
+            {
+                Log.Warning("PlaywrightInstallUiService is not registered");
+                return;
+            }
+
             var os = installer.GetOperatingSystem();
             Log.Information("Checking Playwright browsers on {OS}...", os);
 
@@ -190,47 +196,23 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 _splashViewModel?.UpdateStatus("Cần cài đặt Playwright browsers...", 65);
             });
 
-            // Show installation window with progress/status
-            var installViewModel = new PlaywrightInstallationViewModel
-            {
-                OperatingSystem = os
-            };
-            var installWindow = new PlaywrightInstallationWindow
-            {
-                DataContext = installViewModel,
-                CanResize = false,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen
-            };
-
-            installWindow.Show();
-            installWindow.StartInstallation();
-
             bool ready;
             try
             {
-                var showTerminalWindow = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-                ready = await installer.EnsureBrowsersInstalledAsync(message =>
-                {
-                    installWindow.UpdateStatus(message);
-                }, showTerminalWindow);
+                ready = await installUiService.EnsurePlaywrightBrowsersAsync();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error while ensuring Playwright browsers");
                 ready = false;
-                installWindow.SetError(ex.Message);
             }
 
             if (ready)
             {
-                installWindow.CompleteInstallation();
-                _ = installWindow.AutoCloseAfterDelayAsync();
                 Log.Information("Playwright browsers are ready.");
             }
             else
             {
-                installWindow.SetError(
-                    "Không thể cài đặt Playwright. Vui lòng kiểm tra kết nối mạng hoặc cài thủ công.");
                 Log.Warning("Playwright browsers still missing after attempted install.");
             }
         }

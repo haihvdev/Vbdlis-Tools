@@ -142,15 +142,20 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         /// Ensures Playwright browsers exist; will run "playwright install chromium" if missing.
         /// </summary>
         public async Task<bool> EnsureBrowsersInstalledAsync(Action<string>? onStatusChange = null,
-            bool showTerminalWindow = false)
+            bool showTerminalWindow = false, bool forceInstall = false)
         {
-            if (IsBrowsersInstalled())
+            if (!forceInstall && IsBrowsersInstalled())
             {
                 return true;
             }
 
             try
             {
+                if (forceInstall)
+                {
+                    _logger.Information("Forcing Playwright browser installation/refresh...");
+                }
+
                 var installTargetPath = GetInstallTargetPath();
                 Directory.CreateDirectory(installTargetPath);
 

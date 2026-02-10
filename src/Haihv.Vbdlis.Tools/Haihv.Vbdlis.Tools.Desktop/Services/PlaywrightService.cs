@@ -27,6 +27,8 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         private DateTime? _lastAccessUtc;
         private readonly ILogger _logger = Log.ForContext<PlaywrightService>();
         private readonly SemaphoreSlim _navigationSemaphore = new(1, 1);
+        private readonly IPlaywrightInstallUiService? _installUiService;
+        private readonly IPlaywrightInstallerService? _installerService;
 
         public event Action<string>? StatusChanged;
         public event Action<string>? SessionExpired;
@@ -36,6 +38,13 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         public IBrowser? Browser { get; private set; }
 
         public bool IsInitialized => Context != null && Browser != null;
+
+        public PlaywrightService(IPlaywrightInstallUiService? installUiService = null,
+            IPlaywrightInstallerService? installerService = null)
+        {
+            _installUiService = installUiService;
+            _installerService = installerService;
+        }
 
         public async Task<IPage?> EnsurePageAsync(IPage? page, string url)
         {
@@ -154,76 +163,126 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
                 return; // Already initialized
             }
 
-            try
+            var attemptedInstall = false;
+            Exception? lastException = null;
+            while (true)
             {
-                // Set user data directory
-                _userDataDirectory = userDataDir ?? Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Haihv.Vbdlis.Tools",
-                    "PlaywrightData"
-                );
+                try
+                {
+                    // Set user data directory
+                    _userDataDirectory = userDataDir ?? Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Haihv.Vbdlis.Tools",
+                        "PlaywrightData"
+                    );
 
-                // Ensure directory exists
-                Directory.CreateDirectory(_userDataDirectory);
+                    // Ensure directory exists
+                    Directory.CreateDirectory(_userDataDirectory);
 
-                // Install Playwright browsers if not already installed
-                // Note: You need to run "playwright install" command once before first use
-                // or call: Microsoft.Playwright.Program.Main(new[] { "install" });
+                    // Install Playwright browsers if not already installed
+                    // Note: You need to run "playwright install" command once before first use
+                    // or call: Microsoft.Playwright.Program.Main(new[] { "install" });
 
-                _playwright = await Playwright.CreateAsync();
+                    _playwright = await Playwright.CreateAsync();
 
-                // Launch browser with persistent context
-                // This preserves cookies, local storage, session storage, etc.
-                Context = await _playwright.Chromium.LaunchPersistentContextAsync(
-                    _userDataDirectory,
-                    new BrowserTypeLaunchPersistentContextOptions
+                    // Launch browser with persistent context
+                    // This preserves cookies, local storage, session storage, etc.
+                    Context = await _playwright.Chromium.LaunchPersistentContextAsync(
+                        _userDataDirectory,
+                        new BrowserTypeLaunchPersistentContextOptions
+                        {
+                            Headless = headless,
+
+                            // Browser window settings
+                            ViewportSize = new ViewportSize { Width = 1920, Height = 1080 },
+
+                            // Accept downloads
+                            AcceptDownloads = true,
+
+                            // Enable JavaScript
+                            JavaScriptEnabled = true,
+
+                            // User agent (optional - uncomment to customize)
+                            // UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+
+                            // Locale and timezone
+                            Locale = "vi-VN",
+                            TimezoneId = "Asia/Ho_Chi_Minh",
+
+                            // Permissions (optional)
+                            // Permissions = new[] { "geolocation", "notifications" },
+
+                            // Additional browser arguments (optional)
+                            Args =
+                            [
+                                "--disable-blink-features=AutomationControlled", // Hide automation
+                                "--disable-dev-shm-usage",
+                                "--no-sandbox"
+                            ],
+
+                            // Ignore HTTPS errors (use with caution)
+                            IgnoreHTTPSErrors = false,
+
+                            // Slow down operations for debugging (milliseconds)
+                            SlowMo = 0,
+                        }
+                    );
+
+                    // Get browser instance from context
+                    Browser = Context.Browser;
+                    return;
+                }
+                catch (PlaywrightException ex) when (!attemptedInstall && ShouldAttemptInstall(ex))
+                {
+                    attemptedInstall = true;
+                    lastException = ex;
+                    _playwright?.Dispose();
+                    _playwright = null;
+                    Context = null;
+                    Browser = null;
+                    _logger.Warning(ex,
+                        "Playwright browser executable missing or outdated. Attempting automatic update...");
+
+                    var installed = await TryEnsurePlaywrightInstalledAsync();
+
+                    if (!installed)
                     {
-                        Headless = headless,
-
-                        // Browser window settings
-                        ViewportSize = new ViewportSize { Width = 1920, Height = 1080 },
-
-                        // Accept downloads
-                        AcceptDownloads = true,
-
-                        // Enable JavaScript
-                        JavaScriptEnabled = true,
-
-                        // User agent (optional - uncomment to customize)
-                        // UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-
-                        // Locale and timezone
-                        Locale = "vi-VN",
-                        TimezoneId = "Asia/Ho_Chi_Minh",
-
-                        // Permissions (optional)
-                        // Permissions = new[] { "geolocation", "notifications" },
-
-                        // Additional browser arguments (optional)
-                        Args =
-                        [
-                            "--disable-blink-features=AutomationControlled", // Hide automation
-                            "--disable-dev-shm-usage",
-                            "--no-sandbox"
-                        ],
-
-                        // Ignore HTTPS errors (use with caution)
-                        IgnoreHTTPSErrors = false,
-
-                        // Slow down operations for debugging (milliseconds)
-                        SlowMo = 0,
+                        break;
                     }
-                );
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        "Failed to initialize Playwright. Make sure Playwright browsers are installed. " +
+                        "Run: playwright install chromium", ex);
+                }
+            }
 
-                // Get browser instance from context
-                Browser = Context.Browser;
-            }
-            catch (Exception ex)
+            throw new InvalidOperationException(
+                "Failed to initialize Playwright. Make sure Playwright browsers are installed. " +
+                "Run: playwright install chromium", lastException);
+        }
+
+        private static bool ShouldAttemptInstall(PlaywrightException ex)
+        {
+            return ex.Message.Contains("Executable doesn't exist", StringComparison.OrdinalIgnoreCase)
+                   || ex.Message.Contains("chromium_headless_shell", StringComparison.OrdinalIgnoreCase)
+                   || ex.Message.Contains("chromium", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<bool> TryEnsurePlaywrightInstalledAsync()
+        {
+            if (_installUiService != null)
             {
-                throw new InvalidOperationException(
-                    "Failed to initialize Playwright. Make sure Playwright browsers are installed. " +
-                    "Run: playwright install chromium", ex);
+                return await _installUiService.EnsurePlaywrightBrowsersAsync(forceInstall: true);
             }
+
+            if (_installerService != null)
+            {
+                return await _installerService.EnsureBrowsersInstalledAsync(forceInstall: true);
+            }
+
+            return false;
         }
 
         /// <summary>

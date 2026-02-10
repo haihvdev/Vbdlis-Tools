@@ -53,6 +53,9 @@ namespace Haihv.Vbdlis.Tools.Desktop
             // Register Playwright installer service
             services.AddSingleton<IPlaywrightInstallerService, PlaywrightInstallerService>();
 
+            // Register Playwright install UI service
+            services.AddSingleton<IPlaywrightInstallUiService, PlaywrightInstallUiService>();
+
             // Register Playwright service as singleton to maintain browser context
             services.AddSingleton<IPlaywrightService, PlaywrightService>();
 

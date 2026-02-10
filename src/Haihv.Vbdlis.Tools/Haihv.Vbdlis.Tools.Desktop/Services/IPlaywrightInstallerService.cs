@@ -22,6 +22,7 @@ namespace Haihv.Vbdlis.Tools.Desktop.Services
         /// <summary>
         /// Ensures Playwright browsers are available; installs if missing.
         /// </summary>
-        Task<bool> EnsureBrowsersInstalledAsync(Action<string>? onStatusChange = null, bool showTerminalWindow = false);
+        Task<bool> EnsureBrowsersInstalledAsync(Action<string>? onStatusChange = null, bool showTerminalWindow = false,
+            bool forceInstall = false);
     }
 }

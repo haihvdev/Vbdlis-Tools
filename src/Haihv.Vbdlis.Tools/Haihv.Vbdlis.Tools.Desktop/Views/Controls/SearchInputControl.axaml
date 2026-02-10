@@ -27,8 +27,8 @@
                     Text="{Binding SearchInput, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
                     MinLines="5"
-                    MaxLines="10"
-                    Watermark="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;." />
+                    MaxLines="15"
+                    Watermark="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ; hoặc dấu cách. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;." />
             </Grid>
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
@@ -49,11 +49,11 @@
                 <Button
                     Content="ⓘ"
                     VerticalAlignment="Center"
-                    ToolTip.Tip="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;.">
+                    ToolTip.Tip="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ; hoặc dấu cách. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;.">
                     <Button.Flyout>
                         <Flyout>
                             <TextBlock
-                                Text="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;."
+                                Text="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ; hoặc dấu cách. Nếu muốn giữ dấu cách, đặt trong dấu nháy &quot;&quot;."
                                 TextWrapping="Wrap"
                                 MaxWidth="360" />
                         </Flyout>
@@ -127,7 +127,7 @@
                     Text="{Binding SearchInput, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
                     MinLines="5"
-                    MaxLines="10"
+                    MaxLines="15"
                     Watermark="Hỗ trợ nhập nhiều mục, mỗi mục trên một dòng hoặc phân cách bằng dấu chấm phẩy ;" />
             </Grid>
 

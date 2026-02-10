@@ -347,17 +347,15 @@ public partial class CungCapThongTinViewModel : ViewModelBase
 
     private static string[] ParseInput(string input, bool splitBySpace)
     {
-        var separators = splitBySpace
-            ? new HashSet<char> { '\n', '\r', ';', ' ' }
-            : new HashSet<char> { '\n', '\r', ';' };
+        var separators = new HashSet<char> { '\n', '\r', ';' };
 
         return
         [
-            .. SplitInput(input, separators)
+            .. SplitInput(input, separators, splitBySpace)
         ];
     }
 
-    private static IEnumerable<string> SplitInput(string input, HashSet<char> separators)
+    private static IEnumerable<string> SplitInput(string input, HashSet<char> separators, bool splitBySpace)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -375,7 +373,7 @@ public partial class CungCapThongTinViewModel : ViewModelBase
                 continue;
             }
 
-            if (!inQuotes && separators.Contains(ch))
+            if (!inQuotes && (separators.Contains(ch) || (splitBySpace && char.IsWhiteSpace(ch))))
             {
                 var token = buffer.ToString().Trim();
                 if (!string.IsNullOrWhiteSpace(token))
