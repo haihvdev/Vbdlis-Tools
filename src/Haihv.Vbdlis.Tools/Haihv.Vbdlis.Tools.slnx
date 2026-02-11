@@ -1,24 +1,14 @@
 <Solution>
     <Folder Name="/App/">
-        <Project Path="Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App.Android/Haihv.Vbdlis.Tools.App.Android.csproj">
-            <Deploy/>
-        </Project>
-        <Project Path="Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App.Browser/Haihv.Vbdlis.Tools.App.Browser.csproj"/>
-        <Project Path="Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App.Desktop/Haihv.Vbdlis.Tools.App.Desktop.csproj"/>
-        <Project Path="Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App.iOS/Haihv.Vbdlis.Tools.App.iOS.csproj">
-            <Deploy/>
-        </Project>
-        <Project Path="Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App/Haihv.Vbdlis.Tools.App.csproj"/>
-        <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.csproj"
-                 Id="a281f979-b1be-4f83-ae34-d6195a095cd3"/>
+        <Project Path="Haihv.Vbdlis.Tools.Desktop/Haihv.Vbdlis.Tools.Desktop.csproj" Id="a281f979-b1be-4f83-ae34-d6195a095cd3" />
     </Folder>
     <Folder Name="/Helpers/">
-        <Project Path="Haihv.Helpers.Strings/Haihv.Helpers.Strings.csproj" Id="f034d1a1-91bb-4a31-9d30-1ce7b4b05490"/>
+        <Project Path="Haihv.Helpers.Strings/Haihv.Helpers.Strings.csproj" Id="f034d1a1-91bb-4a31-9d30-1ce7b4b05490" />
     </Folder>
   <Folder Name="/Solution Items/">
-      <File Path="compose.yaml"/>
+      <File Path="compose.yaml" />
   </Folder>
     <Folder Name="/Web/">
-        <Project Path="Haihv.Vbdlis.Tools.Api.Playwright/Haihv.Vbdlis.Tools.Api.Playwright.csproj"/>
+        <Project Path="Haihv.Vbdlis.Tools.Api.Playwright/Haihv.Vbdlis.Tools.Api.Playwright.csproj" />
     </Folder>
 </Solution>
