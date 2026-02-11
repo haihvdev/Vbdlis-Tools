@@ -5,7 +5,7 @@
   "buildNumber": 5,
   "lastBuildDate": "2026-02-11",
   "dateCode": "2602",
-  "appUpdateNotes": "**11 Tháng 02, 2026**\n- Sửa lỗi và Cải thiện giao diện tìm kiếm.**01 Tháng 02, 2026**\n- Bổ sung chức năng cache cho tìm kiếm và cải thiện giao diện\n- Bổ sung chức năng quản lý lịch sử tìm kiếm\n- Cải thiện quản lý đăng nhập và ghi log lỗi\n\n**31 Tháng 01, 2026**\n- Tái cầu trúc giao diện chức năng tìm kiếm.",
+  "appUpdateNotes": "**11 Tháng 02, 2026**\n- Sửa lỗi và Cải thiện giao diện tìm kiếm.\n\n**01 Tháng 02, 2026**\n- Bổ sung chức năng cache cho tìm kiếm và cải thiện giao diện\n- Bổ sung chức năng quản lý lịch sử tìm kiếm\n- Cải thiện quản lý đăng nhập và ghi log lỗi\n\n**31 Tháng 01, 2026**\n- Tái cầu trúc giao diện chức năng tìm kiếm.",
   "history": [
     {
       "version": "1.0.26021101",
