@@ -1,3 +1,16 @@
-GET https://{{HostAddress}}/weatherforecast/
+POST https://{{HostAddress}}/api/v1/vbdlis/search-giay-to
+Content-Type: application/json
 Accept: application/json
 
+{
+  "server": "https://bgi.mplis.gov.vn/dc",
+  "username": "your_username",
+  "password": "your_password",
+  "soGiayToList": [
+    "123456789012",
+    "024093001234"
+  ],
+  "responseMode": "compact",
+  "headless": true,
+  "tinhId": 24
+}

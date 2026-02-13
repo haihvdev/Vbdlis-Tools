@@ -30,27 +30,27 @@
   </ItemGroup>
 
   <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.3.11"/>
-      <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.11"/>
-      <PackageReference Include="Avalonia.Desktop" Version="11.3.11"/>
-      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11"/>
-      <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11"/>
+      <PackageReference Include="Avalonia" Version="11.3.12" />
+      <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.12" />
+      <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
+      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+      <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-      <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11">
+      <PackageReference Include="Avalonia.Diagnostics" Version="11.3.12">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
       <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.1.1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2"/>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Playwright" Version="1.58.0"/>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
-      <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.2"/>
-    <PackageReference Include="Serilog" Version="4.3.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+      <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="EPPlus" Version="8.4.2"/>
