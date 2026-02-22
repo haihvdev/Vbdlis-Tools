@@ -25,7 +25,9 @@
       "Bash(hdiutil detach:*)",
       "Bash(dir:*)",
       "Bash(curl:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Read(//Users/hoanghai/.claude/**)"
     ],
     "deny": [],
     "ask": []
